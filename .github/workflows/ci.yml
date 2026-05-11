@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  guardrails:
+    name: Guardrail checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run scripts/check_loc.py
+      - run: uv run scripts/check_hot_path.py
+      - run: uv run scripts/check_gpio.py
+      - run: uv run scripts/check_structure.py
+
+  build:
+    name: Build PC
+    runs-on: ubuntu-latest
+    needs: guardrails
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install PlatformIO
+        run: uv sync --extra ci
+      - name: Build + smoke test
+        run: uv run scripts/test.py

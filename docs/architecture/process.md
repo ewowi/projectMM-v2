@@ -33,7 +33,8 @@ Three enforcement tiers, in order of when they fire:
 
 - **Pre-commit** — fires before the diff is finished. Catches violations of the hot-path rules (no allocations, no blocking calls, no logging in any `loop*()` body) and architectural fitness functions (pin numbers trace to typed board config — `pinMode(5, ...)` is rejected, `pinMode(BoardPins::WS2812_DATA, ...)` is the correct form).
 - **CI gates** — block PR merge. Enforce LOC budgets per surface, footprint baselines per module, test-count baselines, and a doc-growth budget per release. Overshoot fails; a bump requires an explicit signed-off line in the release plan.
-- **Structural additions** — block additions that bypass the design. A new top-level directory requires an ADR. A new file under `deploy/`, `tests/`, or `docs/` requires an inline justification of what existing surface was insufficient.
+- **Structural additions** — block additions that bypass the design. A new top-level directory requires an ADR. A new file under `scripts/`, `tests/`, or `docs/` requires an inline justification of what existing surface was insufficient.
+- **Process visibility** — every developer-facing process (build, test, checks, doc-serve, future flash/upload/log-tail) is a card in `scripts/ui.py`. The UI is the process layer's census: adding a script is visible work; removing one is visible work. v1 reached 20+ `deploy/` scripts partly because the surface was never rendered in one place; v2 renders it from day one.
 
 The specific tools that implement each tier (linters, formatters, static analysers, hook scripts) are an implementation detail of Sprint 1, not a constraint. They earn their place by paying for themselves under the same frugality rule they enforce.
 
