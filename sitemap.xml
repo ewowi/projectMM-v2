@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/architecture/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/deploy/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/lights/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/development/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/development/anti-drift/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/development/guardrails/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/development/release-01/</loc>
+         <lastmod>2026-05-11</lastmod>
+    </url>
+</urlset>

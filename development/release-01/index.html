@@ -1,0 +1,1467 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Cross-platform runtime for modular, loop-driven processes">
+      
+      
+        <meta name="author" content="MoonModules">
+      
+      
+        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/development/release-01/">
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../anti-drift/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Release 1 — Restart to Parity - projectMM v2</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#release-1-restart-to-parity" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="projectMM v2" class="md-header__button md-logo" aria-label="projectMM v2" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            projectMM v2
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Release 1 — Restart to Parity
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ewowi/projectMM-v2" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ewowi/projectMM-v2
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../lights/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Lights
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../deploy/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deploy
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="projectMM v2" class="md-nav__button md-logo" aria-label="projectMM v2" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    projectMM v2
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ewowi/projectMM-v2" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ewowi/projectMM-v2
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lights/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lights
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deploy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 1 — Restart to Parity
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 1 — Restart to Parity
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#release-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Release Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-release-1-delivers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Release 1 delivers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frugality-targets-ci-enforced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frugality targets (CI-enforced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concurrency-model-fixed-at-sprint-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrency model (fixed at Sprint 1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recurring-evaluation-cadence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recurring evaluation cadence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprint-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 1 — Guardrails and skeleton
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 1 — Guardrails and skeleton">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprint-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 2 — First module and test pyramid
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 2 — First module and test pyramid">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprint-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 3 — Pal-minimum
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 3 — Pal-minimum">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprint-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 4 — Light domain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 4 — Light domain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprint-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 5 — Networking modules
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 5 — Networking modules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprint-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 6 — Parity sprint
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 6 — Parity sprint">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../anti-drift/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Anti-drift rules
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guardrails/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guardrails framework
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#release-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Release Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-release-1-delivers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Release 1 delivers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#frugality-targets-ci-enforced" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frugality targets (CI-enforced)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#concurrency-model-fixed-at-sprint-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Concurrency model (fixed at Sprint 1)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recurring-evaluation-cadence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recurring evaluation cadence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprint-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 1 — Guardrails and skeleton
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 1 — Guardrails and skeleton">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprint-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 2 — First module and test pyramid
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 2 — First module and test pyramid">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprint-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 3 — Pal-minimum
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 3 — Pal-minimum">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprint-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 4 — Light domain
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 4 — Light domain">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprint-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 5 — Networking modules
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 5 — Networking modules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sprint-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 6 — Parity sprint
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 6 — Parity sprint">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="release-1-restart-to-parity">Release 1 — Restart to Parity<a class="headerlink" href="#release-1-restart-to-parity" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>Theme:</strong> Bring v2 to parity with v1's first-boot pipeline — effect → blend → driver → preview, served over HTTP / WS with WiFi-STA, persisted to LittleFS, OTA-updatable, NTP-synced, ArtNet-capable — over six sprints. The decision to restart from v1 is documented in v1's <a href="https://ewowi.github.io/projectMM/development/release-09/">Release 9</a>. The main driver is <strong>frugality</strong> (frugal in code, in CPU cycles, in resources); the <a href="../guardrails/">guardrails framework</a> lands in Sprint 1 before any module exists, and the <a href="../anti-drift/">anti-drift rules</a> constrain every sprint that follows.</p>
+</blockquote>
+<hr />
+<h2 id="release-overview">Release Overview<a class="headerlink" href="#release-overview" title="Permanent link">&para;</a></h2>
+<h3 id="what-release-1-delivers">What Release 1 delivers<a class="headerlink" href="#what-release-1-delivers" title="Permanent link">&para;</a></h3>
+<p>A v2 codebase that runs the same first-boot pipeline as v1, implemented as modules over a small core that fits in one head. The core is <code>Module</code> + <code>ModuleManager</code> + <code>Scheduler</code> + a minimal <code>Pal</code>; networking, OTA, NTP, persistence, the HTTP / WS server, and the entire lighting domain (<code>RGB</code>, <code>pixelBuf</code>, effects, layers, layouts, modifiers) are modules. The deploy pipeline is three scripts: build, flash, test. v2's first user is lights, but lights live in <code>modules/lights/</code> and depend on the core, not the other way around.</p>
+<h3 id="frugality-targets-ci-enforced">Frugality targets (CI-enforced)<a class="headerlink" href="#frugality-targets-ci-enforced" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Core (Module + Manager + Scheduler)</td>
+<td>≤ 300 LOC</td>
+</tr>
+<tr>
+<td>Pal</td>
+<td>≤ 200 LOC</td>
+</tr>
+<tr>
+<td>Per module (light domain)</td>
+<td>≤ 200 LOC</td>
+</tr>
+<tr>
+<td>Per module (networking, OTA)</td>
+<td>≤ 300 LOC</td>
+</tr>
+<tr>
+<td>Tests after Sprint 2</td>
+<td>≤ 5 files</td>
+</tr>
+<tr>
+<td>Deploy scripts after Sprint 1</td>
+<td>3 (build, flash, test)</td>
+</tr>
+</tbody>
+</table>
+<p>Overshoot fails CI. Bumping a target requires an explicit line in this release plan signed off by the maintainer.</p>
+<h3 id="concurrency-model-fixed-at-sprint-1">Concurrency model (fixed at Sprint 1)<a class="headerlink" href="#concurrency-model-fixed-at-sprint-1" title="Permanent link">&para;</a></h3>
+<p>Arbitrary DAG topology, SPSC lock-free ring buffer per edge, depth 2 by default. The linear pipeline (effect → blend → driver) and v1's double-buffering are special cases. Depth &gt;2 enables backpressure pipelining where memory allows.</p>
+<h3 id="recurring-evaluation-cadence">Recurring evaluation cadence<a class="headerlink" href="#recurring-evaluation-cadence" title="Permanent link">&para;</a></h3>
+<p>Release 5 is the first recurring evaluation release (per the <a href="../anti-drift/">anti-drift schedule</a>: every fifth release is a no-feature evaluation). It is scheduled here, in Release 1 Sprint 1, not at the end of Release 4.</p>
+<hr />
+<h2 id="sprints">Sprints<a class="headerlink" href="#sprints" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Sprint</th>
+<th>Goal</th>
+<th>Frugality target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#sprint-1">Sprint 1</a></td>
+<td>Guardrails framework + empty Module/Manager/Scheduler/Pal skeleton + CI green</td>
+<td>core ≤ 300 LOC</td>
+</tr>
+<tr>
+<td><a href="#sprint-2">Sprint 2</a></td>
+<td>First module + test pyramid wired</td>
+<td>tests ≤ 5 files</td>
+</tr>
+<tr>
+<td><a href="#sprint-3">Sprint 3</a></td>
+<td>Pal-minimum on PC + ESP32</td>
+<td>Pal ≤ 200 LOC</td>
+</tr>
+<tr>
+<td><a href="#sprint-4">Sprint 4</a></td>
+<td>Light domain: Producer / Consumer with SPSC ring; one effect, one preview driver</td>
+<td>per-module ≤ 200 LOC</td>
+</tr>
+<tr>
+<td><a href="#sprint-5">Sprint 5</a></td>
+<td>Networking modules: WiFi-STA, HTTP, WebSocket, REST API</td>
+<td>per-module ≤ 300 LOC</td>
+</tr>
+<tr>
+<td><a href="#sprint-6">Sprint 6</a></td>
+<td>ArtNet, OTA, NTP, state persistence — parity with v1 first-boot pipeline</td>
+<td>per-module ≤ 300 LOC</td>
+</tr>
+</tbody>
+</table>
+<p>Each sprint closes with a working device. After Sprint 6, v1 is tagged <code>v1.8.x-legacy</code>, this repo is renamed from <code>projectMM-v2</code> to <code>projectMM</code>, and v2 ships its first stable tag <code>v2.0.0</code>.</p>
+<hr />
+<h2 id="sprint-1">Sprint 1 — Guardrails and skeleton<a class="headerlink" href="#sprint-1" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Scope:</strong> Land the guardrails framework (pre-commit hooks, CI gates, structural rules) before any module exists. Write the empty <code>Module</code>, <code>ModuleManager</code>, <code>Scheduler</code>, and <code>Pal</code> skeletons such that <code>loop()</code>, <code>loop20ms()</code>, <code>loop1s()</code>, and <code>loop10s()</code> are first-class scheduler concerns from commit 1, not afterthoughts. CI green on PC and ESP32.</p>
+</blockquote>
+<p>The framework is the load-bearing deliverable. Without it, the same drift that produced v1 reaches v2 by Sprint 4. The <a href="../guardrails/">guardrails outline</a> is the spec; the first commit of this sprint is its implementation. <code>loop20ms()</code> is new in v2 (v1 had only <code>runLoop1s</code> via timing windows); the scheduler maintains four pinned task ranks per core (hot, 20 ms, 1 s, 10 s) and modules opt into each by overriding the corresponding method. Empty overrides cost nothing.</p>
+<p>The drift-metrics dashboard from the anti-drift rules lands as a status doc generated by CI on every push.</p>
+<h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <code>.gitignore</code>, <code>CMakeLists.txt</code>, <code>platformio.ini</code> in place</li>
+<li>[ ] Pre-commit hooks installed and green: clang-format, ruff, raw-GPIO ban, hot-path allocation ban, hot-path blocking-call ban</li>
+<li>[ ] CI workflow green on PC (macOS + Linux + Windows) and ESP32 (esp32dev + esp32s3_n16r8)</li>
+<li>[ ] CI gates enforced: LOC budget, footprint baseline, test-count baseline, doc growth budget, structural-file gate</li>
+<li>[ ] <code>Module</code> base class declares <code>setup</code> / <code>loop</code> / <code>loop20ms</code> / <code>loop1s</code> / <code>loop10s</code> / <code>teardown</code> (empty defaults)</li>
+<li>[ ] <code>Scheduler</code> runs a no-op tick on both cores; pinned-task ranks wired</li>
+<li>[ ] <code>ModuleManager</code> adds / removes a no-op module via API</li>
+<li>[ ] <code>Pal</code> skeleton has timing only (everything else lands in Sprint 3)</li>
+<li>[ ] Core total ≤ 300 LOC; verified by CI</li>
+<li>[ ] Drift-metrics status doc published by CI</li>
+<li>[ ] Release 5 evaluation sprint scheduled in this release plan</li>
+</ul>
+<hr />
+<h2 id="sprint-2">Sprint 2 — First module and test pyramid<a class="headerlink" href="#sprint-2" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Scope:</strong> Add <code>HelloModule</code> (registers one control, logs a line in <code>setup()</code>, increments a counter in <code>loop20ms</code>). Wire the four-tier test pyramid: host unit (doctest, single binary), on-target unit (Unity or doctest on ESP32), integration (REST against in-process server), HIL (live device probe). Each tier covers exactly one kind of bug; no overlap.</p>
+</blockquote>
+<h3 id="definition-of-done_1">Definition of Done<a class="headerlink" href="#definition-of-done_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <code>HelloModule</code> ships with one control and a counter, both visible over REST</li>
+<li>[ ] Host unit tests run on PC for every module</li>
+<li>[ ] On-target unit tests run on ESP32 for the same modules where platform behaviour differs</li>
+<li>[ ] Integration tests run against the in-process server, not over the network</li>
+<li>[ ] HIL probe verifies serial output on a connected device (skipped in CI without hardware)</li>
+<li>[ ] Test count baseline locked at sprint close; bump rule enforced</li>
+</ul>
+<hr />
+<h2 id="sprint-3">Sprint 3 — Pal-minimum<a class="headerlink" href="#sprint-3" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Scope:</strong> Implement <code>Pal</code> for timing, GPIO (via typed board config), filesystem basics, RTOS task and semaphore primitives, and heap query. Nothing else. WiFi, Ethernet, UDP, OTA, NTP, system-info dumps, and OTA partition queries do <strong>not</strong> live in <code>Pal</code>.</p>
+</blockquote>
+<h3 id="definition-of-done_2">Definition of Done<a class="headerlink" href="#definition-of-done_2" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] Pal total ≤ 200 LOC across all platforms</li>
+<li>[ ] PC and ESP32 builds green</li>
+<li>[ ] Typed board config (<code>board/&lt;env&gt;.yaml</code> → <code>Pins.hpp</code> codegen) compiles for esp32dev and esp32s3_n16r8</li>
+<li>[ ] No <code>pinMode(&lt;integer&gt;)</code> or <code>digitalWrite(&lt;integer&gt;)</code> anywhere in the codebase (enforced by pre-commit)</li>
+</ul>
+<hr />
+<h2 id="sprint-4">Sprint 4 — Light domain<a class="headerlink" href="#sprint-4" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Scope:</strong> Port the light pipeline as modules. One producer (effect), one consumer (preview driver), SPSC ring buffer between them at depth 2. <code>RGB</code>, <code>pixelBuf</code>, and the producer / consumer base classes live in <code>modules/lights/</code>, not in core. The DAG declaration API (<code>scheduler.connect(producer, consumer)</code>) is exercised by this sprint.</p>
+</blockquote>
+<h3 id="definition-of-done_3">Definition of Done<a class="headerlink" href="#definition-of-done_3" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <code>EffectBase</code> and <code>DriverBase</code> in <code>modules/lights/</code></li>
+<li>[ ] At least one effect (<code>SineEffect</code> or similar) producing a frame</li>
+<li>[ ] At least one preview driver consuming it and exposing pixels over WS</li>
+<li>[ ] SPSC ring buffer primitive in core, depth 2, ESP32 + PC</li>
+<li>[ ] PreviewModule frame rate matches v1 on the same hardware</li>
+<li>[ ] Per-module footprint ≤ 200 LOC</li>
+</ul>
+<hr />
+<h2 id="sprint-5">Sprint 5 — Networking modules<a class="headerlink" href="#sprint-5" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Scope:</strong> WiFi-STA, HTTP server, WebSocket server, REST API. All as modules. The HTTP / WS server uses the same wire format as v1 so the v1 frontend can connect unchanged during the transition.</p>
+</blockquote>
+<h3 id="definition-of-done_4">Definition of Done<a class="headerlink" href="#definition-of-done_4" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <code>WifiStaModule</code> connects on boot using credentials from state</li>
+<li>[ ] <code>HttpServerModule</code> serves the frontend bundle</li>
+<li>[ ] <code>WebSocketModule</code> pushes schema and state with the v1 wire format</li>
+<li>[ ] REST endpoints <code>/api/modules</code>, <code>/api/system</code>, <code>/api/log</code> parity with v1</li>
+<li>[ ] v1 frontend connects to v2 device unchanged</li>
+<li>[ ] Per-module footprint ≤ 300 LOC</li>
+</ul>
+<hr />
+<h2 id="sprint-6">Sprint 6 — Parity sprint<a class="headerlink" href="#sprint-6" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Scope:</strong> ArtNet (in + out), OTA firmware update, NTP wall-clock, LittleFS state persistence. Sprint closes when the v1 first-boot pipeline runs identically on v2 hardware.</p>
+</blockquote>
+<h3 id="definition-of-done_5">Definition of Done<a class="headerlink" href="#definition-of-done_5" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <code>ArtNetInModule</code>, <code>ArtNetOutModule</code> ship, wired by <code>autoWireKeys()</code></li>
+<li>[ ] <code>FirmwareUpdateModule</code> accepts file upload and GitHub-release flashing</li>
+<li>[ ] <code>NtpModule</code> syncs and exposes <code>local_time</code></li>
+<li>[ ] State persistence via LittleFS modules</li>
+<li>[ ] First-boot pipeline runs identically on v2 hardware (visual + metrics parity check against v1)</li>
+<li>[ ] v1 tagged <code>v1.8.x-legacy</code>; this repo renamed from <code>projectMM-v2</code> to <code>projectMM</code>; v2 tagged <code>v2.0.0</code></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
