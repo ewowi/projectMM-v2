@@ -1,4 +1,4 @@
-# Architecture
+# System Architecture
 
 The core is four pieces. Everything else is a module or a domain on top of the core.
 
@@ -9,7 +9,7 @@ Scheduler                           — runs the DAG across cores
 Pal                                 — platform abstraction, nothing more
 ```
 
-This page is the constraint. Any pull request that does not fit the picture below is either rejected or carries a paired ADR file (`docs/adr/NNNN-*.md`) recording the architecture change explicitly. See [anti-drift rules](development/anti-drift.md) for why.
+This page is the constraint. Any pull request that does not fit the picture below is either rejected or carries a paired ADR file (`docs/adr/NNNN-*.md`) recording the architecture change explicitly. See [process architecture](process.md) for why.
 
 ---
 
@@ -29,7 +29,7 @@ public:
 
 The contract is the entire module-facing API of the runtime. Six virtuals, all optional, all empty by default. A module that only overrides `setup()` and `loop()` pays for nothing it does not use.
 
-**Hot path.** `loop()` is the load-bearing decision in the runtime: it must do as little as possible at the maximum frequency the platform allows. The guardrails framework enforces this mechanically — no allocations, no blocking calls, no logging in any `loop*()` body — see [guardrails framework](development/guardrails.md).
+**Hot path.** `loop()` is the load-bearing decision in the runtime: it must do as little as possible at the maximum frequency the platform allows. The guardrails enforce this mechanically — no allocations, no blocking calls, no logging in any `loop*()` body — see [process architecture](process.md).
 
 **Tiered cadences.** `loop20ms`, `loop1s`, and `loop10s` exist to drain less urgent work out of the hot path at progressively lower rates so `loop()` stays short. A module decides for itself which cadences it needs; the scheduler pays nothing for cadences a module does not override.
 
@@ -126,4 +126,4 @@ src/core/Scheduler.cpp      — DAG runner with SPSC rings (≤ 300 LOC)
 src/pal/Pal.h               — the platform abstraction (≤ 200 LOC)
 ```
 
-Total core target: ≤ 300 LOC excluding Pal. Verified per release by CI (see [guardrails](development/guardrails.md)).
+Total core target: ≤ 300 LOC excluding Pal. Verified per release by CI (see [process architecture](process.md)).

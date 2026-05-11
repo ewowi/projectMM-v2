@@ -8,19 +8,12 @@ The entry domain is **light control**: LEDs over GPIO or network. Effects, layer
 
 ## The main driver
 
-**Frugality** — frugal in code, in CPU cycles, and in resources. The three dimensions are tested differently:
-
-- **Code frugality**: whether a reader can hold the core in their head.
-- **CPU frugality**: `loop()` time under realistic load on every active core.
-- **Resource frugality**: static and runtime footprint per module across RAM, flash, and any other constrained resource.
-
-Frugality applies equally to source, tests, deploy scripts, and documentation. The principle is not new: essential complexity only (Brooks), Gall's Law, and the Saint-Exupéry rule that perfection is reached not when nothing more can be added but when nothing more can be taken away.
-
-The mechanisms that keep frugality from eroding are documented in [anti-drift rules](development/anti-drift.md) and enforced by the [guardrails framework](development/guardrails.md). Both ship in Sprint 1 of Release 1, before any module is written.
+**Frugality** — frugal in code, in CPU cycles, and in resources. The full statement of the principle, the guardrails that enforce it, and the anti-drift rules that keep the framework itself from eroding live in [process architecture](architecture/process.md). Both the system and process architectures ship as the contract under which every sprint executes.
 
 ## Where to go next
 
-- [Architecture](architecture.md) — the core in one page.
+- [System architecture](architecture/system.md) — the core in one page.
+- [Process architecture](architecture/process.md) — frugality, guardrails, anti-drift.
 - [Lights](lights.md) — the first domain (filled in during Release 1 Sprint 4).
 - [Deploy](deploy.md) — build, flash, test (filled in during Release 1 Sprint 1).
 - [Release 1 plan](development/release-01.md) — six sprints to parity with v1.

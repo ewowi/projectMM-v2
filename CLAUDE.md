@@ -9,11 +9,11 @@ Frugal in code, in CPU cycles, and in resources. This is the load-bearing constr
 1. **Does this addition pay for itself?** A new file, a new test surface, a new doc page, a new deploy script — what does it replace or extend?
 2. **What did you remove?** Every release removes at least one thing. A PR that adds without removing must justify why.
 
-If the answer to (1) is "nothing", the PR is rejected. See [docs/development/anti-drift.md](docs/development/anti-drift.md) for why this matters and [docs/development/guardrails.md](docs/development/guardrails.md) for how it is enforced mechanically.
+If the answer to (1) is "nothing", the PR is rejected. See [docs/architecture/process.md](docs/architecture/process.md) for why this matters and how it is enforced mechanically.
 
 ## The architecture is a constraint
 
-[docs/architecture.md](docs/architecture.md) is short, durable, and the reference for every review. A change that does not fit the picture there is either rejected or carries a paired ADR file (`docs/adr/NNNN-*.md`) recording the architecture change explicitly. The architecture changes only via ADR — never silently.
+[docs/architecture/system.md](docs/architecture/system.md) is short, durable, and the reference for every review. A change that does not fit the picture there is either rejected or carries a paired ADR file (`docs/adr/NNNN-*.md`) recording the architecture change explicitly. The architecture changes only via ADR — never silently.
 
 The core boundary:
 

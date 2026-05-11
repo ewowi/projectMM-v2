@@ -34,14 +34,14 @@ theme:
 
 nav:
   - Home: index.md
-  - Architecture: architecture.md
+  - Architecture:
+    - System: architecture/system.md
+    - Process: architecture/process.md
   - Lights: lights.md
   - Deploy: deploy.md
   - Development:
     - Overview: development/index.md
     - Release 1 — Restart to Parity: development/release-01.md
-    - Anti-drift rules: development/anti-drift.md
-    - Guardrails framework: development/guardrails.md
 
 markdown_extensions:
   - admonition
