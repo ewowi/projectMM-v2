@@ -1,0 +1,23 @@
+# mkdocs build output
+site/
+
+# Python / uv
+.venv/
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# C++ build artefacts (added in v2 Sprint 1)
+build/
+.pio/
+*.o
+*.obj
+
+# Persisted device state (added in v2 Sprint 6)
+state/

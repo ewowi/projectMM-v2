@@ -1,0 +1,12 @@
+[project]
+name = "projectmm-v2"
+version = "0.0.0"
+description = "projectMM v2 — cross-platform runtime for modular, loop-driven processes"
+requires-python = ">=3.11,<3.13"
+dependencies = []
+
+[project.optional-dependencies]
+docs = [
+  "mkdocs>=1.6",
+  "mkdocs-material>=9.5",
+]

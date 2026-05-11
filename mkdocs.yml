@@ -1,0 +1,53 @@
+site_name: projectMM v2
+site_url: https://ewowi.github.io/projectMM-v2
+site_description: Cross-platform runtime for modular, loop-driven processes
+site_author: MoonModules
+
+repo_name: ewowi/projectMM-v2
+repo_url: https://github.com/ewowi/projectMM-v2
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Lights: lights.md
+  - Deploy: deploy.md
+  - Development:
+    - Overview: development/index.md
+    - Release 1 — Restart to Parity: development/release-01.md
+    - Anti-drift rules: development/anti-drift.md
+    - Guardrails framework: development/guardrails.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.details
+  - pymdownx.superfences
+  - tables
+  - toc:
+      permalink: true
