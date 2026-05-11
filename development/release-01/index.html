@@ -814,12 +814,12 @@
   <a href="#sprint-2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sprint 2 — First module and test pyramid
+        Sprint 2 — First module, REST, control panel, host tests
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Sprint 2 — First module and test pyramid">
+    <nav class="md-nav" aria-label="Sprint 2 — First module, REST, control panel, host tests">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -842,12 +842,12 @@
   <a href="#sprint-3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sprint 3 — Pal-minimum
+        Sprint 3 — Pal-minimum + ESP32 + on-target tests
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Sprint 3 — Pal-minimum">
+    <nav class="md-nav" aria-label="Sprint 3 — Pal-minimum + ESP32 + on-target tests">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -870,12 +870,12 @@
   <a href="#sprint-4" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sprint 4 — Light domain
+        Sprint 4 — WiFi-STA + WebSocket + REST over hardware
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Sprint 4 — Light domain">
+    <nav class="md-nav" aria-label="Sprint 4 — WiFi-STA + WebSocket + REST over hardware">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -898,12 +898,12 @@
   <a href="#sprint-5" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sprint 5 — Networking modules
+        Sprint 5 — Light domain
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Sprint 5 — Networking modules">
+    <nav class="md-nav" aria-label="Sprint 5 — Light domain">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1107,12 +1107,12 @@
   <a href="#sprint-2" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sprint 2 — First module and test pyramid
+        Sprint 2 — First module, REST, control panel, host tests
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Sprint 2 — First module and test pyramid">
+    <nav class="md-nav" aria-label="Sprint 2 — First module, REST, control panel, host tests">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1135,12 +1135,12 @@
   <a href="#sprint-3" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sprint 3 — Pal-minimum
+        Sprint 3 — Pal-minimum + ESP32 + on-target tests
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Sprint 3 — Pal-minimum">
+    <nav class="md-nav" aria-label="Sprint 3 — Pal-minimum + ESP32 + on-target tests">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1163,12 +1163,12 @@
   <a href="#sprint-4" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sprint 4 — Light domain
+        Sprint 4 — WiFi-STA + WebSocket + REST over hardware
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Sprint 4 — Light domain">
+    <nav class="md-nav" aria-label="Sprint 4 — WiFi-STA + WebSocket + REST over hardware">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1191,12 +1191,12 @@
   <a href="#sprint-5" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sprint 5 — Networking modules
+        Sprint 5 — Light domain
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Sprint 5 — Networking modules">
+    <nav class="md-nav" aria-label="Sprint 5 — Light domain">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1335,28 +1335,28 @@
 <tbody>
 <tr>
 <td><a href="#sprint-1">Sprint 1</a></td>
-<td>Guardrails framework + empty Module/Manager/Scheduler/Pal skeleton + CI green</td>
+<td>Guardrails framework + empty Module/Manager/Scheduler/Pal skeleton + Linux PC CI green</td>
 <td>core ≤ 300 LOC</td>
 </tr>
 <tr>
 <td><a href="#sprint-2">Sprint 2</a></td>
-<td>First module + test pyramid wired</td>
+<td>First module + module factory + REST + control panel + host tests (PC only)</td>
 <td>tests ≤ 5 files</td>
 </tr>
 <tr>
 <td><a href="#sprint-3">Sprint 3</a></td>
-<td>Pal-minimum on PC + ESP32</td>
+<td>Pal-minimum + ESP32 builds green + on-target tests + HIL</td>
 <td>Pal ≤ 200 LOC</td>
 </tr>
 <tr>
 <td><a href="#sprint-4">Sprint 4</a></td>
-<td>Light domain: Producer / Consumer with SPSC ring; one effect, one preview driver</td>
-<td>per-module ≤ 200 LOC</td>
+<td>WiFi-STA + WebSocket + REST over hardware; v1 frontend connects unchanged</td>
+<td>per-module ≤ 300 LOC</td>
 </tr>
 <tr>
 <td><a href="#sprint-5">Sprint 5</a></td>
-<td>Networking modules: WiFi-STA, HTTP, WebSocket, REST API</td>
-<td>per-module ≤ 300 LOC</td>
+<td>Light domain: producer → SPSC ring → consumer; one effect, one preview driver</td>
+<td>per-module ≤ 200 LOC</td>
 </tr>
 <tr>
 <td><a href="#sprint-6">Sprint 6</a></td>
@@ -1369,77 +1369,86 @@
 <hr />
 <h2 id="sprint-1">Sprint 1 — Guardrails and skeleton<a class="headerlink" href="#sprint-1" title="Permanent link">&para;</a></h2>
 <blockquote>
-<p><strong>Scope:</strong> Land the guardrails framework (pre-commit hooks, CI gates, structural rules) before any module exists. Write the empty <code>Module</code>, <code>ModuleManager</code>, <code>Scheduler</code>, and <code>Pal</code> skeletons such that <code>loop()</code>, <code>loop20ms()</code>, <code>loop1s()</code>, and <code>loop10s()</code> are first-class scheduler concerns from commit 1, not afterthoughts. CI green on PC and ESP32.</p>
+<p><strong>Scope:</strong> Land the minimum guardrails framework that the empty <code>Module</code> / <code>ModuleManager</code> / <code>Scheduler</code> / <code>Pal</code> skeleton justifies — no more. The four lifecycle cadences (<code>loop</code>, <code>loop20ms</code>, <code>loop1s</code>, <code>loop10s</code>) are first-class scheduler concerns from commit 1, not afterthoughts. Linux-PC CI green; macOS/Windows PC and ESP32 envs land when those platforms gain real code (Sprint 3).</p>
 </blockquote>
-<p>The framework is the load-bearing deliverable. Without it, the same drift that produced v1 reaches v2 by Sprint 4. <a href="../../architecture/process/">Process architecture</a> is the spec; the first commit of this sprint is its implementation. <code>loop20ms()</code> is new in v2 (v1 had only <code>runLoop1s</code> via timing windows); the scheduler maintains four pinned task ranks per core (hot, 20 ms, 1 s, 10 s) and modules opt into each by overriding the corresponding method. Empty overrides cost nothing.</p>
-<p>The drift-metrics dashboard lands as a status doc generated by CI on every push.</p>
+<p>The framework is the load-bearing deliverable. Without it, the same drift that produced v1 reaches v2 by Sprint 4. <a href="../../architecture/process/">Process architecture</a> is the spec; the first commit of this sprint is its implementation. <code>loop20ms()</code> is new in v2 (v1 had only <code>runLoop1s</code> via timing windows); the scheduler maintains four cadences per core (hot, 20 ms, 1 s, 10 s) and modules opt into each by overriding the corresponding method. Empty overrides cost nothing.</p>
+<p><code>scripts/ui.py</code> renders the project's process surface as a browser-based control panel from day one — see <a href="../../deploy/#interactive">Deploy → Interactive UI</a> and <a href="../../architecture/process/">process architecture §2</a>. Pre-commit and CI invoke scripts directly (non-interactive contexts).</p>
 <h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
 <ul>
-<li>[ ] <code>.gitignore</code>, <code>CMakeLists.txt</code>, <code>platformio.ini</code> in place</li>
-<li>[ ] Pre-commit hooks installed and green: raw-GPIO ban, hot-path allocation ban, hot-path blocking-call ban (formatters and linters — see "To be validated" below)</li>
-<li>[ ] CI workflow green on PC (macOS + Linux + Windows) and ESP32 (esp32dev + esp32s3_n16r8)</li>
-<li>[ ] CI gates enforced: LOC budget, footprint baseline, test-count baseline, doc growth budget, structural-file gate</li>
-<li>[ ] <code>Module</code> base class declares <code>setup</code> / <code>loop</code> / <code>loop20ms</code> / <code>loop1s</code> / <code>loop10s</code> / <code>teardown</code> (empty defaults)</li>
-<li>[ ] <code>Scheduler</code> runs a no-op tick on both cores; pinned-task ranks wired</li>
-<li>[ ] <code>ModuleManager</code> adds / removes a no-op module via API</li>
-<li>[ ] <code>Pal</code> skeleton has timing only (everything else lands in Sprint 3)</li>
-<li>[ ] Core total ≤ 300 LOC; verified by CI</li>
-<li>[ ] Drift-metrics status doc published by CI</li>
-<li>[ ] Release 5 evaluation sprint scheduled in this release plan</li>
+<li>[x] <code>.gitignore</code>, <code>platformio.ini</code> in place (CMake deferred — PlatformIO covers both PC and ESP32)</li>
+<li>[x] Pre-commit hook installed (<code>git config core.hooksPath .githooks</code>): raw-GPIO ban, hot-path allocation ban, hot-path blocking-call ban, structural-additions allowlist, LOC budget</li>
+<li>[x] CI workflow green on Linux PC (macOS + Windows PC, esp32dev, esp32s3_n16r8 deferred to Sprint 3)</li>
+<li>[x] CI gates enforced: LOC budget, structural-file allowlist, hot-path bans, raw-GPIO ban</li>
+<li>[x] <code>Module</code> base class declares <code>setup</code> / <code>loop</code> / <code>loop20ms</code> / <code>loop1s</code> / <code>loop10s</code> / <code>teardown</code> (empty defaults)</li>
+<li>[x] <code>Scheduler</code> runs no-op ticks on two threads with four cadences wired (<code>loop</code> / <code>loop20ms</code> / <code>loop1s</code> / <code>loop10s</code>); pinning deferred until ESP32 where it matters</li>
+<li>[x] <code>ModuleManager</code> adds / removes a no-op module via API</li>
+<li>[x] <code>Pal</code> skeleton has timing only (<code>millis</code>, <code>micros</code>, <code>sleep</code>, <code>yield</code>)</li>
+<li>[x] Core total ≤ 300 LOC; verified by <code>scripts/check_loc.py</code></li>
+<li>[x] Developer control panel: <code>scripts/ui.py</code> — see <a href="../../deploy/#interactive">Deploy → Interactive UI</a>; per-script docs at <a href="../../deploy/#scripts">Deploy → Scripts</a></li>
+<li>[x] Release 5 evaluation sprint scheduled (see Release Overview above)</li>
+</ul>
+<p>Deferred to Sprint 2+ as "earn its place":</p>
+<ul>
+<li>Footprint baseline, test-count baseline, doc-growth budget number — no data yet</li>
+<li>Drift-metrics status doc — nothing to measure on an empty skeleton</li>
+<li>Formatters / linters / static analysers (clang-format, ruff, clang-tidy, cppcheck) — see "To be validated during Release 1" below</li>
 </ul>
 <hr />
-<h2 id="sprint-2">Sprint 2 — First module and test pyramid<a class="headerlink" href="#sprint-2" title="Permanent link">&para;</a></h2>
+<h2 id="sprint-2">Sprint 2 — First module, REST, control panel, host tests<a class="headerlink" href="#sprint-2" title="Permanent link">&para;</a></h2>
 <blockquote>
-<p><strong>Scope:</strong> Add <code>HelloModule</code> (registers one control, logs a line in <code>setup()</code>, increments a counter in <code>loop20ms</code>). Wire the four-tier test pyramid: host unit (doctest, single binary), on-target unit (Unity or doctest on ESP32), integration (REST against in-process server), HIL (live device probe). Each tier covers exactly one kind of bug; no overlap.</p>
+<p><strong>Scope:</strong> Reach a testable system on PC. A first module type, a module factory, an HTTP server module, REST endpoints for module add / remove / list, a browser page that uses them, host unit tests, and integration tests against the in-process server. PC only — ESP32 and HIL move to Sprint 3. This is the sprint that opens the static + dynamic test loop.</p>
 </blockquote>
 <h3 id="definition-of-done_1">Definition of Done<a class="headerlink" href="#definition-of-done_1" title="Permanent link">&para;</a></h3>
 <ul>
-<li>[ ] <code>HelloModule</code> ships with one control and a counter, both visible over REST</li>
-<li>[ ] Host unit tests run on PC for every module</li>
-<li>[ ] On-target unit tests run on ESP32 for the same modules where platform behaviour differs</li>
-<li>[ ] Integration tests run against the in-process server, not over the network</li>
-<li>[ ] HIL probe verifies serial output on a connected device (skipped in CI without hardware)</li>
-<li>[ ] Test count baseline locked at sprint close; bump rule enforced</li>
+<li>[ ] <code>HelloModule</code> — <code>Module</code> subclass with one control and a counter</li>
+<li>[ ] Module factory in <code>ModuleManager</code>: <code>add(type, id)</code> constructs by type via a typename → factory registry (no <code>strcmp</code> chain)</li>
+<li>[ ] <code>HttpServerModule</code> (PC stdlib) serves the REST API and a small browser page</li>
+<li>[ ] REST: <code>GET /api/modules</code> (list), <code>POST /api/modules</code> (add by type), <code>DELETE /api/modules/{id}</code> (remove), <code>GET /api/modules/{id}</code> (read controls)</li>
+<li>[ ] Browser page served by <code>HttpServerModule</code>: list modules, add by type, remove by id — talks to the same REST</li>
+<li>[ ] Host unit tests via doctest, single binary; tests ≤ 5 files</li>
+<li>[ ] Integration tests: start the server in-process, hit REST, assert</li>
+<li>[ ] Test-count baseline locked at sprint close; bump rule enforced</li>
 </ul>
 <hr />
-<h2 id="sprint-3">Sprint 3 — Pal-minimum<a class="headerlink" href="#sprint-3" title="Permanent link">&para;</a></h2>
+<h2 id="sprint-3">Sprint 3 — Pal-minimum + ESP32 + on-target tests<a class="headerlink" href="#sprint-3" title="Permanent link">&para;</a></h2>
 <blockquote>
-<p><strong>Scope:</strong> Implement <code>Pal</code> for timing, GPIO (via typed board config), filesystem basics, RTOS task and semaphore primitives, and heap query. Nothing else. WiFi, Ethernet, UDP, OTA, NTP, system-info dumps, and OTA partition queries do <strong>not</strong> live in <code>Pal</code>.</p>
+<p><strong>Scope:</strong> <code>Pal</code> for timing, GPIO (via typed board config), filesystem basics, RTOS task and semaphore primitives, heap query. Nothing else — WiFi / Ethernet / UDP / OTA / NTP / system-info dumps do <strong>not</strong> live in <code>Pal</code>. esp32dev + esp32s3_n16r8 builds green; the Sprint 2 stack runs on hardware over serial (WiFi lands in Sprint 4). On-target unit tests and HIL probe land here against real hardware.</p>
 </blockquote>
 <h3 id="definition-of-done_2">Definition of Done<a class="headerlink" href="#definition-of-done_2" title="Permanent link">&para;</a></h3>
 <ul>
 <li>[ ] Pal total ≤ 200 LOC across all platforms</li>
-<li>[ ] PC and ESP32 builds green</li>
-<li>[ ] Typed board config (<code>board/&lt;env&gt;.yaml</code> → <code>Pins.hpp</code> codegen) compiles for esp32dev and esp32s3_n16r8</li>
-<li>[ ] No <code>pinMode(&lt;integer&gt;)</code> or <code>digitalWrite(&lt;integer&gt;)</code> anywhere in the codebase (enforced by pre-commit)</li>
+<li>[ ] esp32dev and esp32s3_n16r8 builds green; Linux PC build still green</li>
+<li>[ ] Typed board config (<code>board/&lt;env&gt;.yaml</code> → <code>Pins.hpp</code> codegen) compiles for both ESP32 envs</li>
+<li>[ ] On-target unit tests run on ESP32 for modules where platform behaviour differs</li>
+<li>[ ] HIL probe verifies serial output on a connected device (skipped in CI without hardware)</li>
 </ul>
 <hr />
-<h2 id="sprint-4">Sprint 4 — Light domain<a class="headerlink" href="#sprint-4" title="Permanent link">&para;</a></h2>
+<h2 id="sprint-4">Sprint 4 — WiFi-STA + WebSocket + REST over hardware<a class="headerlink" href="#sprint-4" title="Permanent link">&para;</a></h2>
 <blockquote>
-<p><strong>Scope:</strong> Port the light pipeline as modules. One producer (effect), one consumer (preview driver), SPSC ring buffer between them at depth 2. <code>RGB</code>, <code>pixelBuf</code>, and the producer / consumer base classes live in <code>modules/lights/</code>, not in core. The DAG declaration API (<code>scheduler.connect(producer, consumer)</code>) is exercised by this sprint.</p>
+<p><strong>Scope:</strong> <code>WifiStaModule</code> connects on boot. The Sprint 2 HTTP / REST stack runs over WiFi on the device. <code>WebSocketModule</code> pushes schema and state in the v1 wire format. The v1 frontend connects to v2 hardware unchanged.</p>
 </blockquote>
 <h3 id="definition-of-done_3">Definition of Done<a class="headerlink" href="#definition-of-done_3" title="Permanent link">&para;</a></h3>
 <ul>
-<li>[ ] <code>EffectBase</code> and <code>DriverBase</code> in <code>modules/lights/</code></li>
-<li>[ ] At least one effect (<code>SineEffect</code> or similar) producing a frame</li>
-<li>[ ] At least one preview driver consuming it and exposing pixels over WS</li>
-<li>[ ] SPSC ring buffer primitive in core, depth 2, ESP32 + PC</li>
-<li>[ ] PreviewModule frame rate matches v1 on the same hardware</li>
-<li>[ ] Per-module footprint ≤ 200 LOC</li>
+<li>[ ] <code>WifiStaModule</code> connects on boot using credentials from state</li>
+<li>[ ] HTTP + REST from Sprint 2 work on ESP32 over WiFi</li>
+<li>[ ] <code>WebSocketModule</code> pushes schema and state in v1 wire format</li>
+<li>[ ] REST endpoints <code>/api/modules</code>, <code>/api/system</code>, <code>/api/log</code> reach parity with v1</li>
+<li>[ ] v1 frontend connects to v2 hardware unchanged (list / add / remove modules + live state)</li>
+<li>[ ] Per-module footprint ≤ 300 LOC</li>
 </ul>
 <hr />
-<h2 id="sprint-5">Sprint 5 — Networking modules<a class="headerlink" href="#sprint-5" title="Permanent link">&para;</a></h2>
+<h2 id="sprint-5">Sprint 5 — Light domain<a class="headerlink" href="#sprint-5" title="Permanent link">&para;</a></h2>
 <blockquote>
-<p><strong>Scope:</strong> WiFi-STA, HTTP server, WebSocket server, REST API. All as modules. The HTTP / WS server uses the same wire format as v1 so the v1 frontend can connect unchanged during the transition.</p>
+<p><strong>Scope:</strong> Port the light pipeline as modules. One producer (effect), one consumer (preview driver), SPSC ring buffer between them at depth 2. <code>RGB</code>, <code>pixelBuf</code>, and the producer / consumer base classes live in <code>modules/lights/</code>, not in core. The DAG declaration API (<code>scheduler.connect(producer, consumer)</code>) is exercised by this sprint.</p>
 </blockquote>
 <h3 id="definition-of-done_4">Definition of Done<a class="headerlink" href="#definition-of-done_4" title="Permanent link">&para;</a></h3>
 <ul>
-<li>[ ] <code>WifiStaModule</code> connects on boot using credentials from state</li>
-<li>[ ] <code>HttpServerModule</code> serves the frontend bundle</li>
-<li>[ ] <code>WebSocketModule</code> pushes schema and state with the v1 wire format</li>
-<li>[ ] REST endpoints <code>/api/modules</code>, <code>/api/system</code>, <code>/api/log</code> parity with v1</li>
-<li>[ ] v1 frontend connects to v2 device unchanged</li>
-<li>[ ] Per-module footprint ≤ 300 LOC</li>
+<li>[ ] <code>EffectBase</code> and <code>DriverBase</code> in <code>modules/lights/</code></li>
+<li>[ ] At least one effect (<code>SineEffect</code> or similar) producing a frame</li>
+<li>[ ] At least one preview driver consuming it and exposing pixels via the Sprint 4 WebSocket</li>
+<li>[ ] SPSC ring buffer primitive in core, depth 2, ESP32 + PC</li>
+<li>[ ] PreviewModule frame rate matches v1 on the same hardware</li>
+<li>[ ] Per-module footprint ≤ 200 LOC</li>
 </ul>
 <hr />
 <h2 id="sprint-6">Sprint 6 — Parity sprint<a class="headerlink" href="#sprint-6" title="Permanent link">&para;</a></h2>
@@ -1462,7 +1471,7 @@
 <p><strong>Hot-path enforcement mechanism.</strong> Whether hot-path bans (no allocations, no blocking calls, no logging in <code>loop*()</code> bodies) are enforced by regex over <code>void &lt;name&gt;::loop\b.*\{</code> … matching <code>}</code>, by a clang-tidy plugin, by AST tooling, or by something else. Whatever it is must be cheap to maintain.</p>
 <p><strong>Footprint baseline format.</strong> Where module footprint baselines live (<code>baselines/footprint.json</code> was the v1 proposal) and what triggers an update — PR description entry, signed-off bump line, or another mechanism.</p>
 <p><strong>Doc-growth budget number.</strong> v1 proposed 500 lines per release; v2 picks a number when it has enough data to pick one.</p>
-<p><strong>Structural-additions justification format.</strong> Whether <code>// WHY:</code> (C++) and a top-of-file Python docstring are the right way to record why a new file in <code>deploy/</code>, <code>tests/</code>, or <code>docs/</code> exists, or whether a single mechanism (e.g. PR template field) is cheaper.</p>
+<p><strong>Structural-additions justification format.</strong> Whether <code>// WHY:</code> (C++) and a top-of-file Python docstring are the right way to record why a new file in <code>scripts/</code>, <code>tests/</code>, or <code>docs/</code> exists, or whether a single mechanism (e.g. PR template field) is cheaper.</p>
 <p><strong>Verifier-of-the-verifier.</strong> v1's answer was: the testing system's growth is gated by the structural rule, and its correctness is asserted only by the unit test that every module's <code>healthReport()</code> is non-empty — no meta-tests. v2 inherits this stance by default but should validate it once <code>healthReport()</code> exists.</p>
 <p>Each item closes with a one-line outcome in this section by Sprint 6 (kept, dropped, or replaced). What is kept moves into <a href="../../architecture/process/">process architecture</a>; what is dropped disappears.</p>
 
