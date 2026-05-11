@@ -245,17 +245,18 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../architecture/" class="md-tabs__link">
-        
-  
-  
     
+    
+      <li class="md-tabs__item">
+        <a href="../architecture/system/" class="md-tabs__link">
+          
+  
   
   Architecture
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -397,9 +398,25 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+    
+    
+    
+    
+      
+      
         
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -413,7 +430,79 @@
   
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Process
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -596,10 +685,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#constraints-that-travel-with-every-release" class="md-nav__link">
+  <a href="#the-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Constraints that travel with every release
+        The contract
       
     </span>
   </a>
@@ -654,62 +743,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="anti-drift/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Anti-drift rules
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="guardrails/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guardrails framework
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -744,10 +777,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#constraints-that-travel-with-every-release" class="md-nav__link">
+  <a href="#the-contract" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Constraints that travel with every release
+        The contract
       
     </span>
   </a>
@@ -787,13 +820,8 @@
 
 <h1 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h1>
 <p>projectMM v2 follows an Agile process adapted for AI-collaborative development. Releases are major milestones; sprints are scope-boxed work cycles within a release.</p>
-<h2 id="constraints-that-travel-with-every-release">Constraints that travel with every release<a class="headerlink" href="#constraints-that-travel-with-every-release" title="Permanent link">&para;</a></h2>
-<p>Two documents are not release artefacts but constraints on every release that follows. They were produced in v1's <a href="https://ewowi.github.io/projectMM/development/release-09/">Release 9</a> and ported here verbatim because they apply to v2 from commit 1.</p>
-<ul>
-<li><a href="anti-drift/">Anti-drift rules</a> — the mechanisms that keep frugality from eroding once AI agents do most of the writing.</li>
-<li><a href="guardrails/">Guardrails framework</a> — the pre-commit, CI, and structural gates that enforce those mechanisms.</li>
-</ul>
-<p>Any pull request that bypasses or relaxes either document carries a paired ADR file (<code>docs/adr/NNNN-*.md</code>).</p>
+<h2 id="the-contract">The contract<a class="headerlink" href="#the-contract" title="Permanent link">&para;</a></h2>
+<p><a href="../architecture/process/">Process architecture</a> is the contract under which every release executes — frugality (the main driver), the guardrails that enforce it, and the anti-drift rules that keep the framework itself from eroding. It is not a release artefact but a constraint on every release that follows. Any pull request that bypasses or relaxes it carries a paired ADR file (<code>docs/adr/NNNN-*.md</code>).</p>
 <h2 id="releases">Releases<a class="headerlink" href="#releases" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -813,7 +841,7 @@
 </tr>
 </tbody>
 </table>
-<p>Release 5 is the next recurring evaluation sprint per the anti-drift schedule (every fifth release of v2). It is scheduled in Release 1 Sprint 1, not at the end of Release 4.</p>
+<p>Release 5 is the next recurring evaluation sprint per the <a href="../architecture/process/">process architecture</a> (every fifth release of v2). It is scheduled in Release 1 Sprint 1, not at the end of Release 4.</p>
 
 
 

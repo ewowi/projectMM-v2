@@ -12,11 +12,13 @@
         <meta name="author" content="MoonModules">
       
       
-        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/development/guardrails/">
+        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/architecture/process/">
       
       
-        <link rel="prev" href="../anti-drift/">
+        <link rel="prev" href="../system/">
       
+      
+        <link rel="next" href="../../lights/">
       
       
         
@@ -27,7 +29,7 @@
     
     
       
-        <title>Guardrails framework - projectMM v2</title>
+        <title>Process - projectMM v2</title>
       
     
     
@@ -78,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#guardrails-framework" class="md-skip">
+        <a href="#process-architecture" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Guardrails framework
+              Process
             
           </span>
         </div>
@@ -242,18 +244,21 @@
   
   
   
-  
-    <li class="md-tabs__item">
-      <a href="../../architecture/" class="md-tabs__link">
-        
+    
   
   
     
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../system/" class="md-tabs__link">
+          
+  
   
   Architecture
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -299,13 +304,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../development/" class="md-tabs__link">
           
   
   
@@ -393,11 +396,32 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../architecture/" class="md-nav__link">
+  
+    
+    
+    
+    
+      
         
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
   
   
   <span class="md-ellipsis">
@@ -411,7 +435,159 @@
   
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Process
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Process
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-frugality-the-main-driver" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Frugality — the main driver
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-guardrails-frugality-enforced-mechanically" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Guardrails — frugality enforced mechanically
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-anti-drift-why-these-rules-survive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Anti-drift — why these rules survive
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -474,31 +650,26 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
             
   
   
@@ -516,7 +687,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -534,7 +705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../development/" class="md-nav__link">
         
   
   
@@ -562,7 +733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../release-01/" class="md-nav__link">
+      <a href="../../development/release-01/" class="md-nav__link">
         
   
   
@@ -578,142 +749,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../anti-drift/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Anti-drift rules
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-    
-  
-  
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guardrails framework
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guardrails framework
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#pre-commit" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pre-commit
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#ci-gates" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CI gates
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#structural-additions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Structural additions
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -753,10 +788,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#pre-commit" class="md-nav__link">
+  <a href="#1-frugality-the-main-driver" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pre-commit
+        1. Frugality — the main driver
       
     </span>
   </a>
@@ -764,10 +799,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#ci-gates" class="md-nav__link">
+  <a href="#2-guardrails-frugality-enforced-mechanically" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CI gates
+        2. Guardrails — frugality enforced mechanically
       
     </span>
   </a>
@@ -775,10 +810,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#structural-additions" class="md-nav__link">
+  <a href="#3-anti-drift-why-these-rules-survive" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Structural additions
+        3. Anti-drift — why these rules survive
       
     </span>
   </a>
@@ -805,36 +840,48 @@
   
 
 
-<h1 id="guardrails-framework">Guardrails framework<a class="headerlink" href="#guardrails-framework" title="Permanent link">&para;</a></h1>
-<blockquote>
-<p><strong>Source:</strong> ported verbatim from v1's <a href="https://ewowi.github.io/projectMM/development/release-09/#guardrails-framework-outline">Release 9 § Guardrails framework outline</a>. This document is the spec that Release 1 Sprint 1 implements. Changes require a paired ADR.</p>
-</blockquote>
+<h1 id="process-architecture">Process Architecture<a class="headerlink" href="#process-architecture" title="Permanent link">&para;</a></h1>
+<p>How projectMM v2 is built and changed. This page is a constraint on every release. A pull request that violates it either is rejected or carries a paired ADR file (<code>docs/adr/NNNN-*.md</code>) recording the change explicitly.</p>
+<p>The <a href="../system/">system architecture</a> constrains the artifact. This page constrains how the artifact changes.</p>
 <hr />
-<p>Three enforcement tiers, all in place before the first module of v2 is written.</p>
-<h2 id="pre-commit">Pre-commit<a class="headerlink" href="#pre-commit" title="Permanent link">&para;</a></h2>
-<p>Git hooks that fire before the AI agent finishes the diff.</p>
+<h2 id="1-frugality-the-main-driver">1. Frugality — the main driver<a class="headerlink" href="#1-frugality-the-main-driver" title="Permanent link">&para;</a></h2>
+<p><strong>Frugal in code, in CPU cycles, and in resources.</strong> Every change answers two questions before it lands:</p>
+<ol>
+<li>Does this addition pay for itself? A new file, test surface, doc page, or deploy script — what does it replace or extend?</li>
+<li>What did you remove? Every release removes at least one thing. A release that adds without removing must justify why.</li>
+</ol>
+<p>If the answer to (1) is "nothing", the PR is rejected.</p>
+<p>The three dimensions are tested differently:</p>
 <ul>
-<li><code>clang-format</code>, <code>ruff</code> — formatting and lint.</li>
-<li>No <code>pinMode(&lt;integer&gt;)</code>, <code>digitalWrite(&lt;integer&gt;)</code>, <code>gpio_set_*(&lt;integer&gt;)</code>, or other GPIO call with a literal pin — pins must come from a typed board configuration.</li>
-<li>No <code>new</code> / <code>malloc</code> / <code>psram_malloc</code> / <code>JsonDocument</code> inside the body of any <code>loop()</code>, <code>loop20ms()</code>, <code>loop1s()</code>, or <code>loop10s()</code> (heuristic regex on <code>void &lt;name&gt;::loop\b.*\{</code> … matching <code>}</code>).</li>
-<li>No <code>delay</code>, <code>vTaskDelay</code>, <code>sleep</code>, <code>usleep</code>, blocking <code>recv</code> with positive timeout inside the same hot-path bodies.</li>
+<li><strong>Code frugality</strong> — whether a reader can hold the core in their head. Measured in LOC budgets per surface and in reviewer cognitive load.</li>
+<li><strong>CPU frugality</strong> — <code>loop()</code> time under realistic load on every active core.</li>
+<li><strong>Resource frugality</strong> — static and runtime footprint per module across RAM, flash, and any other constrained resource.</li>
 </ul>
-<h2 id="ci-gates">CI gates<a class="headerlink" href="#ci-gates" title="Permanent link">&para;</a></h2>
-<p>Block PR merge.</p>
-<ul>
-<li><code>cppcheck</code>, add <code>clang-tidy</code> with <code>bugprone-*</code> and <code>modernize-*</code> from commit 1.</li>
-<li><strong>Module footprint baseline.</strong> <code>classSize()</code> per module written to <code>baselines/footprint.json</code>. PR fails if any value grows without a paired entry in the PR description.</li>
-<li><strong>Test-count baseline.</strong> Per-binary test count tracked; a new module bumps the count by exactly N expected tests; mismatch fails the PR.</li>
-<li><strong>Doc growth budget.</strong> Docs lines per release capped (proposal: 500); CI fails on overshoot, override requires explicit budget bump in the release plan.</li>
-</ul>
-<h2 id="structural-additions">Structural additions<a class="headerlink" href="#structural-additions" title="Permanent link">&para;</a></h2>
-<p>Block additions that bypass the design.</p>
-<ul>
-<li>Adding a new file under <code>deploy/</code>, <code>tests/</code>, or <code>docs/</code> requires a <code>// WHY:</code> (C++) or top-of-file Python docstring explaining what existing file/surface was insufficient. CI checks the line exists; reviewer judges the content.</li>
-<li>Adding a new top-level directory requires an ADR file (<code>docs/adr/NNNN-*.md</code>) under version control.</li>
-</ul>
+<p>Frugality applies equally to source, tests, deploy scripts, and documentation. The principle is not new: essential complexity only (Brooks), Gall's Law, and the Saint-Exupéry rule that perfection is reached not when nothing more can be added but when nothing more can be taken away.</p>
 <hr />
-<p>The verifier-of-the-verifier question ("test the testing system?") gets a one-line answer: the testing system's growth is gated by the structural rule above (a new test surface requires a written justification), and its correctness is asserted only by the unit test that every module's <code>healthReport()</code> is non-empty. No meta-tests.</p>
+<h2 id="2-guardrails-frugality-enforced-mechanically">2. Guardrails — frugality enforced mechanically<a class="headerlink" href="#2-guardrails-frugality-enforced-mechanically" title="Permanent link">&para;</a></h2>
+<p>Frugality is a property that erodes silently. Guardrails make the erosion mechanical to detect. They land in Sprint 1 of Release 1, before any module exists; no commit in v2 is ever written without them running against it.</p>
+<p>Three enforcement tiers, in order of when they fire:</p>
+<ul>
+<li><strong>Pre-commit</strong> — fires before the diff is finished. Catches violations of the hot-path rules (no allocations, no blocking calls, no logging in any <code>loop*()</code> body) and architectural fitness functions (pin numbers trace to typed board config — <code>pinMode(5, ...)</code> is rejected, <code>pinMode(BoardPins::WS2812_DATA, ...)</code> is the correct form).</li>
+<li><strong>CI gates</strong> — block PR merge. Enforce LOC budgets per surface, footprint baselines per module, test-count baselines, and a doc-growth budget per release. Overshoot fails; a bump requires an explicit signed-off line in the release plan.</li>
+<li><strong>Structural additions</strong> — block additions that bypass the design. A new top-level directory requires an ADR. A new file under <code>deploy/</code>, <code>tests/</code>, or <code>docs/</code> requires an inline justification of what existing surface was insufficient.</li>
+</ul>
+<p>The specific tools that implement each tier (linters, formatters, static analysers, hook scripts) are an implementation detail of Sprint 1, not a constraint. They earn their place by paying for themselves under the same frugality rule they enforce.</p>
+<hr />
+<h2 id="3-anti-drift-why-these-rules-survive">3. Anti-drift — why these rules survive<a class="headerlink" href="#3-anti-drift-why-these-rules-survive" title="Permanent link">&para;</a></h2>
+<p>The guardrails above describe <em>what</em> is enforced. Anti-drift describes <em>why the framework itself does not erode</em> — the lesson from v1, where the verifier always trailed the code it was meant to constrain.</p>
+<ul>
+<li><strong>Guardrails ahead, never behind.</strong> The framework ships before the code it constrains. This inverts the v1 timeline.</li>
+<li><strong>Mandatory subtraction.</strong> Every release removes at least one thing. "What did you remove?" is a sprint-close question alongside "what did you add?". A system that never removes anything will always grow until someone considers a restart.</li>
+<li><strong>Frugality is a review gate.</strong> Every PR answers the two questions in §1 before any other.</li>
+<li><strong>Fix causes, not symptoms.</strong> When a change does not behave correctly, find why and fix it at the cause. Do not add code that masks a symptom — every such patch creates a new failure mode that needs its own patch, and the system grows by accretion. Patterns to refuse: the retry added because something is flaky, the timer added because something races, the try/catch that swallows an error "just in case", the re-init that papers over inconsistent state. If the cause cannot be identified, the work is blocked — not a chance to add a band-aid.</li>
+<li><strong>Architecture is a constraint, not a description.</strong> <a href="../system/">System architecture</a> is the reference for every review. Changes to it happen only via ADR — never silently. v1's drift came from the architecture quietly becoming one document among many.</li>
+<li><strong>Recurring evaluation releases.</strong> Every fifth release is a no-feature evaluation that walks the code, checks for drift, and proposes removals. The schedule is set at the start of v2 Sprint 1, not at the end of Release 4.</li>
+<li><strong>Drift metrics in CI.</strong> Per-release deltas published as a status doc: file count, LOC per surface, ratio of new tests to new code, modules added vs removed. Any metric trending the wrong way across three consecutive releases is flagged in the next retrospective.</li>
+<li><strong>The verifier obeys the same rules it enforces.</strong> Adding a new pre-commit hook, CI gate, or analysis script requires the same justification as adding a new module: what it replaces, what it extends. Without this rule the guardrails framework drifts the way <code>deploy/</code> drifted in v1.</li>
+</ul>
+<p>None of these is sufficient on its own. Together they create the friction that prevents drift from accumulating below the threshold where anyone notices it.</p>
 
 
 

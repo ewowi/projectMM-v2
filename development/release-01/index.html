@@ -18,8 +18,6 @@
         <link rel="prev" href="../">
       
       
-        <link rel="next" href="../anti-drift/">
-      
       
         
       
@@ -245,17 +243,18 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../architecture/" class="md-tabs__link">
-        
-  
-  
     
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/system/" class="md-tabs__link">
+          
+  
   
   Architecture
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -397,9 +396,25 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../architecture/" class="md-nav__link">
+    
+    
+    
+    
+      
+      
         
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -413,7 +428,79 @@
   
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Process
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -863,66 +950,21 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#to-be-validated-during-release-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        To be validated during Release 1
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../anti-drift/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Anti-drift rules
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../guardrails/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Guardrails framework
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -1201,6 +1243,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#to-be-validated-during-release-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        To be validated during Release 1
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1223,7 +1276,7 @@
 
 <h1 id="release-1-restart-to-parity">Release 1 — Restart to Parity<a class="headerlink" href="#release-1-restart-to-parity" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Theme:</strong> Bring v2 to parity with v1's first-boot pipeline — effect → blend → driver → preview, served over HTTP / WS with WiFi-STA, persisted to LittleFS, OTA-updatable, NTP-synced, ArtNet-capable — over six sprints. The decision to restart from v1 is documented in v1's <a href="https://ewowi.github.io/projectMM/development/release-09/">Release 9</a>. The main driver is <strong>frugality</strong> (frugal in code, in CPU cycles, in resources); the <a href="../guardrails/">guardrails framework</a> lands in Sprint 1 before any module exists, and the <a href="../anti-drift/">anti-drift rules</a> constrain every sprint that follows.</p>
+<p><strong>Theme:</strong> Bring v2 to parity with v1's first-boot pipeline — effect → blend → driver → preview, served over HTTP / WS with WiFi-STA, persisted to LittleFS, OTA-updatable, NTP-synced, ArtNet-capable — over six sprints. The decision to restart from v1 is documented in v1's <a href="https://ewowi.github.io/projectMM/development/release-09/">Release 9</a>. The contract under which this release executes is <a href="../../architecture/process/">process architecture</a>: frugality, guardrails, anti-drift.</p>
 </blockquote>
 <hr />
 <h2 id="release-overview">Release Overview<a class="headerlink" href="#release-overview" title="Permanent link">&para;</a></h2>
@@ -1268,7 +1321,7 @@
 <h3 id="concurrency-model-fixed-at-sprint-1">Concurrency model (fixed at Sprint 1)<a class="headerlink" href="#concurrency-model-fixed-at-sprint-1" title="Permanent link">&para;</a></h3>
 <p>Arbitrary DAG topology, SPSC lock-free ring buffer per edge, depth 2 by default. The linear pipeline (effect → blend → driver) and v1's double-buffering are special cases. Depth &gt;2 enables backpressure pipelining where memory allows.</p>
 <h3 id="recurring-evaluation-cadence">Recurring evaluation cadence<a class="headerlink" href="#recurring-evaluation-cadence" title="Permanent link">&para;</a></h3>
-<p>Release 5 is the first recurring evaluation release (per the <a href="../anti-drift/">anti-drift schedule</a>: every fifth release is a no-feature evaluation). It is scheduled here, in Release 1 Sprint 1, not at the end of Release 4.</p>
+<p>Release 5 is the first recurring evaluation release (per the <a href="../../architecture/process/">process architecture</a>: every fifth release is a no-feature evaluation). It is scheduled here, in Release 1 Sprint 1, not at the end of Release 4.</p>
 <hr />
 <h2 id="sprints">Sprints<a class="headerlink" href="#sprints" title="Permanent link">&para;</a></h2>
 <table>
@@ -1318,12 +1371,12 @@
 <blockquote>
 <p><strong>Scope:</strong> Land the guardrails framework (pre-commit hooks, CI gates, structural rules) before any module exists. Write the empty <code>Module</code>, <code>ModuleManager</code>, <code>Scheduler</code>, and <code>Pal</code> skeletons such that <code>loop()</code>, <code>loop20ms()</code>, <code>loop1s()</code>, and <code>loop10s()</code> are first-class scheduler concerns from commit 1, not afterthoughts. CI green on PC and ESP32.</p>
 </blockquote>
-<p>The framework is the load-bearing deliverable. Without it, the same drift that produced v1 reaches v2 by Sprint 4. The <a href="../guardrails/">guardrails outline</a> is the spec; the first commit of this sprint is its implementation. <code>loop20ms()</code> is new in v2 (v1 had only <code>runLoop1s</code> via timing windows); the scheduler maintains four pinned task ranks per core (hot, 20 ms, 1 s, 10 s) and modules opt into each by overriding the corresponding method. Empty overrides cost nothing.</p>
-<p>The drift-metrics dashboard from the anti-drift rules lands as a status doc generated by CI on every push.</p>
+<p>The framework is the load-bearing deliverable. Without it, the same drift that produced v1 reaches v2 by Sprint 4. <a href="../../architecture/process/">Process architecture</a> is the spec; the first commit of this sprint is its implementation. <code>loop20ms()</code> is new in v2 (v1 had only <code>runLoop1s</code> via timing windows); the scheduler maintains four pinned task ranks per core (hot, 20 ms, 1 s, 10 s) and modules opt into each by overriding the corresponding method. Empty overrides cost nothing.</p>
+<p>The drift-metrics dashboard lands as a status doc generated by CI on every push.</p>
 <h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
 <ul>
 <li>[ ] <code>.gitignore</code>, <code>CMakeLists.txt</code>, <code>platformio.ini</code> in place</li>
-<li>[ ] Pre-commit hooks installed and green: clang-format, ruff, raw-GPIO ban, hot-path allocation ban, hot-path blocking-call ban</li>
+<li>[ ] Pre-commit hooks installed and green: raw-GPIO ban, hot-path allocation ban, hot-path blocking-call ban (formatters and linters — see "To be validated" below)</li>
 <li>[ ] CI workflow green on PC (macOS + Linux + Windows) and ESP32 (esp32dev + esp32s3_n16r8)</li>
 <li>[ ] CI gates enforced: LOC budget, footprint baseline, test-count baseline, doc growth budget, structural-file gate</li>
 <li>[ ] <code>Module</code> base class declares <code>setup</code> / <code>loop</code> / <code>loop20ms</code> / <code>loop1s</code> / <code>loop10s</code> / <code>teardown</code> (empty defaults)</li>
@@ -1402,6 +1455,16 @@
 <li>[ ] First-boot pipeline runs identically on v2 hardware (visual + metrics parity check against v1)</li>
 <li>[ ] v1 tagged <code>v1.8.x-legacy</code>; this repo renamed from <code>projectMM-v2</code> to <code>projectMM</code>; v2 tagged <code>v2.0.0</code></li>
 </ul>
+<hr />
+<h2 id="to-be-validated-during-release-1">To be validated during Release 1<a class="headerlink" href="#to-be-validated-during-release-1" title="Permanent link">&para;</a></h2>
+<p>The <a href="../../architecture/process/">process architecture</a> states the contract in high-level terms. The items below are specifics inherited from v1's Release 9 guardrails outline that need to earn their place under the frugality rule (does this addition pay for itself?) before they are codified. Each is a sprint-time decision in Release 1, not a Release-1 entry condition.</p>
+<p><strong>Tool choices for the three guardrail tiers.</strong> Specific formatters, linters, and static analysers — for example <code>clang-format</code>, <code>ruff</code>, <code>clang-tidy</code> with <code>bugprone-*</code>/<code>modernize-*</code>, <code>cppcheck</code>. Each must justify itself or be dropped. The <em>rules</em> are fixed by process architecture; the <em>tools</em> are not.</p>
+<p><strong>Hot-path enforcement mechanism.</strong> Whether hot-path bans (no allocations, no blocking calls, no logging in <code>loop*()</code> bodies) are enforced by regex over <code>void &lt;name&gt;::loop\b.*\{</code> … matching <code>}</code>, by a clang-tidy plugin, by AST tooling, or by something else. Whatever it is must be cheap to maintain.</p>
+<p><strong>Footprint baseline format.</strong> Where module footprint baselines live (<code>baselines/footprint.json</code> was the v1 proposal) and what triggers an update — PR description entry, signed-off bump line, or another mechanism.</p>
+<p><strong>Doc-growth budget number.</strong> v1 proposed 500 lines per release; v2 picks a number when it has enough data to pick one.</p>
+<p><strong>Structural-additions justification format.</strong> Whether <code>// WHY:</code> (C++) and a top-of-file Python docstring are the right way to record why a new file in <code>deploy/</code>, <code>tests/</code>, or <code>docs/</code> exists, or whether a single mechanism (e.g. PR template field) is cheaper.</p>
+<p><strong>Verifier-of-the-verifier.</strong> v1's answer was: the testing system's growth is gated by the structural rule, and its correctness is asserted only by the unit test that every module's <code>healthReport()</code> is non-empty — no meta-tests. v2 inherits this stance by default but should validate it once <code>healthReport()</code> exists.</p>
+<p>Each item closes with a one-line outcome in this section by Sprint 6 (kept, dropped, or replaced). What is kept moves into <a href="../../architecture/process/">process architecture</a>; what is dropped disappears.</p>
 
 
 
