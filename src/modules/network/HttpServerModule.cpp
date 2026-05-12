@@ -8,6 +8,7 @@
 
 #include "../../../src/frontend/frontend_bundle.h"
 #include "../../core/ModuleManager.h"
+#include "../system/Logger.h"
 
 namespace pmm {
 
@@ -51,18 +52,22 @@ void HttpServerModule::setup() {
     return pal::HttpResponse{200, "application/json", std::move(body)};
   });
 
-  // GET /api/modules — list all modules as JSON. The manager lock is held
-  // during iteration so a concurrent add/remove cannot invalidate the vector.
+  // GET /api/modules — full module schema list as JSON, same shape as the
+  // WS schema event so the frontend's render() can consume either. The
+  // manager lock is held during iteration so a concurrent add/remove cannot
+  // invalidate the vector.
   server_->onGet("/api/modules", [this](const std::string&) {
-    std::string body = "[";
+    JsonDocument doc;
+    JsonArray arr = doc.to<JsonArray>();
     if (manager_) {
       std::lock_guard<std::recursive_mutex> lk(manager_->mutex());
       for (size_t i = 0; i < manager_->size(); ++i) {
-        if (i > 0) body += ",";
-        manager_->at(i)->serialize_json(body);
+        manager_->at(i)->getSchema(arr.add<JsonObject>());
       }
     }
-    body += "]";
+    std::string body;
+    body.reserve(measureJson(doc) + 1);
+    serializeJson(doc, body);
     return pal::HttpResponse{200, "application/json", std::move(body)};
   });
 
@@ -107,6 +112,34 @@ void HttpServerModule::setup() {
       return pal::HttpResponse{200, "application/json", "{\"ok\":true}"};
     }
     return json_err(404, "not found");
+  });
+
+  // GET /api/system — aggregate runtime metrics. Each module contributes via
+  // its MoonModule::fillSystemJson override (SystemStatusModule fills heap,
+  // PSRAM, fs, chip, etc.; future modules add their own fields).
+  server_->onGet("/api/system", [this](const std::string&) {
+    JsonDocument doc;
+    JsonObject root = doc.to<JsonObject>();
+    if (manager_) {
+      std::lock_guard<std::recursive_mutex> lk(manager_->mutex());
+      for (size_t i = 0; i < manager_->size(); ++i) manager_->at(i)->fillSystemJson(root);
+    }
+    std::string body;
+    body.reserve(measureJson(doc) + 1);
+    serializeJson(doc, body);
+    return pal::HttpResponse{200, "application/json", std::move(body)};
+  });
+
+  // GET /api/log — recent log lines from pmm::Logger's ring buffer. Format
+  // matches the frontend's app.js poller: {"entries":["line",...]}.
+  server_->onGet("/api/log", [](const std::string&) {
+    JsonDocument doc;
+    JsonArray arr = doc["entries"].to<JsonArray>();
+    for (const auto& line : pmm::log_buffer()) arr.add(line);
+    std::string body;
+    body.reserve(measureJson(doc) + 1);
+    serializeJson(doc, body);
+    return pal::HttpResponse{200, "application/json", std::move(body)};
   });
 
   // PATCH /api/modules/<id> — set one or more controls on a module.

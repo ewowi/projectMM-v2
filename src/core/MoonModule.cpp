@@ -2,6 +2,8 @@
 
 #include <cstdlib>
 
+#include "../pal/Pal.h"
+
 namespace pmm {
 
 // -- Destructor --------------------------------------------------------------
@@ -39,6 +41,7 @@ void MoonModule::runSetup() {
 
 void MoonModule::runLoop() {
   if (enabled_) loop();
+  ++tickCount_;  // sampled in runLoop1s → ms_per_tick → fps in the UI
   for (uint8_t i = 0; i < childCount_; ++i) children_[i]->runLoop();
 }
 
@@ -48,6 +51,13 @@ void MoonModule::runLoop20ms() {
 }
 
 void MoonModule::runLoop1s() {
+  // Sample tick rate. timingPrevMs_ starts at 0 (first sample seeds it).
+  const uint32_t now = pal::millis();
+  if (timingPrevMs_ != 0 && tickCount_ > timingPrevTicks_) {
+    msPerTick_ = (float)(now - timingPrevMs_) / (float)(tickCount_ - timingPrevTicks_);
+  }
+  timingPrevMs_    = now;
+  timingPrevTicks_ = tickCount_;
   loop1s();
   for (uint8_t i = 0; i < childCount_; ++i) children_[i]->runLoop1s();
 }
@@ -209,6 +219,15 @@ void MoonModule::getSchema(JsonObject out) const {
   out["name"] = type_;            // v2: name doubles as type until/unless a
                                   // module needs a separate human label
   out["category"] = category();
+  // Module-card stats line (frontend reads these to render the heap / class
+  // size badges and the green setup-OK dot). psram_size_bytes stays 0 for
+  // Sprint 5 — psram-backed allocations land in Sprint 6 with the lighting
+  // pipeline. core defaults to 0 (single inline scheduler thread on ESP32).
+  out["class_size_bytes"] = (uint32_t)classSize_;
+  out["heap_size_bytes"]  = (uint32_t)dynamicMemorySize();
+  out["psram_size_bytes"] = 0u;
+  out["setup_ok"]         = true;  // Sprint 7 will surface real setup failures
+  out["core"]             = 0u;    // Sprint 6 PalRtos may pin modules per core
   JsonArray arr = out["controls"].to<JsonArray>();
   for (uint8_t i = 0; i < controlCount_; ++i) {
     const ControlDescriptor& d = controls_[i];

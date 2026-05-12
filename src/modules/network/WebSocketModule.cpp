@@ -17,6 +17,9 @@ void WebSocketModule::loop20ms() {
 
 void WebSocketModule::loop1s() {
   if (!ws_ || !manager_) return;
+  // Retry begin() in case the network came up after setup() (ESP32 case).
+  // Idempotent; cheap once started.
+  ws_->begin();
   if (!ws_->hasClients()) return;
   broadcast_schema_();
   broadcast_state_();
@@ -49,8 +52,15 @@ void WebSocketModule::broadcast_state_() {
     std::lock_guard<std::recursive_mutex> lk(manager_->mutex());
     for (size_t i = 0; i < manager_->size(); ++i) {
       JsonObject entry = arr.add<JsonObject>();
-      entry["id"] = manager_->at(i)->id();
-      manager_->at(i)->getControlValues(entry["controls"].to<JsonObject>());
+      MoonModule* m = manager_->at(i);
+      entry["id"] = m->id();
+      // Per-module timing — frontend's fps/ms toggle reads ms_per_tick.
+      // self_ms_per_tick will diverge from ms_per_tick once Sprint 6 adds
+      // child-recursion accounting; for now they're the same value.
+      JsonObject t = entry["timing"].to<JsonObject>();
+      t["ms_per_tick"]      = m->msPerTick();
+      t["self_ms_per_tick"] = m->msPerTick();
+      m->getControlValues(entry["controls"].to<JsonObject>());
     }
   }
   std::string out;

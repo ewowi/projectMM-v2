@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 ALLOWED = {
-    ".github", ".githooks", "docs", "lib", "partitions", "scripts", "src", "test",
+    ".github", ".githooks", "data", "docs", "lib", "partitions", "scripts", "src", "test",
     ".gitignore", "CLAUDE.md", "LICENSE", "README.md",
     "mkdocs.yml", "platformio.ini", "pyproject.toml", "uv.lock",
 }
@@ -15,6 +15,9 @@ ALLOWED = {
 # "lib"        → docs/adr/0001-vendor-cpp-httplib.md (vendored third-party only).
 # "partitions" → ESP32 board flash layouts (CSV); pioarduino requires a file
 #                path, no .ini equivalent. Carry-over from v1 (Sprint 4).
+# "data"       → source dir for the LittleFS image (`pio run -t uploadfs`).
+#                Only wifi.json.example is committed; wifi.json is gitignored.
+#                Sprint 5.
 
 
 def main(argv):

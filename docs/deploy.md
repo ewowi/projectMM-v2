@@ -52,6 +52,22 @@ Runs the host unit and integration test suite via `pio test -e pc-test`. Uses [d
 
 Starts the compiled `pc` binary (long-running). Exposes the browser UI and REST API on `http://127.0.0.1:8080`. Start the Run card after a successful Build; Stop sends SIGTERM. Source: `scripts/run.py`.
 
+The HTTP port differs per platform: PC binds 8080 (port < 1024 requires root and `run.py` is unprivileged), ESP32 binds 80 so users open `http://<device-ip>` without a port suffix. The default comes from `pal::default_http_port()` and is overridable via the `HttpServerModule` constructor.
+
+### WiFi provisioning {#wifi-provisioning}
+
+`WifiStaModule` reads its credentials from `/wifi.json` on the device's LittleFS partition. The source for that partition lives in `data/` at the repo root.
+
+```bash
+cp data/wifi.json.example data/wifi.json
+$EDITOR data/wifi.json                              # set ssid + password
+uv run scripts/flash.py esp32dev --target uploadfs --port /dev/cu.usbserial-XXXX
+```
+
+The same is available in the UI via the **Flash filesystem (esp32dev)** card.
+
+`data/wifi.json` is gitignored. On boot, an empty/missing file leaves the module in `status="no credentials"` and HTTP/WS stay deferred (no netif). With valid credentials, `WifiStaModule` connects, logs `[wifi] connected …` to `/api/log`, and the HTTP + WS modules' `loop1s()` start their listeners on the next tick.
+
 ### Flash esp32dev / Flash esp32s3_n16r8 {#flash-esp32dev}
 
 Uploads the built firmware over USB via `pio run -e <env> --target upload --upload-port <port>`. Uses the port selected in the header port picker — disabled if none is selected. Source: `scripts/flash.py`. CI does not flash (no hardware in the runner).
@@ -78,13 +94,15 @@ Counts non-blank lines in each surface and compares against the budget:
 | `src/core/MoonModule.h` | 250 | the contract: lifecycle + controls + identity (Sprint 3 port) |
 | `src/core/MoonModule.cpp` | 350 | non-trivial method implementations (Sprint 3 port) |
 | `src/pal/Pal.h` | 100 | timing: millis, micros, yield, sleep |
+| `src/pal/PalFs.h` | 150 | LittleFS (ESP32) + std::filesystem (PC) — lands in Sprint 5 with WifiStaModule |
+| `src/pal/PalWifi.h` | 100 | WiFi STA primitives (Sprint 5) |
 | `src/pal/PalHttp.h` | 350 | HTTP server (cpp-httplib on PC, ESPAsyncWebServer on ESP32) |
 | `src/pal/PalWs.h` | 450 | WebSocket (POSIX sockets on PC, AsyncWebSocket on ESP32) |
 | `src/pal/PalSystemInfo.h` | 250 | chip_model, reset_reason_str, build info (bumped 200→250 in Sprint 4 when the ESP32 branch landed) |
 | `src/modules/network/` | 250 | Module wrappers only: `HttpServerModule` + `WebSocketModule` |
-| `src/modules/system/` | 300 | SystemStatusModule (Sprint 3) + future NTP/WiFi modules |
+| `src/modules/system/` | 400 | SystemStatusModule + WifiStaModule + Logger ring buffer — bumped 300→400 in Sprint 5 |
 
-Pal files for `PalFs`, `PalGpio`, `PalRtos`, and `PalHeap` are intentionally **not** pre-registered — each lands with its first consumer (Sprint 5 for WiFi credentials; Sprint 6 for the light driver and FreeRTOS task pin). Pre-registering a budget for a file that has no caller is the v1 kitchen-sink pattern this list exists to prevent.
+Pal files for `PalGpio`, `PalRtos`, and `PalHeap` are intentionally **not** pre-registered — each lands with its first consumer (Sprint 6 for the light driver and FreeRTOS task pin). Pre-registering a budget for a file that has no caller is the v1 kitchen-sink pattern this list exists to prevent.
 
 `src/frontend/` (the SPA bundle) is not counted — it is generated data (gzipped JS/CSS as a `uint8_t` array). Authored UI sources (`index.html`, `style.css`, `app.js`) are `.html` / `.css` / `.js` so check_loc skips them too.
 

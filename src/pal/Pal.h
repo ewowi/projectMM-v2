@@ -47,6 +47,34 @@ inline void log_init(uint32_t baud = 115200) {
 #endif
 }
 
+// Default HTTP port. ESP32 binds 80 freely — users open http://<device-ip>
+// without a :port suffix. PC needs root for ports < 1024, and run.py is
+// unprivileged, so we use 8080 there. Override with the HttpServerModule
+// constructor arg if you need a different port (e.g. running two PC
+// instances side by side).
+inline uint16_t default_http_port() {
+#ifdef ARDUINO
+  return 80;
+#else
+  return 8080;
+#endif
+}
+
+// How many scheduler threads make sense on this platform. PC: 2 — the host
+// has hardware threads to spare, multi-core is the whole point of testing
+// concurrent module dispatch. ESP32 / arduino-esp32: 1 — std::thread maps
+// to pthread, whose default stack is ~3 KB and chokes on Scheduler::core_loop
+// once it grabs the recursive_mutex and dispatches into ArduinoJson-using
+// modules. Multi-core ESP32 lands in Sprint 6 with PalRtos's
+// xTaskCreatePinnedToCore (correct stack sizing per task).
+inline int default_scheduler_cores() {
+#ifdef ARDUINO
+  return 1;
+#else
+  return 2;
+#endif
+}
+
 // Register a handler invoked when the user asks for a clean shutdown.
 // PC: SIGINT (Ctrl-C). ESP32: no signal source under arduino-esp32 — no-op.
 inline void on_interrupt(void (*fn)(int)) {

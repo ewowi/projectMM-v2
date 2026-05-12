@@ -46,6 +46,8 @@
 #ifdef ARDUINO
   #include <AsyncWebSocket.h>
   #include <ESPAsyncWebServer.h>
+
+  #include "PalWifi.h"
 #else
   #include <arpa/inet.h>
   #include <csignal>
@@ -78,10 +80,13 @@ class WsServer {
  public:
   WsServer() : wsServer_(kWsPort), ws_("/") {}
 
-  // Sprint 4: same deferral as pal::HttpServer::begin — the listener cannot
-  // start until lwIP has a netif (Sprint 5 / WiFi). Routes still register
-  // via onEvent/addHandler so they're ready when Sprint 5 re-invokes begin().
+  // Idempotent. AsyncServer::begin() asserts inside FreeRTOS queue ops if the
+  // lwIP TCP/IP task isn't running — i.e. before WiFi/Ethernet brings up a
+  // netif. Module loop1s() calls begin() once a second; the first call once
+  // the network is up flips started_ true, subsequent calls return immediately.
   void begin() {
+    if (started_) return;
+    if (!pal::wifi_is_connected()) return;
     ws_.onEvent([](AsyncWebSocket* /*srv*/, AsyncWebSocketClient* client,
                    AwsEventType type, void* /*arg*/,
                    uint8_t* /*data*/, size_t /*len*/) {
@@ -89,7 +94,9 @@ class WsServer {
       else if (type == WS_EVT_DISCONNECT) printf("[WsServer] client #%u disconnected\n", client->id());
     });
     wsServer_.addHandler(&ws_);
-    printf("[WsServer] deferred — no network until Sprint 5 lands WiFi\n");
+    wsServer_.begin();
+    started_ = true;
+    printf("[WsServer] listening on ws://0.0.0.0:%u (network up)\n", (unsigned)kWsPort);
   }
 
   void broadcastText(const char* data, size_t len) {
@@ -107,6 +114,7 @@ class WsServer {
   void tick() { ws_.cleanupClients(); }
 
  private:
+  bool           started_ = false;
   AsyncWebServer wsServer_;
   AsyncWebSocket ws_;
 };
@@ -221,6 +229,8 @@ class WsServer {
   explicit WsServer(uint16_t port = kWsPort) : port_(port) {}
 
   void begin() {
+    if (started_) return;
+    started_ = true;
     ::signal(SIGPIPE, SIG_IGN);  // prevent crash on broken pipe (macOS + Linux)
 
     listenFd_ = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -274,6 +284,7 @@ class WsServer {
 
  private:
   uint16_t port_;
+  bool     started_ = false;
   int listenFd_ = -1;
   std::thread acceptThread_;
   mutable std::mutex mx_;

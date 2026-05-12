@@ -7,10 +7,17 @@
 namespace pmm {
 
 void Scheduler::run() {
-  std::printf("[sched] spawning %d core thread(s)\n", cores_);
-  for (int i = 0; i < cores_; ++i) {
+  std::printf("[sched] spawning %d core thread(s) (1 inline)\n", cores_);
+  // Spawn (cores_ - 1) extra threads and run core 0 inline on the calling
+  // thread. arduino-esp32's std::thread maps to pthread with a ~3 KB default
+  // stack — too small for our loop's mutex + JSON dispatch — but the calling
+  // thread (loopTask) has 8 KB so running inline avoids the stack-overflow
+  // crash. PC has plenty of stack everywhere, so it just looks like one
+  // less std::thread.
+  for (int i = 1; i < cores_; ++i) {
     threads_.emplace_back([this, i] { core_loop(i); });
   }
+  core_loop(0);
   for (auto& t : threads_) t.join();
   std::printf("[sched] all cores joined\n");
 }

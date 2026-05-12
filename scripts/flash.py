@@ -22,8 +22,10 @@ def main(argv):
     p = argparse.ArgumentParser()
     p.add_argument("env", nargs="?", default="esp32dev")
     p.add_argument("--port", default=None)
+    # `--target uploadfs` writes data/ as a LittleFS image (Sprint 5 wifi.json).
+    p.add_argument("--target", default="upload")
     args = p.parse_args(argv)
-    cmd = [pio_bin(), "run", "-e", args.env, "--target", "upload"]
+    cmd = [pio_bin(), "run", "-e", args.env, "--target", args.target]
     if args.port:
         cmd.extend(["--upload-port", args.port])
     return subprocess.call(cmd, cwd=ROOT)

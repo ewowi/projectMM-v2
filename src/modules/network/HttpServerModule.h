@@ -19,6 +19,11 @@ class HttpServerModule : public MoonModule {
   explicit HttpServerModule(uint16_t port = 8080) : port_(port) {}
 
   void setup() override;
+  // loop1s(): pal::HttpServer::begin() is idempotent and waits for the
+  // network to come up before binding (ESP32 needs WiFi for lwIP). Calling
+  // it once a second lets the listener start automatically when WifiStaModule
+  // brings up the netif. After it succeeds, subsequent calls return immediately.
+  void loop1s() override { if (server_) server_->begin(); }
   // teardown: pal::HttpServer's destructor stops the listener and joins
   //           its thread; nothing extra needed here.
 

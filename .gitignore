@@ -19,5 +19,10 @@ build/
 *.o
 *.obj
 
-# Persisted device state (added in v2 Sprint 6)
+# Persisted device state (Sprint 5 PalFs PC root, Sprint 6 lighting state)
 state/
+
+# ESP32 LittleFS data partition source: real WiFi credentials live here and
+# are uploaded via `pio run -t uploadfs`. Only the .example template is
+# committed. See docs/deploy.md → "WiFi provisioning".
+data/wifi.json

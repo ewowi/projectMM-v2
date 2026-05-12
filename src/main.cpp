@@ -4,7 +4,9 @@
 #include "core/Scheduler.h"
 #include "modules/network/HttpServerModule.h"
 #include "modules/network/WebSocketModule.h"
+#include "modules/system/Logger.h"
 #include "modules/system/SystemStatusModule.h"
+#include "modules/system/WifiStaModule.h"
 #include "pal/Pal.h"
 
 // setup() owns the run loop on both platforms:
@@ -24,19 +26,22 @@ static void on_sigint(int) { if (g_sched) g_sched->stop(); }
 
 void setup() {
   pal::log_init();
-  std::printf("[main] projectMM v2 starting (t=%u ms)\n", pal::millis());
+  pmm::log("[main] projectMM v2 starting (t=%u ms)\n", pal::millis());
 
   static pmm::ModuleManager mm;
   mm.register_type<pmm::SystemStatusModule>("system");
-  mm.register_type<pmm::HttpServerModule>("http", uint16_t{8080});
+  mm.register_type<pmm::WifiStaModule>("wifi-sta");
+  mm.register_type<pmm::HttpServerModule>("http", pal::default_http_port());
   mm.register_type<pmm::WebSocketModule>("ws");
 
-  mm.add("system", "system-0");
-  mm.add("http",   "http-0");
-  mm.add("ws",     "ws-0");
-  std::printf("[main] %zu module(s) running  (UI on :8080, WS on :81)\n", mm.size());
+  mm.add("system",   "system-0");
+  mm.add("wifi-sta", "wifi-sta-0");
+  mm.add("http",     "http-0");
+  mm.add("ws",       "ws-0");
+  pmm::log("[main] %zu module(s) running  (UI on :%u, WS on :81)\n",
+           mm.size(), (unsigned)pal::default_http_port());
 
-  static pmm::Scheduler sched(&mm, 2);
+  static pmm::Scheduler sched(&mm, pal::default_scheduler_cores());
   g_sched = &sched;
   pal::on_interrupt(on_sigint);
 
@@ -45,7 +50,7 @@ void setup() {
   mm.remove("ws-0");
   mm.remove("http-0");
   mm.remove("system-0");
-  std::printf("[main] done\n");
+  pmm::log("[main] done\n");
 }
 
 void loop() {}

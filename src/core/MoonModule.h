@@ -282,6 +282,16 @@ class MoonModule {
   bool schemaDirty_ = false;
   size_t classSize_ = 0;          // set by ModuleManager::register_type<T> at registration
   size_t moduleAllocBytes_ = 0;   // set by the module inside onAllocateMemory()
+  // Tick counter incremented from runLoop(); sampled in runLoop1s() to derive
+  // ms_per_tick (and from it, fps) for the per-module timing line in the UI.
+  // Cheap: one uint32_t bump per hot-path call, no pal::micros() needed.
+  uint32_t tickCount_         = 0;
+  uint32_t timingPrevTicks_   = 0;
+  uint32_t timingPrevMs_      = 0;
+  float    msPerTick_         = 0.0f;
+ public:
+  float msPerTick() const { return msPerTick_; }
+ protected:
 
   ControlDescriptor* controls_ = nullptr;
   uint8_t controlCount_ = 0;

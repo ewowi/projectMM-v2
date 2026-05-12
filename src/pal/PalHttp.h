@@ -58,13 +58,15 @@ using BinaryEndFn = std::function<HttpResponse(bool ok)>;
 
   #include <map>
   #include <set>
+
+  #include "PalWifi.h"
   #include <vector>
 
 namespace pal {
 
 class HttpServer {
  public:
-  explicit HttpServer(uint16_t port) : server_(port) {}
+  explicit HttpServer(uint16_t port) : port_(port), server_(port) {}
 
   void onGet(const char* path, HttpHandler handler) {
     server_.on(path, HTTP_GET, [handler](AsyncWebServerRequest* req) {
@@ -208,16 +210,24 @@ class HttpServer {
         });
   }
 
-  // Sprint 4: AsyncServer::begin() asserts inside FreeRTOS queue ops if the
-  // lwIP TCP/IP task isn't running, which on arduino-esp32 only happens
-  // once WiFi or Ethernet brings up a netif. v2 has no WiFi module yet
-  // (Sprint 5) so begin() is a no-op on Arduino — the listener will start
-  // when Sprint 5's WifiStaModule signals network-ready and re-invokes it.
+  // Idempotent. AsyncServer::begin() asserts inside FreeRTOS queue ops if the
+  // lwIP TCP/IP task isn't running, which on arduino-esp32 only happens once
+  // WiFi (or later Ethernet) brings up a netif — so we gate on
+  // pal::wifi_is_connected() and skip until then. The owning module calls
+  // begin() from its loop1s() to retry; once started_ flips true it returns
+  // immediately. Sprint 4 logged "deferred" once and gave up; Sprint 5 waits
+  // for WiFi to come up and starts the listener on the same call.
   void begin() {
-    printf("[HttpServer] deferred — no network until Sprint 5 lands WiFi\n");
+    if (started_) return;
+    if (!pal::wifi_is_connected()) return;
+    server_.begin();
+    started_ = true;
+    printf("[HttpServer] listening on port %u (network up)\n", (unsigned)port_);
   }
 
  private:
+  uint16_t port_;
+  bool     started_ = false;
   AsyncWebServer server_;
   struct PostEntry {
     std::string path;
@@ -314,7 +324,11 @@ class HttpServer {
   // Starts listening in a background thread; returns immediately.
   // Prints an error and skips the thread if the port cannot be bound
   // (e.g. port < 1024 without elevated privileges, or port already in use).
+  // Idempotent: re-entry from the owning module's loop1s() is a no-op once
+  // started (mirrors the ESP32 branch which waits for WiFi the same way).
   void begin() {
+    if (started_) return;
+    started_ = true;
     if (!server_.bind_to_port("0.0.0.0", port_)) {
       fprintf(stderr,
               "[HttpServer] ERROR: cannot bind port %u"
@@ -343,6 +357,7 @@ class HttpServer {
  private:
   httplib::Server server_;
   uint16_t port_;
+  bool     started_ = false;
   std::thread thread_;
 };
 
