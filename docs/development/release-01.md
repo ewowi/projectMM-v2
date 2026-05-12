@@ -134,9 +134,12 @@ Deferred to Sprint 2+ as "earn its place":
 
 #### Step 2: WebSocket transport (`PalWs.h` + `WebSocketModule`)
 
-- [ ] Copy v1's `src/core/WsServer.h` verbatim into `src/pal/PalWs.h` (platform-conditional → lives in `pal/`); frugalize
-- [ ] Wrap as `WebSocketModule` in `src/modules/network/` — platform-neutral, no `#ifdef`s; registers handshake on `/ws` via `pal::HttpServer`, pushes schema on connect, broadcasts state changes (driven by control updates and `loop1s`)
-- [ ] REST mutations land: `POST /api/modules` (add), `DELETE /api/modules/{id}` (remove), `PATCH /api/modules/{id}` (set controls) — all via `HttpServerModule` dispatching into the control system
+- [x] Port v1's `src/core/WsServer.h` into `src/pal/PalWs.h` (483 LOC → 247, frugalized). ESP32 branch: deferred frame-buffer pre-allocation infrastructure + heap_caps_get_largest_free_block guards (Sprint 4, when PalHeap lands); deferred broadcastLog (Sprint 5+, when v2 has logging). PC branch: inlined the POSIX socket calls instead of carrying v1's `PcSocketShims.h` (Windows path dropped — v2 targets Linux/macOS PC + ESP32).
+- [x] Wrap as `WebSocketModule` in `src/modules/network/` — platform-neutral, no `#ifdef`s; owns a `pal::WsServer`, broadcasts schema + state JSON each `loop1s` when there are connected clients. **Deviation from initial plan**: WS lives on its own port (81), not as a `/ws` upgrade on the HTTP port. cpp-httplib has no WebSocket support and adding HTTP-upgrade handling would force a second HTTP library — v1's two-port pattern is cleaner here. Frontend connects to `ws://host:81/`.
+- [x] REST mutations on `HttpServerModule`: `POST /api/modules` (add by type+id), `DELETE /api/modules/{id}` (remove), `PATCH /api/modules/{id}` (set controls — body is a JSON object of `{key: value, ...}`, each key dispatched through `setControl`). All hold `manager_->mutex()` across find+mutate to avoid races with the Scheduler.
+- [x] **Bug uncovered + fixed during Step 2**: `ModuleManager::add()` was calling `m->setup()` directly instead of `m->runSetup()`. This skipped the framework's auto-registration of the `enabled_` control and any other onBuildControls work — meaning `setControl("enabled", false)` silently returned false because the control wasn't registered. Both `add()` and `remove()` now use `runSetup()` / `runTeardown()` dispatch wrappers; `Scheduler::core_loop` correspondingly uses `runLoop` / `runLoop20ms` / etc. so child recursion + enabled-gating in the dispatch wrappers actually fire.
+- [x] **End-of-step verification**: HTTP REST exercised by curl — POST adds, PATCH `{"enabled":false}` stops `HelloModule::counter_` from incrementing (visible in subsequent GET), DELETE removes; raw WS probe sees the 101 handshake and receives schema + state frames at ~2/sec (matching `loop1s`).
+- [x] LOC: `src/pal/PalWs.h` 247 / 450 (v1 verbatim was 483; ~51% size); `src/modules/network` 156 / 250 (HttpServerModule + WebSocketModule).
 
 #### Step 3: `SystemStatusModule` (the first real `MoonModule`)
 

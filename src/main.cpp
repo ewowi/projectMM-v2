@@ -5,6 +5,7 @@
 #include "core/Scheduler.h"
 #include "modules/hello/HelloModule.h"
 #include "modules/network/HttpServerModule.h"
+#include "modules/network/WebSocketModule.h"
 #include "pal/Pal.h"
 
 static pmm::Scheduler* g_sched = nullptr;
@@ -17,10 +18,12 @@ int main() {
   pmm::ModuleManager mm;
   mm.register_type<pmm::HelloModule>("hello");
   mm.register_type<pmm::HttpServerModule>("http", uint16_t{8080});
+  mm.register_type<pmm::WebSocketModule>("ws");
 
   mm.add("hello", "hello-0");
   mm.add("http",  "http-0");
-  std::printf("[main] %zu module(s) running  (Ctrl-C to stop, UI on :8080)\n", mm.size());
+  mm.add("ws",    "ws-0");
+  std::printf("[main] %zu module(s) running  (Ctrl-C to stop, UI on :8080, WS on :81)\n", mm.size());
 
   pmm::Scheduler sched(&mm, 2);
   g_sched = &sched;
@@ -28,6 +31,7 @@ int main() {
 
   sched.run();
 
+  mm.remove("ws-0");
   mm.remove("http-0");
   mm.remove("hello-0");
   std::printf("[main] done\n");

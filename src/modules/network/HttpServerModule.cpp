@@ -1,23 +1,43 @@
 #include "HttpServerModule.h"
 
+#include <ArduinoJson.h>
+
 #include <cstdio>
+#include <cstring>
 #include <mutex>
+#include <string>
 
 #include "../../../src/frontend/frontend_bundle.h"
 #include "../../core/ModuleManager.h"
 
 namespace pmm {
 
+namespace {
+
+constexpr const char* kModulesPrefix = "/api/modules/";
+
+// Extract the {id} segment from a path like "/api/modules/hello-0".
+std::string id_from_path(const std::string& path) {
+  const size_t prefixLen = std::strlen(kModulesPrefix);
+  if (path.size() <= prefixLen) return {};
+  return path.substr(prefixLen);
+}
+
+pal::HttpResponse json_err(int status, const char* reason) {
+  std::string body = std::string("{\"error\":\"") + reason + "\"}";
+  return {status, "application/json", std::move(body)};
+}
+
+}  // namespace
+
 void HttpServerModule::setup() {
   server_ = std::make_unique<pal::HttpServer>(port_);
 
-  // Serve the v1 SPA bundle (gzipped) on GET /.
-  server_->onGetStaticGzip("/", "text/html",
-                          FRONTEND_HTML_GZ, FRONTEND_HTML_GZ_LEN);
+  // GET / — serve the v1 SPA bundle (gzipped).
+  server_->onGetStaticGzip("/", "text/html", FRONTEND_HTML_GZ, FRONTEND_HTML_GZ_LEN);
 
-  // GET /api/modules — list all modules as a JSON array of their
-  // serialize_json output. The manager lock is held during iteration so
-  // a concurrent add/remove cannot invalidate the vector mid-list.
+  // GET /api/modules — list all modules as JSON. The manager lock is held
+  // during iteration so a concurrent add/remove cannot invalidate the vector.
   server_->onGet("/api/modules", [this](const std::string&) {
     std::string body = "[";
     if (manager_) {
@@ -29,6 +49,51 @@ void HttpServerModule::setup() {
     }
     body += "]";
     return pal::HttpResponse{200, "application/json", std::move(body)};
+  });
+
+  // POST /api/modules — add a module. Body: {"type":"<t>","id":"<i>"}.
+  server_->onPost("/api/modules", [this](const std::string& body) {
+    if (!manager_) return json_err(500, "no manager");
+    JsonDocument doc;
+    if (deserializeJson(doc, body)) return json_err(400, "bad json");
+    const char* type = doc["type"] | "";
+    const char* id   = doc["id"]   | "";
+    if (!*type || !*id) return json_err(400, "type and id required");
+
+    std::lock_guard<std::recursive_mutex> lk(manager_->mutex());
+    if (manager_->find(id)) return json_err(409, "id exists");
+    if (!manager_->add(type, id)) return json_err(404, "unknown type");
+    return pal::HttpResponse{201, "application/json", "{\"ok\":true}"};
+  });
+
+  // DELETE /api/modules/<id> — remove a module.
+  server_->onDelete("/api/modules/.+", [this](const std::string& path) {
+    if (!manager_) return json_err(500, "no manager");
+    std::string id = id_from_path(path);
+    if (id.empty()) return json_err(400, "id required");
+    if (manager_->remove(id.c_str())) {
+      return pal::HttpResponse{200, "application/json", "{\"ok\":true}"};
+    }
+    return json_err(404, "not found");
+  });
+
+  // PATCH /api/modules/<id> — set one or more controls on a module.
+  // Body: {"<key>": <value>, ...}. Each key invokes setControl(); unknown keys
+  // are silently ignored (matches v1 behaviour — the schema is the contract).
+  server_->onPatch("/api/modules/.+", [this](const std::string& path, const std::string& body) {
+    if (!manager_) return json_err(500, "no manager");
+    std::string id = id_from_path(path);
+    if (id.empty()) return json_err(400, "id required");
+    JsonDocument doc;
+    if (deserializeJson(doc, body)) return json_err(400, "bad json");
+
+    std::lock_guard<std::recursive_mutex> lk(manager_->mutex());
+    MoonModule* m = manager_->find(id.c_str());
+    if (!m) return json_err(404, "not found");
+    for (JsonPairConst kv : doc.as<JsonObjectConst>()) {
+      m->setControl(kv.key().c_str(), kv.value());
+    }
+    return pal::HttpResponse{200, "application/json", "{\"ok\":true}"};
   });
 
   server_->begin();

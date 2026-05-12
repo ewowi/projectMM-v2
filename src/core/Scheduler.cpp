@@ -33,10 +33,11 @@ void Scheduler::core_loop(int core_id) {
       for (size_t i = 0; i < mm_->size(); ++i) {
         if (static_cast<int>(i) % cores_ != core_id) continue;
         MoonModule* m = mm_->at(i);
-        m->loop();
-        if (now - last_20ms >= 20) m->loop20ms();
-        if (now - last_1s >= 1000) m->loop1s();
-        if (now - last_10s >= 10000) m->loop10s();
+        // Use dispatch wrappers so child recursion + enabled_ gating are honored.
+        m->runLoop();
+        if (now - last_20ms >= 20) m->runLoop20ms();
+        if (now - last_1s >= 1000) m->runLoop1s();
+        if (now - last_10s >= 10000) m->runLoop10s();
       }
     }
 

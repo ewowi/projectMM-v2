@@ -16,7 +16,8 @@ MoonModule* ModuleManager::add(const char* type, const char* id) {
   m->type_ = type;
   m->id_ = id;
   m->manager_ = this;
-  m->setup();
+  m->runSetup();   // dispatch wrapper: setup() + onBuildControls() + register enabled_
+                   // + children + onChildrenReady + onAllocateMemory
   std::printf("[mm] add: type=%s id=%s\n", type, id);
   MoonModule* raw = m.get();
   modules_.push_back(std::move(m));
@@ -28,7 +29,7 @@ bool ModuleManager::remove(const char* id) {
   for (auto it = modules_.begin(); it != modules_.end(); ++it) {
     if ((*it)->id_ == id) {
       std::printf("[mm] remove: id=%s\n", id);
-      (*it)->teardown();
+      (*it)->runTeardown();  // dispatch wrapper: recurses into children first
       modules_.erase(it);
       return true;
     }
