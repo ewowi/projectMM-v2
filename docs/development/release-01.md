@@ -350,11 +350,11 @@ void PreviewModule::loop20ms() {
 
 ## Sprint 8 — Test foundation: classified units + MemBoot/MemLive + in-process scenarios {#sprint-8}
 
-> **Scope:** The current test surface (203 LOC / 9 cases under `test/test_pc/`) is honest smoke coverage but does not exercise what Sprints 4–7 built. This sprint lands three rails that give Sprint 9 a real safety net for the minimalism review and give every future sprint a place to assert behavior:
+> **Scope:** The pre-Sprint-8 test surface (203 LOC / 9 cases under `test/test_pc/`) was honest smoke coverage but did not exercise what Sprints 4–7 built. This sprint landed three rails that give Sprint 9 a real safety net for the minimalism review and give every future sprint a place to assert behavior:
 >
 > 1. **Classified unit tests + behavioral coverage** of the Sprint 4–7 surface (FrameRing SPSC, RipplesEffect LUT, PalHeap fallback, Scheduler core affinity, PreviewModule wire format, ArtnetOutModule packet packing, StateStoreModule round-trip).
 > 2. **Runtime `[MemBoot]` / `[MemLive]` events** emitted through `pmm::Logger` so heap deltas are visible in stdout / `/api/log` / the ui.py log window.
-> 3. **Declarative scenarios replayed in-process** via doctest — `deploy/test/scenarios/*.json` parsed and run through `ModuleManager`, with Rail 2's events firing during replay.
+> 3. **Declarative scenarios replayed in-process** via doctest — `test/test_pc/scenarios/*.json` parsed and run through `ModuleManager`, with Rail 2's events firing during replay.
 >
 > **Minimalism stance, fixed by Sprint 1's Rule #1.** Events flow to `pmm::Logger`'s ring → serial / `/api/log` / ui.py log window. The firmware writes no log file; no `.md` status doc is generated; no per-chip baseline JSON is committed. Yesterday's run is not preserved on disk. Each deferred test artefact (REST scenario runner, baseline diffing, devicelist orchestration, summarise.py, committed serial logs) has an explicit drift episode that unlocks it — see [Deferred](#sprint-8-deferred) below. v1 reached 20+ test-artefact files; v2 stays at zero until drift demands the first one.
 
@@ -362,40 +362,45 @@ void PreviewModule::loop20ms() {
 
 #### Rail 1 — Classified unit tests + behavioral coverage
 
-- [ ] `scripts/classify_tests.py` (≤ 30 LOC): regex over `TEST_CASE("…")` names emits a `[smoke]` / `[format]` / `[behavioral]` / `[integration]` prefix in the doctest output stream. Visible in ui.py's log window; nothing written. Classifier keys ported from v1's `deploy/unittest.py` (`_INTEGRATION_KEYS`, `_SMOKE_KEYS`, `_FORMAT_KEYS`); `behavioral` is the default.
-- [ ] New `test/test_pc/` files exercising real call sequences from Sprints 4–7. Each file's PR description names the drift class it catches (per [process arch §2](../architecture/process.md#2-guardrails-minimalism-enforced-mechanically)):
+- [x] `scripts/classify_tests.py` (51 LOC): regex over PIO's test output lines (`<file>:<line>: <name>\t[STATUS]`) emits a `[smoke]` / `[format]` / `[behavioral]` / `[integration]` prefix per case. Classifier keys ported from v1's `deploy/unittest.py`. Sprint 8 close distribution: 24 behavioral, 4 integration, 2 format, 1 smoke.
+- [x] Seven new `test/test_pc/` files covering real call sequences from Sprints 4–7:
 
     | File | What it asserts |
     |---|---|
-    | `test_ripples_lut.cpp` | 128×128 LUT path produces deterministic pixel pattern; `revision_` bumps on geometry / `hue_base` change; `base_color_` table matches expected hue gradient |
-    | `test_frame_ring.cpp` | Producer + consumer on two `std::thread`s — SPSC ordering, slot rotation, no torn reads, release/acquire pairing |
-    | `test_pal_heap.cpp` | `psram_alloc(N)` returns byte-addressable aligned pointer; `psram_free` idempotent on null; survives N>0 and N=0 |
-    | `test_scheduler_affinity.cpp` | Two modules with `coreAffinity()` 0 and 1 — per-core tick counters increment in isolation; affinity beyond `cores_` doesn't tick |
-    | `test_preview_wire.cpp` | Feed a known 4×4 RGB grid; assert 7-byte header + RGB body byte-for-byte against the `renderPixelFrame` contract |
-    | `test_artnet_packing.cpp` | 64×64 frame → 25 universes; header bytes 0..17 match Art-Net OpDmx; universe increment correct |
-    | `test_state_store.cpp` | Mutate a control via `setControl`, wait for the 10 s window, simulate reboot (manager teardown + `StateStoreModule` re-construct), assert control restored |
+    | `test_ripples_lut.cpp` | `revision_` bumps on geometry change; `loop20ms` produces non-trivial pixel output; `hue_base` change recolours >90 % of the buffer (proves `rebuild_color_table_` runs without the LUT phase table being touched); registry publish/find round-trips. |
+    | `test_frame_ring.cpp` | `allocate(0)` no-op; nullptr before first publish; publish→read returns the just-filled slot; slot rotation (depth-2 alternation); SPSC consumer never tears under a paced producer (10 kHz). |
+    | `test_pal_heap.cpp` | `psram_alloc(0)` returns null; `psram_free(nullptr)` is a no-op; allocator returns byte-addressable memory; 1000 alloc/free cycles do not leak. |
+    | `test_scheduler_affinity.cpp` | Two-core run ticks both modules; one-core run ignores the module pinned to core 1 (load-bearing: dispatch filter is `affinity == core_id`, not `affinity < cores`). |
+    | `test_preview_wire.cpp` | 4×4 RGB grid packs to exactly the 7-byte header + body bytes the frontend's `renderPixelFrame` expects; 128×128 geometry encodes 0x80 0x00 LE in bytes 1–2. |
+    | `test_artnet_packing.cpp` | OpDmx header bytes 0..17 match the Art-Net spec for universe 0 / 510 DMX; universe 96 fits in the low byte; partial DMX byte count encodes big-endian; 64×64 frame splits into 25 universes (24×510 + 1×48). |
+    | `test_state_store.cpp` | Add `ripples` + `state-store`, scale width/height to 64, trigger `runLoop10s`, tear the manager down, instantiate a fresh manager → `state-store`'s setup re-creates `r-roundtrip` at 64×64 from disk. |
 
-- [ ] `test/test_pc/` grows from 203 LOC → roughly 600–800 LOC. Per-file LOC budgets added to `scripts/check_loc.py` with the post-write count + ~15 % headroom.
+- [x] Two small production refactors enable testing without spinning up real WS / UDP: `PreviewModule::pack_frame` + `required_frame_bytes` and `ArtnetOutModule::pack_header` are now public static helpers. `loop20ms()` behavior unchanged on both modules.
+- [x] `test/test_pc/` grew from **203 → 597** non-blank-non-comment LOC, 9 → 34 cases. Per-file LOC budgets added to `scripts/check_loc.py` with the post-write count + ~15 % headroom.
+- [x] **Bugs the tests caught while being written** (the load-bearing payoff):
+  - First `test_frame_ring` SPSC test assumed "no tears under any rate" — actually documented as best-effort overwrite. Test now pinned to the *paced-producer* contract that holds in production.
+  - First `test_ripples_lut` test assumed `hue_base=0` ⇒ red-dominant. Wrong at 16×16 because hue rotates +0.05 per unit distance, reaching cyan at corners. Replaced with a recolour-on-change assertion.
+  - `test_scheduler_affinity` surfaced a use-after-free between Scheduler instances: `pal::task_create_pinned` detaches std::threads on PC, so a destroyed `Scheduler`'s detached thread keeps reading `stop_` from the deleted instance. Test helper now sleeps 50 ms after `stop()`. Worth recording for Sprint 9's review of the Scheduler PC path; production unaffected because `run()` never returns on device.
 
 #### Rail 2 — `[MemBoot]` / `[MemLive]` runtime events
 
-- [ ] Extend `pmm::Logger` (or add `src/modules/system/MemTracker.h`, ≤ 100 LOC) to emit stable line-prefixed events through the existing log ring:
-  - `[MemBoot]   ModuleName  setup +ΔKB = MKB (frag=P%, largest=LKB)` after each module's `setup()` returns — hooked in `MoonModule::runSetup`.
-  - `[MemLive]   ModuleName  setup +ΔKB = MKB (...)` one second later, after `onAllocateMemory` and steady state. Catches modules whose true cost only shows up post-setup.
-  - `[MemLive] periodic = MKB (...)` at 1 Hz, only when heap moved by > 1 KB threshold.
-  - ESP32 only: append `PR: +ΔKB = MKB` suffix on the same line for PSRAM.
-- [ ] Events flow through `pmm::Logger`'s ring → serial + `/api/log` + ui.py log window. **No file written by firmware. No `docs/status/*.md` generated.**
-- [ ] Format is intentionally machine-parseable so an LLM reading the ui.py log can answer "did module X leak during the scenario?" without a custom parser. The format is stable enough to become a contract on its own line shape.
+- [x] `src/modules/system/MemTracker.h` (75 LOC): `snapshot()`, `log_boot()`, `log_live()`, `tick_1s()`. All events flow through `pmm::Logger`'s ring → serial + `/api/log` + ui.py log window. **No file written by firmware. No `docs/status/*.md` generated.**
+- [x] `MoonModule::runSetup` hooked: snapshot heap before `setup()`, emit `[MemBoot]` after `setup()` returns (setup-only cost), emit `[MemLive]` at end of `runSetup` (total cost including children + `onAllocateMemory`). Originally planned as "one second later"; landed as "end of `runSetup`" — same shape as v1, and the MemBoot→MemLive delta on PR (PSRAM) cleanly exposes `onAllocateMemory`'s per-module cost separately from `setup()`. Lazy post-setup allocations (e.g. WiFi internal buffers) surface in the periodic delta emission instead.
+- [x] `SystemStatusModule::loop1s` calls `memtracker::tick_1s()`. Emits `[MemLive] delta ±N.NKB = M.MKB (...)` lines only when heap moves > 1 KB; `[MemLive] periodic = M.MKB (...)` heartbeat every 10 s. Threshold + heartbeat cadence keep the log quiet when nothing happens, matching the "events only" stance.
+- [x] HIL verified on esp32s3 (`192.168.1.156`): per-module setup brackets visible with real heap + PSRAM deltas, e.g. `ripples-0` MemBoot→MemLive on PR exposes a 3.6 KB PSRAM consumption attributable to `onAllocateMemory`'s pixel buffer + tables + ring. `/api/log` carries the live delta/periodic events.
+- [x] `src/modules/system` LOC budget bumped 500 → 600 (MemTracker.h ~75 LOC; signed off).
+- [x] **Layering note** (for Sprint 9): `src/core/MoonModule.cpp` now includes `src/modules/system/MemTracker.h`, which transitively includes `Logger.h`. This is the first `src/core/` → `src/modules/system/` dependency. Acceptable because Logger is a project-wide utility, not a feature module (CLAUDE.md's "in core" carve-out scopes the rule to networking / lighting). Worth re-evaluating in Sprint 9 if the convention bends further.
+- [x] **Known limitation** (deferred): PC `PalSystemInfo` stubs return 0, so PC events show all-zero deltas. Real PC heap accounting via `mach_task_self`/`task_info` (macOS) and `/proc/self/status` (Linux) lands when a drift episode unlocks it — e.g. when Rail 3's scenarios need PC numbers for regression bounds.
 
 #### Rail 3 — Declarative scenarios, in-process only
 
-- [ ] `deploy/test/scenarios/base-pipeline.json` (≤ 30 LOC) — describes the current default light pipeline (ripples + preview + artnet-out at 16×16). Step ops: `add_module`, `set_control`, `set_input`. Steps marked `"measure": true` carry optional `"bounds": { "fps": { "min": N } }` for assertion. Schema mirrors v1's `deploy/test/scenarios/*.json` so the format can be reused later if a REST runner earns its place.
-- [ ] `test/test_pc/test_scenarios.cpp` (~100 LOC) parses each JSON file under `deploy/test/scenarios/`, replays via `ModuleManager`, asserts step bounds. Rail 2's MemBoot/MemLive events fire during replay; the test stdout shows the same memory trail a real boot does.
-- [ ] No REST runner. No `scripts/scenario.py`. No baseline file. Adding a new scenario adds coverage automatically via the JSON-glob loop — no extra test code per scenario.
+- [x] `test/test_pc/scenarios/base-pipeline.json` describes the current default light pipeline: add `ripples-0` + `preview-0` + `artnet-out-0` at 16×16, then scale to 32×32, then change `hue_base`. Step ops: `add_module`, `set_control`. The artnet-add step carries a `bounds.module_count.min = 3` assertion. Schema mirrors v1's scenario JSON so a REST runner can be unlocked later without a fixture rewrite. Co-located under `test/test_pc/scenarios/` (not v1's `deploy/test/scenarios/`) because scenarios in v2 are test fixtures, not deploy artefacts, and v2 deliberately has no `deploy/` directory.
+- [x] `test/test_pc/test_scenarios.cpp` (91 LOC): parses each JSON under `test/test_pc/scenarios/`, replays via `ModuleManager`, asserts step bounds. `SUBCASE` per scenario so a failure in one doesn't mask others. Rail 2's `[MemBoot]` / `[MemLive]` events fire during replay — the test stdout shows the same memory trail a real boot would emit.
+- [x] No REST runner. No `scripts/scenario.py`. No baseline file. Adding a new scenario requires no new test code — the directory glob picks it up automatically.
 
 #### Growth ledger
 
-- [ ] An "Artefact promotions" subsection added under [Validated during Release 1](#validated-during-release-1). Each future promotion of a deferred test artefact gets one line, dated, with the drift episode that unlocked it. Without a drift episode entry, no promotion lands. This is the [§3 anti-drift rule](../architecture/process.md#3-anti-drift-why-these-rules-survive) applied to test infrastructure itself.
+- [x] [Artefact promotions](#artefact-promotions) subsection added under [Validated during Release 1](#validated-during-release-1). Empty at Sprint 8 close by design. Each future promotion of a deferred test artefact lands as one dated line citing the drift episode that unlocked it. Without a drift episode, no promotion. The [§3 anti-drift rule](../architecture/process.md#3-anti-drift-why-these-rules-survive) applied to test infrastructure itself.
 
 ### Deferred {#sprint-8-deferred}
 
@@ -478,4 +483,10 @@ The [process architecture](../architecture/process.md) states the contract in hi
 
 **Structural-additions justification format** — **REPLACED.** Convention is top-of-file docstring (Python) or top-of-file `//` block (C++). Top-level directory additions additionally require an ADR, enforced by `scripts/check_structure.py`'s allowlist. No `// WHY:` marker syntax, no PR-template field.
 
-**Verifier-of-the-verifier** — **REPLACED.** The "growth gated by the structural rule" half stayed and is now enforced by `check_structure.py`'s top-level allowlist. The `healthReport()` meta-test never landed and isn't needed — the test surface is 203 LOC across two files (`test/test_pc/test_module.cpp`, `test_http.cpp`), small enough to read in one sitting; a meta-assertion buys nothing at that size.
+**Verifier-of-the-verifier** — **REPLACED.** The "growth gated by the structural rule" half stayed and is now enforced by `check_structure.py`'s top-level allowlist. The `healthReport()` meta-test never landed and isn't needed — the test surface is 203 LOC across two files (`test/test_pc/test_module.cpp`, `test_http.cpp`), small enough to read in one sitting; a meta-assertion buys nothing at that size. (Updated by Sprint 8 Rail 1: surface grew to 9 test files / ~700 LOC / 34 cases; still readable in one sitting.)
+
+### Artefact promotions {#artefact-promotions}
+
+Each line records the promotion of a deferred test artefact from Sprint 8's [Deferred](#sprint-8-deferred) list. Format: `YYYY-MM-DD — promoted <artefact>. Drift episode: <one-line description of what slipped past the current rails>.` Without a drift-episode entry, no promotion lands. This is the [§3 anti-drift rule](../architecture/process.md#3-anti-drift-why-these-rules-survive) applied to test infrastructure itself.
+
+*(empty — no promotions yet; this is the desired state at Release 1 close.)*

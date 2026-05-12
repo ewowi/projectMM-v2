@@ -19,6 +19,7 @@
 #include "../../core/MoonModule.h"
 #include "../../pal/Pal.h"
 #include "../../pal/PalSystemInfo.h"
+#include "MemTracker.h"
 
 // Build-time identification — `scripts/inject_build_info.py` generates
 // `BuildInfo.h` at the start of every PlatformIO build and adds its dir
@@ -136,6 +137,7 @@ class SystemStatusModule : public MoonModule {
       psramUsedKb_ = totalPsramKb_ - psramFreeKb_;
     }
     fsUsedKb_ = pal::fs_used_kb();
+    memtracker::tick_1s();
     fsFreeKb_ = totalFsKb_ - fsUsedKb_;
   }
 

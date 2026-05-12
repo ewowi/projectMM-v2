@@ -89,9 +89,9 @@ class ArtnetOutModule : public MoonModule {
       const uint16_t chunk     = remaining > kDmxPerPacket
                                  ? (uint16_t)kDmxPerPacket
                                  : (uint16_t)remaining;
-      pack_header_(uni, chunk);
-      std::memcpy(packet_ + 18, bytes + offset, chunk);
-      udp_.send(dest_ip_buf_, kArtnetPort, packet_, 18 + chunk);
+      pack_header(packet_, uni, chunk);
+      std::memcpy(packet_ + kHeaderBytes, bytes + offset, chunk);
+      udp_.send(dest_ip_buf_, kArtnetPort, packet_, kHeaderBytes + chunk);
       offset += chunk;
       ++uni;
     }
@@ -99,33 +99,38 @@ class ArtnetOutModule : public MoonModule {
     if (released_after) ring->release_read();
   }
 
- private:
+ public:
   static constexpr uint16_t kArtnetPort    = 6454;
   static constexpr uint16_t kDmxPerPacket  = 510;   // 170 RGB pixels
+  static constexpr uint16_t kHeaderBytes   = 18;
 
+  // Fill the 18-byte Art-Net OpDmx header at `dst[0..17]`. Exposed static so
+  // tests can assert the wire bytes without sending UDP. The caller copies
+  // up to `dmx_len` payload bytes into `dst[18..]`.
+  static void pack_header(uint8_t* dst, uint8_t universe, uint16_t dmx_len) {
+    static constexpr uint8_t kArtNetId[8] = {'A','r','t','-','N','e','t',0};
+    std::memcpy(dst, kArtNetId, 8);
+    dst[8]  = 0x00; dst[9]  = 0x50;       // OpDmx, little-endian
+    dst[10] = 0x00; dst[11] = 0x0e;       // ProtVer 14, big-endian
+    dst[12] = 0;                          // sequence (0 = disabled)
+    dst[13] = 0;                          // physical port
+    dst[14] = universe;                   // universe lo
+    dst[15] = 0;                          // universe hi (net+subnet stay 0 for Sprint 6)
+    dst[16] = (uint8_t)(dmx_len >> 8);    // length hi (big-endian)
+    dst[17] = (uint8_t)(dmx_len & 0xff);  // length lo
+  }
+
+ private:
   char       source_buf_[24]  = "ripples-0";
   char       dest_ip_buf_[24] = "255.255.255.255";
   uint32_t   universe_        = 0;
   PixelSource* source_        = nullptr;
   pal::Udp   udp_;
   // One packet buffer reused per universe: 18-byte header + max 510 bytes.
-  uint8_t    packet_[18 + kDmxPerPacket] = {};
+  uint8_t    packet_[kHeaderBytes + kDmxPerPacket] = {};
 
   void resolve_source_() {
     source_ = PixelRegistry::instance().find(source_buf_);
-  }
-
-  void pack_header_(uint8_t universe, uint16_t dmx_len) {
-    static constexpr uint8_t kArtNetId[8] = {'A','r','t','-','N','e','t',0};
-    std::memcpy(packet_, kArtNetId, 8);
-    packet_[8]  = 0x00; packet_[9]  = 0x50;       // OpDmx, little-endian
-    packet_[10] = 0x00; packet_[11] = 0x0e;       // ProtVer 14, big-endian
-    packet_[12] = 0;                              // sequence (0 = disabled)
-    packet_[13] = 0;                              // physical port
-    packet_[14] = universe;                       // universe lo
-    packet_[15] = 0;                              // universe hi (net+subnet stay 0 for Sprint 6)
-    packet_[16] = (uint8_t)(dmx_len >> 8);        // length hi (big-endian)
-    packet_[17] = (uint8_t)(dmx_len & 0xff);      // length lo
   }
 };
 

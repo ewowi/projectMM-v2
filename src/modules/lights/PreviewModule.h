@@ -58,17 +58,25 @@ class PreviewModule : public MoonModule {
     const PixelBufferRef ref = source_->pixelBuffer();
     if (!ref.valid()) return;
 
-    const uint32_t pixel_bytes = ref.count() * sizeof(RGB);
-    const size_t   frame_bytes = 7 + pixel_bytes;
+    const size_t frame_bytes = required_frame_bytes(ref);
     if (frame_.size() < frame_bytes) frame_.resize(frame_bytes);
-
-    frame_[0] = 0x02;
-    write_u16_le_(&frame_[1], ref.width);
-    write_u16_le_(&frame_[3], ref.height);
-    write_u16_le_(&frame_[5], ref.depth);
-    std::memcpy(&frame_[7], ref.data, pixel_bytes);
-
+    pack_frame(frame_.data(), ref);
     ws_->broadcastBinary(frame_.data(), frame_bytes);
+  }
+
+  // Wire-format packer, exposed static so tests can assert the bytes without
+  // spinning up a WebSocket server. `dst` must have room for at least
+  // `required_frame_bytes(ref)`. Returns the same byte count.
+  static size_t required_frame_bytes(const PixelBufferRef& ref) {
+    return 7 + ref.count() * sizeof(RGB);
+  }
+  static size_t pack_frame(uint8_t* dst, const PixelBufferRef& ref) {
+    dst[0] = 0x02;
+    write_u16_le_(&dst[1], ref.width);
+    write_u16_le_(&dst[3], ref.height);
+    write_u16_le_(&dst[5], ref.depth);
+    std::memcpy(&dst[7], ref.data, ref.count() * sizeof(RGB));
+    return required_frame_bytes(ref);
   }
 
   void teardown() override {

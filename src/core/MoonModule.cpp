@@ -3,6 +3,7 @@
 #include <cstdlib>
 
 #include "../pal/Pal.h"
+#include "../modules/system/MemTracker.h"
 
 namespace pmm {
 
@@ -22,7 +23,12 @@ void MoonModule::runSetup() {
   // schemaDirty_.
   freeOwnedOptions_();
   controlCount_ = 0;
+  // Sprint 8 Rail 2: bracket the setup phase with MemBoot (setup cost only)
+  // and MemLive (setup + children + onAllocateMemory). Both flow through
+  // pmm::log → /api/log → ui.py log window.
+  const auto before = memtracker::snapshot();
   setup();
+  memtracker::log_boot(id(), before);
   onBuildControls();  // module registers its addControl() calls here
   // Register enabled_ AFTER onBuildControls() so it picks up any pending value.
   addControl(enabled_, "enabled", "toggle");
@@ -37,6 +43,7 @@ void MoonModule::runSetup() {
   onChildrenReady();
   onAllocateMemory();     // settle dynamic buffers once all params are known
   pendingProps_.clear();  // release pending store memory
+  memtracker::log_live(id(), before);
 }
 
 void MoonModule::runLoop() {

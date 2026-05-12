@@ -34,8 +34,21 @@ BUDGETS = {
     "src/pal/PalSystemInfo.h": 250,  # chip_model, reset_reason_str, build info — bumped 200→250 in Sprint 4 when the ESP32 branch landed
 
     "src/modules/network": 250,      # Module wrappers only (HttpServerModule + WebSocketModule)
-    "src/modules/system":  500,      # SystemStatusModule + WifiStaModule + Logger + StateStoreModule — bumped 400→500 in Sprint 6
+    "src/modules/system":  600,      # SystemStatusModule + WifiStaModule + Logger + StateStoreModule + MemTracker — bumped 500→600 in Sprint 8 (Rail 2 MemTracker.h ~75 LOC)
     "src/modules/lights":  600,      # RGB.h + Pixelable.h + PixelRegistry.h + Ripples/Preview/ArtnetOut (Sprint 6)
+
+    # Per-test budgets — Sprint 8 Rail 1 behavioral coverage. Post-write count + ~15% headroom.
+    # A test that grows past its budget is doing too much — split or trim before bumping.
+    "test/test_pc/test_module.cpp":             65,   # ModuleManager smoke + factory
+    "test/test_pc/test_http.cpp":              150,   # HttpServerModule integration (raw TCP probe)
+    "test/test_pc/test_pal_heap.cpp":           60,   # pal::psram_alloc / psram_free contract
+    "test/test_pc/test_frame_ring.cpp":        110,   # SPSC ordering + cross-thread tear test
+    "test/test_pc/test_ripples_lut.cpp":       125,   # LUT path + revision bump + hue dominance
+    "test/test_pc/test_preview_wire.cpp":       70,   # Binary frame header + body byte-for-byte
+    "test/test_pc/test_artnet_packing.cpp":     75,   # Art-Net OpDmx 18-byte header per universe
+    "test/test_pc/test_scheduler_affinity.cpp": 75,   # coreAffinity dispatch (one-core / two-core)
+    "test/test_pc/test_state_store.cpp":        85,   # /modules.json + /state-<id>.json round-trip
+    "test/test_pc/test_scenarios.cpp":         130,   # Rail 3 — JSON-driven in-process pipeline replay
 }
 
 EXTS = {".h", ".hpp", ".cpp", ".cc"}
