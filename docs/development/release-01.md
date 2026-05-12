@@ -31,6 +31,10 @@ Arbitrary DAG topology, SPSC lock-free ring buffer per edge, depth 2 by default.
 
 Release 5 is the first recurring evaluation release (per the [process architecture](../architecture/process.md): every fifth release is a no-feature evaluation). It is scheduled here, in Release 1 Sprint 1, not at the end of Release 4.
 
+### Mid-release pivot: port-and-frugalize (2026-05-12)
+
+Sprint 2 and Sprint 3 were initially attempted as greenfield rewrites of v1's HTTP server, WebSocket server, and frontend. The result was buggy distillations of code v1 had already debugged: TCP fragmentation, WebSocket handshake corner cases, threading races between the scheduler and HTTP handlers — all rediscovered, all fixed by reading v1's solutions after the fact. The first attempts were deleted; the sprints below are rewritten around *porting* v1's working code and frugalizing it. The discipline is codified in [process architecture §4](../architecture/process.md#4-port-and-frugalize--where-substantive-modules-come-from). Surviving artefacts from the first attempt: guardrails framework, `Module` / `ModuleManager` / `Scheduler` skeleton, `HelloModule`, factory, doctest harness, the test files covering the core and `HelloModule`.
+
 ---
 
 ## Sprints
@@ -38,13 +42,14 @@ Release 5 is the first recurring evaluation release (per the [process architectu
 | Sprint | Goal | Frugality target |
 |--------|------|------------------|
 | [Sprint 1](#sprint-1) | Guardrails framework + empty Module/Manager/Scheduler/Pal skeleton + Linux PC CI green | core ≤ 300 LOC |
-| [Sprint 2](#sprint-2) | First module + module factory + REST + control panel + host tests (PC only) | tests ≤ 5 files |
-| [Sprint 3](#sprint-3) | Pal-minimum + ESP32 builds green + on-target tests + HIL | Pal ≤ 200 LOC |
-| [Sprint 4](#sprint-4) | WiFi-STA + WebSocket + REST over hardware; v1 frontend connects unchanged | per-module ≤ 300 LOC |
-| [Sprint 5](#sprint-5) | Light domain: producer → SPSC ring → consumer; one effect, one preview driver | per-module ≤ 200 LOC |
-| [Sprint 6](#sprint-6) | ArtNet, OTA, NTP, state persistence — parity with v1 first-boot pipeline | per-module ≤ 300 LOC |
+| [Sprint 2](#sprint-2) | Port `HttpServer` + v1 frontend bundle; UI shell visible at `:8080` (disconnected indicator OK) | network ≤ 500 LOC |
+| [Sprint 3](#sprint-3) | `Module` → `MoonModule` (merge controls); port `WsServer` + frontend sources + `SystemStatusModule`; UI shows live system status | MoonModule ≤ 600, system ≤ 300 LOC |
+| [Sprint 4](#sprint-4) | Pal-minimum + ESP32 builds green + on-target tests + HIL | Pal ≤ 200 LOC |
+| [Sprint 5](#sprint-5) | WiFi-STA + REST + WebSocket over hardware; frontend connects unchanged | per-module ≤ 300 LOC |
+| [Sprint 6](#sprint-6) | Light domain: producer → SPSC ring → consumer; one effect, one preview driver | per-module ≤ 200 LOC |
+| [Sprint 7](#sprint-7) | ArtNet, OTA, NTP, state persistence — parity with v1 first-boot pipeline | per-module ≤ 300 LOC |
 
-Each sprint closes with a working device. After Sprint 6, v1 is tagged `v1.8.x-legacy`, this repo is renamed from `projectMM-v2` to `projectMM`, and v2 ships its first stable tag `v2.0.0`.
+Each sprint closes with a working device (or working PC application for sprints 2–3). After Sprint 7, v1 is tagged `v1.8.x-legacy`, this repo is renamed from `projectMM-v2` to `projectMM`, and v2 ships its first stable tag `v2.0.0`.
 
 ---
 
@@ -78,53 +83,105 @@ Deferred to Sprint 2+ as "earn its place":
 
 ---
 
-## Sprint 2 — First module, REST, control panel, host tests {#sprint-2}
+## Sprint 2 — Port `HttpServer` + serve v1 UI shell {#sprint-2}
 
-> **Scope:** Reach a testable system on PC. A first module type, a module factory, an HTTP server module, REST endpoints for module add / remove / list, a browser page that uses them, host unit tests, and integration tests against the in-process server. PC only — ESP32 and HIL move to Sprint 3. This is the sprint that opens the static + dynamic test loop.
+> **Pivot:** A first pass at this sprint built `HttpServerModule` from scratch and ran into the classes of bugs (TCP fragmentation, threading races, HTTP body parsing edge cases) that v1's `core/HttpServer.h` has already debugged into stability. The sprint was reset: substantive modules in v2 are *ported* from v1, then frugalized. See [process architecture §4](../architecture/process.md#4-port-and-frugalize--where-substantive-modules-come-from). Survivors of the first attempt: guardrails framework, core skeleton, `HelloModule`, `ModuleManager` factory, doctest harness.
+
+> **Scope:** Port v1's `src/core/HttpServer.h` (332 LOC) — landing at `src/pal/PalHttp.h` because it is a platform-conditional header wrapping `cpp-httplib`/`ESPAsyncWebServer` — and v1's `src/frontend/frontend_bundle.h` (the gzipped SPA). Frugalize `PalHttp.h`. Wrap it as a platform-neutral `HttpServerModule` (no `#ifdef`s) that serves `/` from the bundle and exposes minimal REST so v1's UI shell loads and renders. The bundle's WebSocket reconnect logic shows a "disconnected" indicator until Sprint 3 lands the WS module — that is the expected end-of-Sprint-2 visual state. PC only — ESP32 envs land in Sprint 4 but `PalHttp.h`'s `#ifdef ARDUINO` branch is kept intact so it compiles when ESP32 arrives.
 
 ### Definition of Done
 
-- [ ] `HelloModule` — `Module` subclass with one control and a counter
-- [ ] Module factory in `ModuleManager`: `add(type, id)` constructs by type via a typename → factory registry (no `strcmp` chain)
-- [ ] `HttpServerModule` (PC stdlib) serves the REST API and a small browser page
-- [ ] REST: `GET /api/modules` (list), `POST /api/modules` (add by type), `DELETE /api/modules/{id}` (remove), `GET /api/modules/{id}` (read controls)
-- [ ] Browser page served by `HttpServerModule`: list modules, add by type, remove by id — talks to the same REST
-- [ ] Host unit tests via doctest, single binary; tests ≤ 5 files
-- [ ] Integration tests: start the server in-process, hit REST, assert
-- [ ] Test-count baseline locked at sprint close; bump rule enforced
+- [x] `HelloModule` — `Module` subclass with counter (`loop1s`) and enabled flag; `serialize_json` override
+- [x] Module factory in `ModuleManager`: `register_type` + `std::function` registry; `add(type, id)` dispatches through it (no `strcmp` chain); `find(id)` added
+- [x] Test-count baseline dropped — counting test *files* adds friction without catching real drift; LOC budgets and the structural allowlist are sufficient
+- [x] Vendor cpp-httplib v0.18.5 in `lib/httplib/src/` (header-only) — see [ADR 0001](../adr/0001-vendor-cpp-httplib.md); `lib` added to structural allowlist
+- [x] Port v1's `HttpServer.h` verbatim into `src/pal/PalHttp.h` (port-step, no modifications) — lives in `pal/` because it contains the only platform conditional in v2; module code that uses HTTP gets the abstraction, not the conditional
+- [x] New guardrail `scripts/check_platform_guards.py` rejects `#ifdef ARDUINO` / `#include <Arduino.h>` / ESP-IDF headers outside `src/pal/`; wired into pre-commit + CI + ui.py
+- [x] **Frugalize** `PalHttp.h` under the §4 rule (strip patches, not features): read line by line, looking for retries / swallow-everything try/catch / timer band-aids / re-init paths. Result: **no patches over symptoms found**; LOC unchanged from v1 verbatim (332). Examined and kept:
+  - 4× `catch (std::bad_alloc&)` blocks in ESP32 handlers (return 503 instead of crash) — graceful API boundary for ESP32's tight heap; a deliberate architecture decision, not a patch.
+  - `catch (...)` around `listen_after_bind()` in PC branch — broader than ideal, but logs to stderr rather than swallowing silently. Acceptable.
+  - Trailing `/.+` → `/*` wildcard adaptation in `onDelete`/`onPatch` — cross-platform syntax adapter between cpp-httplib regex and ESPAsyncWebServer glob; deliberate.
+  - `std::map<request, body>` buffering for ESP32 `onPost`/`onPatch` — required by ESPAsyncWebServer's chunked-body API; not a patch.
+  - `onPostBinary` + `BinaryChunkFn`/`BinaryEndFn` — kept for Sprint 7 (`FirmwareUpdateModule` OTA upload). Future-needed feature; per §4, not a subtraction target.
+- [ ] `HttpServerModule` (in `src/modules/network/`) wraps `pal::HttpServer`, registers `GET /api/modules` (list — matching v1's route set; v1 has no GET-by-id and the WebSocket schema covers per-module reads). Mutations (`POST` / `DELETE` / `PATCH`) land in Sprint 3 with the control system. Contains **zero** platform conditionals.
+- [ ] Port v1's `src/frontend/frontend_bundle.h` verbatim into `src/frontend/frontend_bundle.h` (generated data — not counted by LOC checks)
+- [ ] `HttpServerModule` serves the bundle on `GET /` via `pal::HttpServer::onGetStaticGzip` with `Content-Encoding: gzip`
+- [ ] **End-of-sprint verification:** open `http://127.0.0.1:8080`, see v1's UI render, see modules list (just `hello-0`), see the WebSocket-disconnected indicator (because Sprint 3 hasn't landed yet)
+- [ ] LOC budgets: `src/pal/PalHttp.h` ≤ 350 (v1 verbatim is 332 LOC; frugalize target ~250), `src/modules/network/` ≤ 250
+- [ ] Host unit + integration tests via doctest: `HttpServerModule` REST endpoints covered via cpp-httplib's in-process `Client`
 
 ---
 
-## Sprint 3 — Pal-minimum + ESP32 + on-target tests {#sprint-3}
+## Sprint 3 — `MoonModule` + `WsServer` + `SystemStatusModule` + frontend sources {#sprint-3}
 
-> **Scope:** `Pal` for timing, GPIO (via typed board config), filesystem basics, RTOS task and semaphore primitives, heap query. Nothing else — WiFi / Ethernet / UDP / OTA / NTP / system-info dumps do **not** live in `Pal`. esp32dev + esp32s3_n16r8 builds green; the Sprint 2 stack runs on hardware over serial (WiFi lands in Sprint 4). On-target unit tests and HIL probe land here against real hardware.
+> **Scope:** Three substantive ports land together because they validate each other: the control system (lifecycle in v2's `Module` + control mechanism from v1's `StatefulModule`, merged into a single `MoonModule` class), the WebSocket transport (`PalWs.h` + `WebSocketModule`), and a real module that exercises both (`SystemStatusModule`). The v1 frontend *sources* (HTML/CSS/JS + bundle generator) come in too, frugalized to render only what v2 ships. After this sprint the UI shows live system status, controls are interactive, and the bundle can be regenerated from sources in-tree.
 
 ### Definition of Done
 
-- [ ] Pal total ≤ 200 LOC across all platforms
-- [ ] esp32dev and esp32s3_n16r8 builds green; Linux PC build still green
+#### Step 1: `MoonModule` (merge `Module` + v1's `StatefulModule`)
+
+- [ ] Rename v2's `src/core/Module.h` → `src/core/MoonModule.h`; `pmm::Module` → `pmm::MoonModule` across the tree (HelloModule, HttpServerModule, ModuleManager, Scheduler, tests). `ModuleManager` keeps its name (it manages `MoonModule` instances; the asymmetry is honest).
+- [ ] Copy v1's `src/core/StatefulModule.h` verbatim alongside v2's `MoonModule.h` (port-step)
+- [ ] Merge: take v1's control system (`addControl`, `rebuildControls`, schema serialization, value dispatch) into v2's `MoonModule.h`. v2 keeps its tiered cadences (`loop20ms`/`loop1s`/`loop10s` — v1 has fewer). v1's CRTP `classSize()` is kept only if the footprint-introspection actually pays for itself in v2's scope.
+- [ ] **Frugalize** the merger under §4: strip patches, not features. PR description names what was removed and why.
+- [ ] `src/core/MoonModule.h` LOC ≤ 600
+
+#### Step 2: WebSocket transport (`PalWs.h` + `WebSocketModule`)
+
+- [ ] Copy v1's `src/core/WsServer.h` verbatim into `src/pal/PalWs.h` (platform-conditional → lives in `pal/`); frugalize
+- [ ] Wrap as `WebSocketModule` in `src/modules/network/` — platform-neutral, no `#ifdef`s; registers handshake on `/ws` via `pal::HttpServer`, pushes schema on connect, broadcasts state changes (driven by control updates and `loop1s`)
+- [ ] REST mutations land: `POST /api/modules` (add), `DELETE /api/modules/{id}` (remove), `PATCH /api/modules/{id}` (set controls) — all via `HttpServerModule` dispatching into the control system
+
+#### Step 3: `SystemStatusModule` (the first real `MoonModule`)
+
+- [ ] Port v1's system-info `pal::*` accessors into `src/pal/PalSystemInfo.h`: `chip_model`, `mac_address`, `reset_reason_str`, `sketch_kb`, `total_heap_kb`, `total_psram_kb`, `fs_total_kb`, `fs_used_kb`, `platform_version`. Platform conditionals live in the pal file.
+- [ ] Copy v1's `src/modules/system/SystemStatus.h` verbatim into `src/modules/system/SystemStatusModule.h`; frugalize
+- [ ] `SystemStatusModule` inherits `MoonModule`, calls `addControl(...)` in `setup()` for `heap_used_kb`, `heap_free_kb`, `uptime_s`, `fps`, `local_time`, `chip_model`, `reset_reason`, etc.; updates fields in `loop1s`. **Zero platform conditionals** (enforced by `check_platform_guards.py`).
+- [ ] `src/modules/system` LOC ≤ 300; `src/pal/PalSystemInfo.h` LOC ≤ 200
+- [ ] `main.cpp` swaps `mm.add("hello", ...)` → `mm.add("system", "system-0")`; `src/modules/hello/` deleted (mandatory subtraction for Sprint 3)
+
+#### Step 4: Frontend sources
+
+- [ ] Port v1's `src/frontend/index.html` (84 LOC), `style.css` (744 LOC), `app.js` (1647 LOC) verbatim
+- [ ] Port v1's `scripts/gen_frontend_bundle.py`; add a "Bundle" card to `scripts/ui.py` that regenerates `src/frontend/frontend_bundle.h` from the sources
+- [ ] **Frugalize the frontend** under a UI-specific corollary of §4: strip UI for features v2 does not yet ship (lighting-domain controls, OTA upload screens, etc.). Future sprints add the UI for the features they introduce.
+- [ ] Regenerated `frontend_bundle.h` is committed; CI's "Bundle" check (added with this work) verifies the bundle matches a fresh regeneration from the sources — drift between sources and bundle fails CI.
+- [ ] **End-of-sprint verification:** open `http://127.0.0.1:8080`, see live SystemStatusModule with ticking uptime, heap, fps; controls render from schema; WebSocket "connected" indicator green; the served bundle is smaller than v1's because lighting-domain UI was stripped.
+
+---
+
+## Sprint 4 — Pal-minimum + ESP32 builds + on-target tests {#sprint-4}
+
+> **Scope:** Fill in the remaining `src/pal/` files with their ESP32 implementations: `PalGpio.h`, `PalFs.h`, `PalRtos.h`, `PalHeap.h`. The Sprint 2/3 pal files (`PalHttp.h`, `PalWs.h`, `PalSystemInfo.h`) already have their ESP32 branches from the v1 port — Sprint 4 just adds the build envs and link dependencies. ESP32 builds green; the Sprint 3 stack compiles unchanged because every platform conditional has lived in `src/pal/` all along.
+
+### Definition of Done
+
+- [ ] New pal files: `PalGpio.h`, `PalFs.h`, `PalRtos.h`, `PalHeap.h` — each platform-conditional inside, each ≤ its [LOC budget](../deploy.md)
+- [ ] `ESP32Async/ESPAsyncWebServer` added to `lib_deps` for ESP32 envs only (already required by `PalHttp.h`'s ESP32 branch)
+- [ ] esp32dev and esp32s3_n16r8 envs added to `platformio.ini`; both builds green; Linux PC build still green; CI runs all three
+- [ ] `PalSystemInfo.h`'s ESP32 branch lights up: real `chip_model`, `mac_address`, `reset_reason`, `sketch_kb` on hardware
+- [ ] `check_platform_guards.py` still passes — adding ESP32 implementations means adding pal files, not adding `#ifdef`s anywhere else
 - [ ] Typed board config (`board/<env>.yaml` → `Pins.hpp` codegen) compiles for both ESP32 envs
-- [ ] On-target unit tests run on ESP32 for modules where platform behaviour differs
+- [ ] On-target unit tests run on ESP32 for at least one module where platform behaviour differs (e.g. SystemStatusModule heap reads)
 - [ ] HIL probe verifies serial output on a connected device (skipped in CI without hardware)
 
 ---
 
-## Sprint 4 — WiFi-STA + WebSocket + REST over hardware {#sprint-4}
+## Sprint 5 — WiFi-STA + REST + WebSocket over hardware {#sprint-5}
 
-> **Scope:** `WifiStaModule` connects on boot. The Sprint 2 HTTP / REST stack runs over WiFi on the device. `WebSocketModule` pushes schema and state in the v1 wire format. The v1 frontend connects to v2 hardware unchanged.
+> **Scope:** `WifiStaModule` connects on boot. The Sprint 3 HTTP / REST / WebSocket stack runs over WiFi on the device. The Sprint 3 frontend connects to v2 hardware unchanged — same wire format, no frontend changes.
 
 ### Definition of Done
 
 - [ ] `WifiStaModule` connects on boot using credentials from state
-- [ ] HTTP + REST from Sprint 2 work on ESP32 over WiFi
-- [ ] `WebSocketModule` pushes schema and state in v1 wire format
+- [ ] HTTP + REST + WebSocket from Sprint 3 work on ESP32 over WiFi
+- [ ] Sprint 3 frontend connects to v2 hardware unchanged (all controls live, add/remove works)
 - [ ] REST endpoints `/api/modules`, `/api/system`, `/api/log` reach parity with v1
-- [ ] v1 frontend connects to v2 hardware unchanged (list / add / remove modules + live state)
 - [ ] Per-module footprint ≤ 300 LOC
 
 ---
 
-## Sprint 5 — Light domain {#sprint-5}
+## Sprint 6 — Light domain {#sprint-6}
 
 > **Scope:** Port the light pipeline as modules. One producer (effect), one consumer (preview driver), SPSC ring buffer between them at depth 2. `RGB`, `pixelBuf`, and the producer / consumer base classes live in `modules/lights/`, not in core. The DAG declaration API (`scheduler.connect(producer, consumer)`) is exercised by this sprint.
 
@@ -132,14 +189,14 @@ Deferred to Sprint 2+ as "earn its place":
 
 - [ ] `EffectBase` and `DriverBase` in `modules/lights/`
 - [ ] At least one effect (`SineEffect` or similar) producing a frame
-- [ ] At least one preview driver consuming it and exposing pixels via the Sprint 4 WebSocket
+- [ ] At least one preview driver consuming it and exposing pixels via the Sprint 5 WebSocket
 - [ ] SPSC ring buffer primitive in core, depth 2, ESP32 + PC
 - [ ] PreviewModule frame rate matches v1 on the same hardware
 - [ ] Per-module footprint ≤ 200 LOC
 
 ---
 
-## Sprint 6 — Parity sprint {#sprint-6}
+## Sprint 7 — Parity sprint {#sprint-7}
 
 > **Scope:** ArtNet (in + out), OTA firmware update, NTP wall-clock, LittleFS state persistence. Sprint closes when the v1 first-boot pipeline runs identically on v2 hardware.
 
