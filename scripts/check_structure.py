@@ -7,10 +7,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 ALLOWED = {
-    ".github", ".githooks", "docs", "scripts", "src",
+    ".github", ".githooks", "docs", "lib", "scripts", "src", "test",
     ".gitignore", "CLAUDE.md", "LICENSE", "README.md",
     "mkdocs.yml", "platformio.ini", "pyproject.toml", "uv.lock",
 }
+# Each entry is justified by either being a v1 carry-over or by a paired ADR.
+# "lib" → docs/adr/0001-vendor-cpp-httplib.md (vendored third-party only).
 
 
 def main(argv):

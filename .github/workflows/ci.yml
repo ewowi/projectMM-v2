@@ -18,6 +18,7 @@ jobs:
       - run: uv run scripts/check_hot_path.py
       - run: uv run scripts/check_gpio.py
       - run: uv run scripts/check_structure.py
+      - run: uv run scripts/check_platform_guards.py
 
   build:
     name: Build PC
@@ -28,5 +29,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - name: Install PlatformIO
         run: uv sync --extra ci
-      - name: Build + smoke test
+      - name: Build
+        run: uv run scripts/build.py
+      - name: Test
         run: uv run scripts/test.py
