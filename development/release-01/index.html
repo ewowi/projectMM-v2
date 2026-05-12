@@ -1320,6 +1320,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Validated during Release 1">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#artefact-promotions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Artefact promotions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -2095,6 +2112,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Validated during Release 1">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#artefact-promotions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Artefact promotions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -2517,20 +2551,20 @@
 <hr />
 <h2 id="sprint-8">Sprint 8 — Test foundation: classified units + MemBoot/MemLive + in-process scenarios<a class="headerlink" href="#sprint-8" title="Permanent link">&para;</a></h2>
 <blockquote>
-<p><strong>Scope:</strong> The current test surface (203 LOC / 9 cases under <code>test/test_pc/</code>) is honest smoke coverage but does not exercise what Sprints 4–7 built. This sprint lands three rails that give Sprint 9 a real safety net for the minimalism review and give every future sprint a place to assert behavior:</p>
+<p><strong>Scope:</strong> The pre-Sprint-8 test surface (203 LOC / 9 cases under <code>test/test_pc/</code>) was honest smoke coverage but did not exercise what Sprints 4–7 built. This sprint landed three rails that give Sprint 9 a real safety net for the minimalism review and give every future sprint a place to assert behavior:</p>
 <ol>
 <li><strong>Classified unit tests + behavioral coverage</strong> of the Sprint 4–7 surface (FrameRing SPSC, RipplesEffect LUT, PalHeap fallback, Scheduler core affinity, PreviewModule wire format, ArtnetOutModule packet packing, StateStoreModule round-trip).</li>
 <li><strong>Runtime <code>[MemBoot]</code> / <code>[MemLive]</code> events</strong> emitted through <code>pmm::Logger</code> so heap deltas are visible in stdout / <code>/api/log</code> / the ui.py log window.</li>
-<li><strong>Declarative scenarios replayed in-process</strong> via doctest — <code>deploy/test/scenarios/*.json</code> parsed and run through <code>ModuleManager</code>, with Rail 2's events firing during replay.</li>
+<li><strong>Declarative scenarios replayed in-process</strong> via doctest — <code>test/test_pc/scenarios/*.json</code> parsed and run through <code>ModuleManager</code>, with Rail 2's events firing during replay.</li>
 </ol>
 <p><strong>Minimalism stance, fixed by Sprint 1's Rule #1.</strong> Events flow to <code>pmm::Logger</code>'s ring → serial / <code>/api/log</code> / ui.py log window. The firmware writes no log file; no <code>.md</code> status doc is generated; no per-chip baseline JSON is committed. Yesterday's run is not preserved on disk. Each deferred test artefact (REST scenario runner, baseline diffing, devicelist orchestration, summarise.py, committed serial logs) has an explicit drift episode that unlocks it — see <a href="#sprint-8-deferred">Deferred</a> below. v1 reached 20+ test-artefact files; v2 stays at zero until drift demands the first one.</p>
 </blockquote>
 <h3 id="definition-of-done_7">Definition of Done<a class="headerlink" href="#definition-of-done_7" title="Permanent link">&para;</a></h3>
 <h4 id="rail-1-classified-unit-tests-behavioral-coverage">Rail 1 — Classified unit tests + behavioral coverage<a class="headerlink" href="#rail-1-classified-unit-tests-behavioral-coverage" title="Permanent link">&para;</a></h4>
 <ul>
-<li>[ ] <code>scripts/classify_tests.py</code> (≤ 30 LOC): regex over <code>TEST_CASE("…")</code> names emits a <code>[smoke]</code> / <code>[format]</code> / <code>[behavioral]</code> / <code>[integration]</code> prefix in the doctest output stream. Visible in ui.py's log window; nothing written. Classifier keys ported from v1's <code>deploy/unittest.py</code> (<code>_INTEGRATION_KEYS</code>, <code>_SMOKE_KEYS</code>, <code>_FORMAT_KEYS</code>); <code>behavioral</code> is the default.</li>
+<li>[x] <code>scripts/classify_tests.py</code> (51 LOC): regex over PIO's test output lines (<code>&lt;file&gt;:&lt;line&gt;: &lt;name&gt;\t[STATUS]</code>) emits a <code>[smoke]</code> / <code>[format]</code> / <code>[behavioral]</code> / <code>[integration]</code> prefix per case. Classifier keys ported from v1's <code>deploy/unittest.py</code>. Sprint 8 close distribution: 24 behavioral, 4 integration, 2 format, 1 smoke.</li>
 <li>
-<p>[ ] New <code>test/test_pc/</code> files exercising real call sequences from Sprints 4–7. Each file's PR description names the drift class it catches (per <a href="../../architecture/process/#2-guardrails-minimalism-enforced-mechanically">process arch §2</a>):</p>
+<p>[x] Seven new <code>test/test_pc/</code> files covering real call sequences from Sprints 4–7:</p>
 <table>
 <thead>
 <tr>
@@ -2541,58 +2575,63 @@
 <tbody>
 <tr>
 <td><code>test_ripples_lut.cpp</code></td>
-<td>128×128 LUT path produces deterministic pixel pattern; <code>revision_</code> bumps on geometry / <code>hue_base</code> change; <code>base_color_</code> table matches expected hue gradient</td>
+<td><code>revision_</code> bumps on geometry change; <code>loop20ms</code> produces non-trivial pixel output; <code>hue_base</code> change recolours &gt;90 % of the buffer (proves <code>rebuild_color_table_</code> runs without the LUT phase table being touched); registry publish/find round-trips.</td>
 </tr>
 <tr>
 <td><code>test_frame_ring.cpp</code></td>
-<td>Producer + consumer on two <code>std::thread</code>s — SPSC ordering, slot rotation, no torn reads, release/acquire pairing</td>
+<td><code>allocate(0)</code> no-op; nullptr before first publish; publish→read returns the just-filled slot; slot rotation (depth-2 alternation); SPSC consumer never tears under a paced producer (10 kHz).</td>
 </tr>
 <tr>
 <td><code>test_pal_heap.cpp</code></td>
-<td><code>psram_alloc(N)</code> returns byte-addressable aligned pointer; <code>psram_free</code> idempotent on null; survives N&gt;0 and N=0</td>
+<td><code>psram_alloc(0)</code> returns null; <code>psram_free(nullptr)</code> is a no-op; allocator returns byte-addressable memory; 1000 alloc/free cycles do not leak.</td>
 </tr>
 <tr>
 <td><code>test_scheduler_affinity.cpp</code></td>
-<td>Two modules with <code>coreAffinity()</code> 0 and 1 — per-core tick counters increment in isolation; affinity beyond <code>cores_</code> doesn't tick</td>
+<td>Two-core run ticks both modules; one-core run ignores the module pinned to core 1 (load-bearing: dispatch filter is <code>affinity == core_id</code>, not <code>affinity &lt; cores</code>).</td>
 </tr>
 <tr>
 <td><code>test_preview_wire.cpp</code></td>
-<td>Feed a known 4×4 RGB grid; assert 7-byte header + RGB body byte-for-byte against the <code>renderPixelFrame</code> contract</td>
+<td>4×4 RGB grid packs to exactly the 7-byte header + body bytes the frontend's <code>renderPixelFrame</code> expects; 128×128 geometry encodes 0x80 0x00 LE in bytes 1–2.</td>
 </tr>
 <tr>
 <td><code>test_artnet_packing.cpp</code></td>
-<td>64×64 frame → 25 universes; header bytes 0..17 match Art-Net OpDmx; universe increment correct</td>
+<td>OpDmx header bytes 0..17 match the Art-Net spec for universe 0 / 510 DMX; universe 96 fits in the low byte; partial DMX byte count encodes big-endian; 64×64 frame splits into 25 universes (24×510 + 1×48).</td>
 </tr>
 <tr>
 <td><code>test_state_store.cpp</code></td>
-<td>Mutate a control via <code>setControl</code>, wait for the 10 s window, simulate reboot (manager teardown + <code>StateStoreModule</code> re-construct), assert control restored</td>
+<td>Add <code>ripples</code> + <code>state-store</code>, scale width/height to 64, trigger <code>runLoop10s</code>, tear the manager down, instantiate a fresh manager → <code>state-store</code>'s setup re-creates <code>r-roundtrip</code> at 64×64 from disk.</td>
 </tr>
 </tbody>
 </table>
 </li>
 <li>
-<p>[ ] <code>test/test_pc/</code> grows from 203 LOC → roughly 600–800 LOC. Per-file LOC budgets added to <code>scripts/check_loc.py</code> with the post-write count + ~15 % headroom.</p>
+<p>[x] Two small production refactors enable testing without spinning up real WS / UDP: <code>PreviewModule::pack_frame</code> + <code>required_frame_bytes</code> and <code>ArtnetOutModule::pack_header</code> are now public static helpers. <code>loop20ms()</code> behavior unchanged on both modules.</p>
 </li>
+<li>[x] <code>test/test_pc/</code> grew from <strong>203 → 597</strong> non-blank-non-comment LOC, 9 → 34 cases. Per-file LOC budgets added to <code>scripts/check_loc.py</code> with the post-write count + ~15 % headroom.</li>
+<li>[x] <strong>Bugs the tests caught while being written</strong> (the load-bearing payoff):</li>
+<li>First <code>test_frame_ring</code> SPSC test assumed "no tears under any rate" — actually documented as best-effort overwrite. Test now pinned to the <em>paced-producer</em> contract that holds in production.</li>
+<li>First <code>test_ripples_lut</code> test assumed <code>hue_base=0</code> ⇒ red-dominant. Wrong at 16×16 because hue rotates +0.05 per unit distance, reaching cyan at corners. Replaced with a recolour-on-change assertion.</li>
+<li><code>test_scheduler_affinity</code> surfaced a use-after-free between Scheduler instances: <code>pal::task_create_pinned</code> detaches std::threads on PC, so a destroyed <code>Scheduler</code>'s detached thread keeps reading <code>stop_</code> from the deleted instance. Test helper now sleeps 50 ms after <code>stop()</code>. Worth recording for Sprint 9's review of the Scheduler PC path; production unaffected because <code>run()</code> never returns on device.</li>
 </ul>
 <h4 id="rail-2-memboot-memlive-runtime-events">Rail 2 — <code>[MemBoot]</code> / <code>[MemLive]</code> runtime events<a class="headerlink" href="#rail-2-memboot-memlive-runtime-events" title="Permanent link">&para;</a></h4>
 <ul>
-<li>[ ] Extend <code>pmm::Logger</code> (or add <code>src/modules/system/MemTracker.h</code>, ≤ 100 LOC) to emit stable line-prefixed events through the existing log ring:</li>
-<li><code>[MemBoot]   ModuleName  setup +ΔKB = MKB (frag=P%, largest=LKB)</code> after each module's <code>setup()</code> returns — hooked in <code>MoonModule::runSetup</code>.</li>
-<li><code>[MemLive]   ModuleName  setup +ΔKB = MKB (...)</code> one second later, after <code>onAllocateMemory</code> and steady state. Catches modules whose true cost only shows up post-setup.</li>
-<li><code>[MemLive] periodic = MKB (...)</code> at 1 Hz, only when heap moved by &gt; 1 KB threshold.</li>
-<li>ESP32 only: append <code>PR: +ΔKB = MKB</code> suffix on the same line for PSRAM.</li>
-<li>[ ] Events flow through <code>pmm::Logger</code>'s ring → serial + <code>/api/log</code> + ui.py log window. <strong>No file written by firmware. No <code>docs/status/*.md</code> generated.</strong></li>
-<li>[ ] Format is intentionally machine-parseable so an LLM reading the ui.py log can answer "did module X leak during the scenario?" without a custom parser. The format is stable enough to become a contract on its own line shape.</li>
+<li>[x] <code>src/modules/system/MemTracker.h</code> (75 LOC): <code>snapshot()</code>, <code>log_boot()</code>, <code>log_live()</code>, <code>tick_1s()</code>. All events flow through <code>pmm::Logger</code>'s ring → serial + <code>/api/log</code> + ui.py log window. <strong>No file written by firmware. No <code>docs/status/*.md</code> generated.</strong></li>
+<li>[x] <code>MoonModule::runSetup</code> hooked: snapshot heap before <code>setup()</code>, emit <code>[MemBoot]</code> after <code>setup()</code> returns (setup-only cost), emit <code>[MemLive]</code> at end of <code>runSetup</code> (total cost including children + <code>onAllocateMemory</code>). Originally planned as "one second later"; landed as "end of <code>runSetup</code>" — same shape as v1, and the MemBoot→MemLive delta on PR (PSRAM) cleanly exposes <code>onAllocateMemory</code>'s per-module cost separately from <code>setup()</code>. Lazy post-setup allocations (e.g. WiFi internal buffers) surface in the periodic delta emission instead.</li>
+<li>[x] <code>SystemStatusModule::loop1s</code> calls <code>memtracker::tick_1s()</code>. Emits <code>[MemLive] delta ±N.NKB = M.MKB (...)</code> lines only when heap moves &gt; 1 KB; <code>[MemLive] periodic = M.MKB (...)</code> heartbeat every 10 s. Threshold + heartbeat cadence keep the log quiet when nothing happens, matching the "events only" stance.</li>
+<li>[x] HIL verified on esp32s3 (<code>192.168.1.156</code>): per-module setup brackets visible with real heap + PSRAM deltas, e.g. <code>ripples-0</code> MemBoot→MemLive on PR exposes a 3.6 KB PSRAM consumption attributable to <code>onAllocateMemory</code>'s pixel buffer + tables + ring. <code>/api/log</code> carries the live delta/periodic events.</li>
+<li>[x] <code>src/modules/system</code> LOC budget bumped 500 → 600 (MemTracker.h ~75 LOC; signed off).</li>
+<li>[x] <strong>Layering note</strong> (for Sprint 9): <code>src/core/MoonModule.cpp</code> now includes <code>src/modules/system/MemTracker.h</code>, which transitively includes <code>Logger.h</code>. This is the first <code>src/core/</code> → <code>src/modules/system/</code> dependency. Acceptable because Logger is a project-wide utility, not a feature module (CLAUDE.md's "in core" carve-out scopes the rule to networking / lighting). Worth re-evaluating in Sprint 9 if the convention bends further.</li>
+<li>[x] <strong>Known limitation</strong> (deferred): PC <code>PalSystemInfo</code> stubs return 0, so PC events show all-zero deltas. Real PC heap accounting via <code>mach_task_self</code>/<code>task_info</code> (macOS) and <code>/proc/self/status</code> (Linux) lands when a drift episode unlocks it — e.g. when Rail 3's scenarios need PC numbers for regression bounds.</li>
 </ul>
 <h4 id="rail-3-declarative-scenarios-in-process-only">Rail 3 — Declarative scenarios, in-process only<a class="headerlink" href="#rail-3-declarative-scenarios-in-process-only" title="Permanent link">&para;</a></h4>
 <ul>
-<li>[ ] <code>deploy/test/scenarios/base-pipeline.json</code> (≤ 30 LOC) — describes the current default light pipeline (ripples + preview + artnet-out at 16×16). Step ops: <code>add_module</code>, <code>set_control</code>, <code>set_input</code>. Steps marked <code>"measure": true</code> carry optional <code>"bounds": { "fps": { "min": N } }</code> for assertion. Schema mirrors v1's <code>deploy/test/scenarios/*.json</code> so the format can be reused later if a REST runner earns its place.</li>
-<li>[ ] <code>test/test_pc/test_scenarios.cpp</code> (~100 LOC) parses each JSON file under <code>deploy/test/scenarios/</code>, replays via <code>ModuleManager</code>, asserts step bounds. Rail 2's MemBoot/MemLive events fire during replay; the test stdout shows the same memory trail a real boot does.</li>
-<li>[ ] No REST runner. No <code>scripts/scenario.py</code>. No baseline file. Adding a new scenario adds coverage automatically via the JSON-glob loop — no extra test code per scenario.</li>
+<li>[x] <code>test/test_pc/scenarios/base-pipeline.json</code> describes the current default light pipeline: add <code>ripples-0</code> + <code>preview-0</code> + <code>artnet-out-0</code> at 16×16, then scale to 32×32, then change <code>hue_base</code>. Step ops: <code>add_module</code>, <code>set_control</code>. The artnet-add step carries a <code>bounds.module_count.min = 3</code> assertion. Schema mirrors v1's scenario JSON so a REST runner can be unlocked later without a fixture rewrite. Co-located under <code>test/test_pc/scenarios/</code> (not v1's <code>deploy/test/scenarios/</code>) because scenarios in v2 are test fixtures, not deploy artefacts, and v2 deliberately has no <code>deploy/</code> directory.</li>
+<li>[x] <code>test/test_pc/test_scenarios.cpp</code> (91 LOC): parses each JSON under <code>test/test_pc/scenarios/</code>, replays via <code>ModuleManager</code>, asserts step bounds. <code>SUBCASE</code> per scenario so a failure in one doesn't mask others. Rail 2's <code>[MemBoot]</code> / <code>[MemLive]</code> events fire during replay — the test stdout shows the same memory trail a real boot would emit.</li>
+<li>[x] No REST runner. No <code>scripts/scenario.py</code>. No baseline file. Adding a new scenario requires no new test code — the directory glob picks it up automatically.</li>
 </ul>
 <h4 id="growth-ledger">Growth ledger<a class="headerlink" href="#growth-ledger" title="Permanent link">&para;</a></h4>
 <ul>
-<li>[ ] An "Artefact promotions" subsection added under <a href="#validated-during-release-1">Validated during Release 1</a>. Each future promotion of a deferred test artefact gets one line, dated, with the drift episode that unlocked it. Without a drift episode entry, no promotion lands. This is the <a href="../../architecture/process/#3-anti-drift-why-these-rules-survive">§3 anti-drift rule</a> applied to test infrastructure itself.</li>
+<li>[x] <a href="#artefact-promotions">Artefact promotions</a> subsection added under <a href="#validated-during-release-1">Validated during Release 1</a>. Empty at Sprint 8 close by design. Each future promotion of a deferred test artefact lands as one dated line citing the drift episode that unlocked it. Without a drift episode, no promotion. The <a href="../../architecture/process/#3-anti-drift-why-these-rules-survive">§3 anti-drift rule</a> applied to test infrastructure itself.</li>
 </ul>
 <h3 id="sprint-8-deferred">Deferred<a class="headerlink" href="#sprint-8-deferred" title="Permanent link">&para;</a></h3>
 <p>Each deferred artefact lists the drift episode that would unlock its promotion:</p>
@@ -2664,7 +2703,10 @@
 <p><strong>Footprint baseline format</strong> — <strong>REPLACED.</strong> Budgets live inline in <code>scripts/check_loc.py</code>'s <code>BUDGETS = {...}</code> dict, each entry annotated with a rationale comment. Bumps are PR-visible inline edits to that dict. No separate <code>baselines/footprint.json</code> was created.</p>
 <p><strong>Doc-growth budget number</strong> — <strong>DROPPED.</strong> No automated count was added. Doc growth is judged at review time. Revisit only if drift becomes a felt problem.</p>
 <p><strong>Structural-additions justification format</strong> — <strong>REPLACED.</strong> Convention is top-of-file docstring (Python) or top-of-file <code>//</code> block (C++). Top-level directory additions additionally require an ADR, enforced by <code>scripts/check_structure.py</code>'s allowlist. No <code>// WHY:</code> marker syntax, no PR-template field.</p>
-<p><strong>Verifier-of-the-verifier</strong> — <strong>REPLACED.</strong> The "growth gated by the structural rule" half stayed and is now enforced by <code>check_structure.py</code>'s top-level allowlist. The <code>healthReport()</code> meta-test never landed and isn't needed — the test surface is 203 LOC across two files (<code>test/test_pc/test_module.cpp</code>, <code>test_http.cpp</code>), small enough to read in one sitting; a meta-assertion buys nothing at that size.</p>
+<p><strong>Verifier-of-the-verifier</strong> — <strong>REPLACED.</strong> The "growth gated by the structural rule" half stayed and is now enforced by <code>check_structure.py</code>'s top-level allowlist. The <code>healthReport()</code> meta-test never landed and isn't needed — the test surface is 203 LOC across two files (<code>test/test_pc/test_module.cpp</code>, <code>test_http.cpp</code>), small enough to read in one sitting; a meta-assertion buys nothing at that size. (Updated by Sprint 8 Rail 1: surface grew to 9 test files / ~700 LOC / 34 cases; still readable in one sitting.)</p>
+<h3 id="artefact-promotions">Artefact promotions<a class="headerlink" href="#artefact-promotions" title="Permanent link">&para;</a></h3>
+<p>Each line records the promotion of a deferred test artefact from Sprint 8's <a href="#sprint-8-deferred">Deferred</a> list. Format: <code>YYYY-MM-DD — promoted &lt;artefact&gt;. Drift episode: &lt;one-line description of what slipped past the current rails&gt;.</code> Without a drift-episode entry, no promotion lands. This is the <a href="../../architecture/process/#3-anti-drift-why-these-rules-survive">§3 anti-drift rule</a> applied to test infrastructure itself.</p>
+<p><em>(empty — no promotions yet; this is the desired state at Release 1 close.)</em></p>
 
 
 
