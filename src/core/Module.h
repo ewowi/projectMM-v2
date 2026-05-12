@@ -1,6 +1,9 @@
 #pragma once
+#include <string>
 
 namespace pmm {
+
+class ModuleManager;
 
 class Module {
  public:
@@ -13,12 +16,18 @@ class Module {
   virtual void loop10s() {}
   virtual void teardown() {}
 
-  const char* id() const { return id_; }
-  const char* type() const { return type_; }
+  virtual void serialize_json(std::string& out) const {
+    out += "{\"type\":\"" + type_ + "\",\"id\":\"" + id_ + "\"}";
+  }
+
+  const char* id() const { return id_.c_str(); }
+  const char* type() const { return type_.c_str(); }
+  ModuleManager* manager() const { return manager_; }
 
  protected:
-  const char* id_ = "";
-  const char* type_ = "";
+  std::string id_;
+  std::string type_;
+  ModuleManager* manager_ = nullptr;
 
   friend class ModuleManager;
 };

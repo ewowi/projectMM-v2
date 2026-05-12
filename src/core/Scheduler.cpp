@@ -28,13 +28,16 @@ void Scheduler::core_loop(int core_id) {
     uint32_t now = pal::millis();
     ticks++;
 
-    for (size_t i = 0; i < mm_->size(); ++i) {
-      if (static_cast<int>(i) % cores_ != core_id) continue;
-      Module* m = mm_->at(i);
-      m->loop();
-      if (now - last_20ms >= 20) m->loop20ms();
-      if (now - last_1s >= 1000) m->loop1s();
-      if (now - last_10s >= 10000) m->loop10s();
+    {
+      std::lock_guard<std::recursive_mutex> lk(mm_->mutex());
+      for (size_t i = 0; i < mm_->size(); ++i) {
+        if (static_cast<int>(i) % cores_ != core_id) continue;
+        Module* m = mm_->at(i);
+        m->loop();
+        if (now - last_20ms >= 20) m->loop20ms();
+        if (now - last_1s >= 1000) m->loop1s();
+        if (now - last_10s >= 10000) m->loop10s();
+      }
     }
 
     if (now - last_20ms >= 20) { last_20ms = now; ticks_20ms++; }
