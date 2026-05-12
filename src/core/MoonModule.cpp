@@ -230,8 +230,8 @@ void MoonModule::getSchema(JsonObject out) const {
   out["class_size_bytes"] = (uint32_t)classSize_;
   out["heap_size_bytes"]  = (uint32_t)dynamicMemorySize();
   out["psram_size_bytes"] = 0u;
-  out["setup_ok"]         = true;  // Sprint 7 will surface real setup failures
-  out["core"]             = 0u;    // Sprint 6 PalRtos may pin modules per core
+  out["setup_ok"]         = true;  // Sprint 8 will surface real setup failures
+  out["core"]             = (uint32_t)core_;  // Sprint 7: real scheduler affinity
   JsonArray arr = out["controls"].to<JsonArray>();
   for (uint8_t i = 0; i < controlCount_; ++i) {
     const ControlDescriptor& d = controls_[i];

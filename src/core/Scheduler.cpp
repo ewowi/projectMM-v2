@@ -3,23 +3,41 @@
 #include <cstdio>
 
 #include "../pal/Pal.h"
+#include "../pal/PalRtos.h"
 
 namespace pmm {
 
+namespace {
+
+// Per-core task entry argument. Stored as plain static so it outlives the
+// task (Scheduler::run never returns on ESP32; on PC the std::thread is
+// detached and lives for the process). Up to 4 cores covers PRO/APP on
+// classic ESP32, both on S3, and 1..4 logical threads on PC.
+struct CoreArg { Scheduler* sched; int core_id; };
+static CoreArg s_core_args[4];
+
+void core_task_entry(void* arg) {
+  auto* a = static_cast<CoreArg*>(arg);
+  a->sched->core_loop(a->core_id);
+}
+
+}  // namespace
+
 void Scheduler::run() {
-  std::printf("[sched] spawning %d core thread(s) (1 inline)\n", cores_);
-  // Spawn (cores_ - 1) extra threads and run core 0 inline on the calling
-  // thread. arduino-esp32's std::thread maps to pthread with a ~3 KB default
-  // stack — too small for our loop's mutex + JSON dispatch — but the calling
-  // thread (loopTask) has 8 KB so running inline avoids the stack-overflow
-  // crash. PC has plenty of stack everywhere, so it just looks like one
-  // less std::thread.
-  for (int i = 1; i < cores_; ++i) {
-    threads_.emplace_back([this, i] { core_loop(i); });
+  std::printf("[sched] starting %d core(s) (1 inline + %d task%s)\n",
+              cores_, cores_ - 1, cores_ - 1 == 1 ? "" : "s");
+  // Spawn (cores_ - 1) extra cores via pal::task_create_pinned. Sprint 5
+  // tried std::thread and the ~3 KB pthread default stack on arduino-esp32
+  // crashed on the first tick — Sprint 7 routes through PalRtos with 8 KB
+  // stacks pinned to the requested core. PC uses std::thread under the
+  // pal hood (core_id ignored, OS scheduler decides).
+  for (int i = 1; i < cores_ && i < (int)(sizeof(s_core_args) / sizeof(s_core_args[0])); ++i) {
+    s_core_args[i] = {this, i};
+    pal::task_create_pinned(core_task_entry, "pmm-core", 8 * 1024,
+                            &s_core_args[i], /*priority=*/1, /*core=*/i);
   }
   core_loop(0);
-  for (auto& t : threads_) t.join();
-  std::printf("[sched] all cores joined\n");
+  std::printf("[sched] core 0 exit (other cores keep running until process exit)\n");
 }
 
 void Scheduler::core_loop(int core_id) {
@@ -38,8 +56,8 @@ void Scheduler::core_loop(int core_id) {
     {
       std::lock_guard<std::recursive_mutex> lk(mm_->mutex());
       for (size_t i = 0; i < mm_->size(); ++i) {
-        if (static_cast<int>(i) % cores_ != core_id) continue;
         MoonModule* m = mm_->at(i);
+        if (m->coreAffinity() != core_id) continue;
         // Use dispatch wrappers so child recursion + enabled_ gating are honored.
         m->runLoop();
         if (now - last_20ms >= 20) m->runLoop20ms();

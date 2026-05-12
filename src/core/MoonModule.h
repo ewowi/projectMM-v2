@@ -250,6 +250,15 @@ class MoonModule {
   virtual const AutoWireSpec* autoWireKeys() const { return nullptr; }
   virtual const char* moduleBaseType() const { return "MoonModule"; }
 
+  // -- Core affinity (Sprint 7) ---------------------------------------------
+  // Which scheduler core (0 = PRO_CPU, 1 = APP_CPU on ESP32; logical id on
+  // PC) ticks this module. Concrete modules set their core in the
+  // constructor: `RipplesEffect()` keeps the default 0; `ArtnetOutModule()`
+  // overrides to 1 so UDP send work runs off the main hot path. Settable
+  // at runtime later when a UI control wants to remap.
+  uint8_t coreAffinity() const     { return core_; }
+  void    setCoreAffinity(uint8_t c) { core_ = c; }
+
   // -- Footprint reporting ---------------------------------------------------
   size_t classSize() const { return classSize_; }
   void   setClassSize(size_t s) { classSize_ = s; }
@@ -289,6 +298,7 @@ class MoonModule {
   uint32_t timingPrevTicks_   = 0;
   uint32_t timingPrevMs_      = 0;
   float    msPerTick_         = 0.0f;
+  uint8_t  core_              = 0;  // Sprint 7 — scheduler core affinity
  public:
   float msPerTick() const { return msPerTick_; }
  protected:

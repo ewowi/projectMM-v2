@@ -37,10 +37,21 @@ struct PixelBufferRef {
   bool     valid() const { return data != nullptr && count() > 0; }
 };
 
+class FrameRing;  // defined in modules/lights/FrameRing.h
+
 class PixelSource {
  public:
   virtual ~PixelSource() = default;
+
+  // Same-core consumers (e.g. PreviewModule on core 0) read directly via
+  // this. Hot-path cost: virtual call + uint32 revision compare.
   virtual PixelBufferRef pixelBuffer() const = 0;
+
+  // Cross-core consumers (e.g. Sprint 7's ArtnetOutModule pinned to core
+  // 1) acquire the producer's depth-2 SPSC ring here. Returns nullptr by
+  // default — effects that don't expose a ring just hand same-core
+  // consumers their internal buffer through `pixelBuffer()` above.
+  virtual FrameRing* frameRing() { return nullptr; }
 };
 
 }  // namespace pmm

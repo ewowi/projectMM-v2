@@ -27,6 +27,7 @@
 #include "../../core/MoonModule.h"
 #include "../../pal/PalUdp.h"
 #include "../system/Logger.h"
+#include "FrameRing.h"
 #include "Pixelable.h"
 #include "PixelRegistry.h"
 #include "RGB.h"
@@ -35,6 +36,8 @@ namespace pmm {
 
 class ArtnetOutModule : public MoonModule {
  public:
+  ArtnetOutModule() { setCoreAffinity(1); }  // Sprint 7 — run on core 1 (APP_CPU on ESP32)
+
   const char* category() const override { return "driver"; }
 
   void setup() override {
@@ -55,14 +58,32 @@ class ArtnetOutModule : public MoonModule {
   void loop20ms() override {
     if (!source_) resolve_source_();
     if (!source_) return;
-    PixelBufferRef ref = source_->pixelBuffer();
-    if (!ref.valid()) return;
 
-    const uint32_t total_bytes = ref.count() * sizeof(RGB);
-    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(ref.data);
+    // Sprint 7 cross-core path: read the most-recently-published frame
+    // from the producer's depth-2 SPSC ring. Memory ordering pairs with
+    // the producer's release-store so pixel data is fully visible here
+    // before we send.
+    FrameRing* ring = source_->frameRing();
+    const uint8_t* bytes = nullptr;
+    uint32_t total_bytes = 0;
+    bool released_after = false;
+    if (ring) {
+      const RGB* frame = ring->try_acquire_read();
+      if (!frame) return;  // no fresh frame since last tick
+      bytes = reinterpret_cast<const uint8_t*>(frame);
+      total_bytes = (uint32_t)ring->slot_bytes();
+      released_after = true;
+    } else {
+      // Fallback for sources without a ring (PC tests of effects that
+      // skip the cross-core path). Reads pixelBuffer() directly.
+      PixelBufferRef ref = source_->pixelBuffer();
+      if (!ref.valid()) return;
+      bytes = reinterpret_cast<const uint8_t*>(ref.data);
+      total_bytes = ref.count() * sizeof(RGB);
+    }
+
     uint32_t offset = 0;
     uint8_t  uni    = (uint8_t)universe_;
-
     while (offset < total_bytes) {
       const uint32_t remaining = total_bytes - offset;
       const uint16_t chunk     = remaining > kDmxPerPacket
@@ -73,8 +94,9 @@ class ArtnetOutModule : public MoonModule {
       udp_.send(dest_ip_buf_, kArtnetPort, packet_, 18 + chunk);
       offset += chunk;
       ++uni;
-      // Sequence increment is optional per spec; receivers tolerate seq=0.
     }
+
+    if (released_after) ring->release_read();
   }
 
  private:

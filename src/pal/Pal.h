@@ -60,20 +60,12 @@ inline uint16_t default_http_port() {
 #endif
 }
 
-// How many scheduler threads make sense on this platform. PC: 2 — the host
-// has hardware threads to spare, multi-core is the whole point of testing
-// concurrent module dispatch. ESP32 / arduino-esp32: 1 — std::thread maps
-// to pthread, whose default stack is ~3 KB and chokes on Scheduler::core_loop
-// once it grabs the recursive_mutex and dispatches into ArduinoJson-using
-// modules. Multi-core ESP32 lands in Sprint 6 with PalRtos's
-// xTaskCreatePinnedToCore (correct stack sizing per task).
-inline int default_scheduler_cores() {
-#ifdef ARDUINO
-  return 1;
-#else
-  return 2;
-#endif
-}
+// How many scheduler threads make sense on this platform. Both PC and
+// ESP32 now run 2: PC has hardware threads to spare; ESP32 uses
+// pal::task_create_pinned with 8 KB stacks per core (Sprint 7 PalRtos —
+// fixes Sprint 5's pthread-stack-overflow workaround that pinned ESP32
+// to a single inline core).
+inline int default_scheduler_cores() { return 2; }
 
 // Register a handler invoked when the user asks for a clean shutdown.
 // PC: SIGINT (Ctrl-C). ESP32: no signal source under arduino-esp32 — no-op.
