@@ -1,10 +1,10 @@
 #pragma once
 #include <string>
-#include "../../core/Module.h"
+#include "../../core/MoonModule.h"
 
 namespace pmm {
 
-class HelloModule : public Module {
+class HelloModule : public MoonModule {
  public:
   void loop1s() override { if (enabled_) ++counter_; }
 

@@ -4,21 +4,21 @@
 
 namespace pmm {
 
-Module* ModuleManager::add(const char* type, const char* id) {
+MoonModule* ModuleManager::add(const char* type, const char* id) {
   std::lock_guard<std::recursive_mutex> lk(mu_);
-  std::unique_ptr<Module> m;
+  std::unique_ptr<MoonModule> m;
   auto it = factories_.find(type);
   if (it != factories_.end()) {
     m = it->second();
   } else {
-    m = std::make_unique<Module>();
+    m = std::make_unique<MoonModule>();
   }
   m->type_ = type;
   m->id_ = id;
   m->manager_ = this;
   m->setup();
   std::printf("[mm] add: type=%s id=%s\n", type, id);
-  Module* raw = m.get();
+  MoonModule* raw = m.get();
   modules_.push_back(std::move(m));
   return raw;
 }
@@ -37,7 +37,7 @@ bool ModuleManager::remove(const char* id) {
   return false;
 }
 
-Module* ModuleManager::find(const char* id) const {
+MoonModule* ModuleManager::find(const char* id) const {
   std::lock_guard<std::recursive_mutex> lk(mu_);
   for (const auto& m : modules_) {
     if (m->id_ == id) return m.get();

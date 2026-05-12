@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "../../core/Module.h"
+#include "../../core/MoonModule.h"
 #include "../../pal/PalHttp.h"
 
 namespace pmm {
@@ -14,7 +14,7 @@ namespace pmm {
 //
 // Sprint 2: list-only. Mutation routes (POST/DELETE/PATCH) land in Sprint 3
 // when the control system arrives.
-class HttpServerModule : public Module {
+class HttpServerModule : public MoonModule {
  public:
   explicit HttpServerModule(uint16_t port = 8080) : port_(port) {}
 

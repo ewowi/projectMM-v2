@@ -17,7 +17,7 @@ using namespace pmm;
 
 TEST_CASE("ModuleManager: add base module") {
   ModuleManager mm;
-  Module* m = mm.add("noop", "n0");
+  MoonModule* m = mm.add("noop", "n0");
   CHECK(m != nullptr);
   CHECK(std::string(m->id()) == "n0");
   CHECK(std::string(m->type()) == "noop");
@@ -27,7 +27,7 @@ TEST_CASE("ModuleManager: add base module") {
 TEST_CASE("ModuleManager: factory builds concrete type") {
   ModuleManager mm;
   mm.register_type("hello", [] { return std::make_unique<HelloModule>(); });
-  Module* m = mm.add("hello", "h0");
+  MoonModule* m = mm.add("hello", "h0");
   CHECK(m != nullptr);
   CHECK(dynamic_cast<HelloModule*>(m) != nullptr);
   CHECK(std::string(m->type()) == "hello");
@@ -35,7 +35,7 @@ TEST_CASE("ModuleManager: factory builds concrete type") {
 
 TEST_CASE("ModuleManager: manager pointer set on add") {
   ModuleManager mm;
-  Module* m = mm.add("noop", "n0");
+  MoonModule* m = mm.add("noop", "n0");
   CHECK(m->manager() == &mm);
 }
 

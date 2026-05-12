@@ -32,7 +32,7 @@ void Scheduler::core_loop(int core_id) {
       std::lock_guard<std::recursive_mutex> lk(mm_->mutex());
       for (size_t i = 0; i < mm_->size(); ++i) {
         if (static_cast<int>(i) % cores_ != core_id) continue;
-        Module* m = mm_->at(i);
+        MoonModule* m = mm_->at(i);
         m->loop();
         if (now - last_20ms >= 20) m->loop20ms();
         if (now - last_1s >= 1000) m->loop1s();

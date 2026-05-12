@@ -5,9 +5,9 @@ namespace pmm {
 
 class ModuleManager;
 
-class Module {
+class MoonModule {
  public:
-  virtual ~Module() = default;
+  virtual ~MoonModule() = default;
 
   virtual void setup() {}
   virtual void loop() {}

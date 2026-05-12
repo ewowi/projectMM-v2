@@ -4,7 +4,7 @@
 #include <thread>
 #include <vector>
 
-#include "Module.h"
+#include "MoonModule.h"
 #include "ModuleManager.h"
 
 namespace pmm {
