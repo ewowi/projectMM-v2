@@ -161,20 +161,29 @@ Deferred to Sprint 2+ as "earn its place":
 
 ---
 
-## Sprint 4 — Pal-minimum + ESP32 builds + on-target tests {#sprint-4}
+## Sprint 4 — ESP32 build envs + PalSystemInfo on hardware {#sprint-4}
 
-> **Scope:** Fill in the remaining `src/pal/` files with their ESP32 implementations: `PalGpio.h`, `PalFs.h`, `PalRtos.h`, `PalHeap.h`. The Sprint 2/3 pal files (`PalHttp.h`, `PalWs.h`, `PalSystemInfo.h`) already have their ESP32 branches from the v1 port — Sprint 4 just adds the build envs and link dependencies. ESP32 builds green; the Sprint 3 stack compiles unchanged because every platform conditional has lived in `src/pal/` all along.
+> **Scope:** Prove that "every platform conditional has lived in `src/pal/` all along" — the load-bearing claim Sprints 2 + 3 made. Add `esp32dev` and `esp32s3_n16r8` build envs, wire `ESPAsyncWebServer` to those envs only, and confirm the existing pal files (`PalHttp.h`, `PalWs.h`, `PalSystemInfo.h`) compile clean on ESP32 without touching anything outside `src/pal/`. Light up `PalSystemInfo.h`'s ESP32 branch with real values. Verify on a connected device.
+>
+> **Scope deliberately reduced from the original draft.** The first draft DoD called for four new pal files (`PalGpio.h`, `PalFs.h`, `PalRtos.h`, `PalHeap.h`) and a typed board config codegen. None of those have a consumer yet in v2: WiFi credentials need `PalFs` (Sprint 5); the lighting driver needs `PalGpio` + `PalRtos` (Sprint 6). Landing pal files ahead of their first caller is exactly the v1 anti-pattern CLAUDE.md Rule #1 forbids — each addition must pay for itself. Each pal file is therefore deferred to the sprint that introduces its first consumer, where the budget, the implementation, and the test arrive together.
 
 ### Definition of Done
 
-- [ ] New pal files: `PalGpio.h`, `PalFs.h`, `PalRtos.h`, `PalHeap.h` — each platform-conditional inside, each ≤ its [LOC budget](../deploy.md)
-- [ ] `ESP32Async/ESPAsyncWebServer` added to `lib_deps` for ESP32 envs only (already required by `PalHttp.h`'s ESP32 branch)
-- [ ] esp32dev and esp32s3_n16r8 envs added to `platformio.ini`; both builds green; Linux PC build still green; CI runs all three
-- [ ] `PalSystemInfo.h`'s ESP32 branch lights up: real `chip_model`, `mac_address`, `reset_reason`, `sketch_kb` on hardware
-- [ ] `check_platform_guards.py` still passes — adding ESP32 implementations means adding pal files, not adding `#ifdef`s anywhere else
-- [ ] Typed board config (`board/<env>.yaml` → `Pins.hpp` codegen) compiles for both ESP32 envs
-- [ ] On-target unit tests run on ESP32 for at least one module where platform behaviour differs (e.g. SystemStatusModule heap reads)
-- [ ] HIL probe verifies serial output on a connected device (skipped in CI without hardware)
+- [x] `ESP32Async/ESPAsyncWebServer` added to `lib_deps` for ESP32 envs only (already required by `PalHttp.h`'s ESP32 branch). LDF mode tuned from `chain+` to plain `chain` because chain+ pulled WiFi.cpp into the build before its sibling Network library was on CPPPATH — a known pioarduino 55 trap that v1 worked around with a `add_network_path.py` pre-script; plain `chain` sidesteps the trap entirely with one fewer moving part.
+- [x] `esp32dev` and `esp32s3_n16r8` envs added to `platformio.ini`; both builds green; PC build still green; CI matrix runs all three. v1's 4 MB partition table (`partitions/esp32dev.csv`) is carried over verbatim — OTA + LittleFS + coredump slots are sized now so Sprint 5 (LittleFS) and Sprint 7 (OTA) land without reflashing a fresh layout. `partitions/` is added to `check_structure.py`'s allowlist.
+- [x] `PalSystemInfo.h`'s ESP32 branch lights up via ESP-IDF + arduino-esp32 calls: `chip_model`, `mac_address`, heap/PSRAM totals, `reset_reason_str`, `sketch_kb`, flash chip details, `cpu_freq_mhz`, `platform_version`, `sdk_version`. The PC stubs stay for everything that has no PC analogue. Budget bumped 200→250 (signed off here) to fit the ESP32 branch; PC-only Sprint 3 placeholder was 86 LOC.
+- [x] `check_platform_guards.py` still passes — every new `#ifdef ARDUINO` lives in `src/pal/` files. Sprint 4 added two new pal entry points hidden behind that interface: `pal::log_init(baud)` (PC: `setbuf(stdout, nullptr)`; ESP32: `Serial.begin + delay`) and `pal::on_interrupt(handler)` (PC: SIGINT; ESP32: no-op — arduino-esp32 newlib lacks `signal()`).
+- [x] `main.cpp` refactored to define `setup()` + `loop()` + `int main()` on both platforms without a single `#ifdef`. Each platform's loader picks the entry point that applies: arduino-esp32's `loopTask` calls `setup()`; PC's `int main()` does the same. `setup()` blocks in `Scheduler::run()` until shutdown on both platforms, so `loop()` is never invoked.
+- [x] HIL probe: `esp32dev` flashed to `/dev/cu.usbserial-20213431`; serial output verified at 115200 — device boots, `SystemStatusModule` constructs (heap/PSRAM/chip queries executed without crash), HTTP and WS modules log a deferred message and skip `AsyncServer::begin()` (their listeners cannot start before lwIP has a netif — see "Deferred" below), Scheduler enters both core loops. CI skips this step without hardware.
+- [x] `scripts/ui.py` gains a USB-port picker in the header (auto-populates from `/dev/cu.usb*` / `/dev/ttyUSB*` + `/dev/ttyACM*`, persisted via `localStorage`) and six ESP32 cards: Build esp32dev / esp32s3_n16r8, Flash esp32dev / esp32s3_n16r8 (consume the picker), Serial monitor for each env (long-running, consume the picker). `scripts/flash.py` and `scripts/monitor.py` are the underlying CLIs; CI doesn't use them (no hardware). `scripts/_pio.py` resolves the right `pio` binary — prefers `~/.platformio/penv/bin/pio` (PlatformIO's bundled Python 3.11) over a Homebrew shim that may resolve to a Python 3.12 with a system `fatfs` package whose API doesn't match the espressif32 platform's expectations (causes `ImportError: cannot import name 'create_extended_partition' from 'fatfs'` at build start). Falls back to PATH lookup when the penv isn't present (CI containers install PlatformIO via pip).
+
+### Deferred (frugality)
+
+- [ ] **HTTP + WebSocket listener startup on ESP32** — `pal::HttpServer::begin()` / `pal::WsServer::begin()` no-op on Arduino because `AsyncServer::begin()` asserts `xQueueSemaphoreTake` when the lwIP TCP/IP task is not running, and that task only starts once WiFi or Ethernet brings up a netif. Sprint 5's `WifiStaModule` will signal network-ready and re-invoke `begin()`. The route registrations (`onGet`, `onPost`, `onPatch`, `onDelete`) still fire in module `setup()` so Sprint 5 only needs to add the trigger, not re-wire any routes.
+- [ ] `PalFs.h` — lands in Sprint 5 with `WifiStaModule` (credentials persistence). `fs_total_kb` / `fs_used_kb` return 0 from `PalSystemInfo.h` on both branches until then.
+- [ ] `PalGpio.h` + `PalRtos.h` + typed board-config codegen — land in Sprint 6 with the lighting driver (pin + FreeRTOS task pin).
+- [ ] `PalHeap.h` — folded into `PalSystemInfo.h` for now; promoted to its own file only when a second caller appears.
+- [ ] On-target unit tests — promoted from Sprint 4 to the first sprint that has platform-divergent behaviour worth asserting on hardware (likely Sprint 6's pixel buffer).
 
 ---
 

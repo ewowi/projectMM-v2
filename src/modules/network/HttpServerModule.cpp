@@ -2,7 +2,6 @@
 
 #include <ArduinoJson.h>
 
-#include <cstdio>
 #include <cstring>
 #include <mutex>
 #include <string>
@@ -130,7 +129,6 @@ void HttpServerModule::setup() {
   });
 
   server_->begin();
-  std::printf("[http] %s listening on :%u\n", id(), port_);
 }
 
 }  // namespace pmm

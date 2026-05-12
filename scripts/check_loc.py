@@ -19,14 +19,15 @@ BUDGETS = {
     "src/core/MoonModule.cpp": 350,   # non-trivial method implementations (Sprint 3 port)
 
     # Pal — one budget per platform concern. New pal file → new entry here.
+    # Deferred pal files (PalFs, PalGpio, PalRtos, PalHeap) are intentionally
+    # absent: each lands with its first consumer (Sprint 5 / Sprint 6), and
+    # the budget entry lands in the same PR. Pre-registering a budget for a
+    # file that has no caller is the v1 kitchen-sink pattern this list exists
+    # to prevent.
     "src/pal/Pal.h":           100,  # millis, micros, yield, sleep
-    "src/pal/PalGpio.h":       100,  # gpio_init / write / read (Sprint 4)
-    "src/pal/PalFs.h":         200,  # filesystem (Sprint 4)
-    "src/pal/PalRtos.h":       150,  # task_pin, semaphores (Sprint 4)
-    "src/pal/PalHeap.h":       100,  # free_heap_bytes, max_alloc_bytes (Sprint 4)
     "src/pal/PalHttp.h":       350,  # HTTP server abstraction (Sprint 2 port, v1 verbatim is 332)
     "src/pal/PalWs.h":         450,  # WebSocket abstraction (Sprint 3 port, v1 verbatim is 483)
-    "src/pal/PalSystemInfo.h": 200,  # chip_model, reset_reason_str, build info (Sprint 3)
+    "src/pal/PalSystemInfo.h": 250,  # chip_model, reset_reason_str, build info — bumped 200→250 in Sprint 4 when the ESP32 branch landed
 
     "src/modules/network": 250,      # Module wrappers only (HttpServerModule + WebSocketModule)
     "src/modules/system":  300,      # SystemStatusModule (Sprint 3) + future NTP/WiFi modules

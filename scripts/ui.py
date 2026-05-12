@@ -20,13 +20,23 @@ import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
 
+# Cards with `"needs_port": True` get the global port selector appended as
+# `--port <value>` to their script invocation. Cards with `"args": [...]`
+# pass that as fixed positional args before the dynamic port flag.
 SCRIPTS = [
     {"id": "build",             "group": "Build & Test", "label": "Build",             "scripts": ["build.py"]},
     {"id": "test",              "group": "Build & Test", "label": "Test",              "scripts": ["test.py"]},
     {"id": "run",               "group": "Build & Test", "label": "Run",               "scripts": ["run.py"], "long_running": True, "url": "http://127.0.0.1:8080"},
+    {"id": "build-esp32dev",    "group": "ESP32",        "label": "Build esp32dev",        "scripts": ["build.py"],   "args": ["esp32dev"]},
+    {"id": "build-esp32s3",     "group": "ESP32",        "label": "Build esp32s3_n16r8",   "scripts": ["build.py"],   "args": ["esp32s3_n16r8"]},
+    {"id": "flash-esp32dev",    "group": "ESP32",        "label": "Flash esp32dev",        "scripts": ["flash.py"],   "args": ["esp32dev"],         "needs_port": True},
+    {"id": "flash-esp32s3",     "group": "ESP32",        "label": "Flash esp32s3_n16r8",   "scripts": ["flash.py"],   "args": ["esp32s3_n16r8"],    "needs_port": True},
+    {"id": "monitor-esp32dev",  "group": "ESP32",        "label": "Serial monitor (esp32dev)",      "scripts": ["monitor.py"], "args": ["esp32dev"],         "needs_port": True, "long_running": True},
+    {"id": "monitor-esp32s3",   "group": "ESP32",        "label": "Serial monitor (esp32s3_n16r8)", "scripts": ["monitor.py"], "args": ["esp32s3_n16r8"],    "needs_port": True, "long_running": True},
     {"id": "all-checks",        "group": "Checks",       "label": "Run all checks",    "scripts": ["check_loc.py", "check_hot_path.py", "check_gpio.py", "check_structure.py", "check_platform_guards.py", "check_bundle.py"]},
     {"id": "check-loc",         "group": "Checks",       "label": "LOC budgets",       "scripts": ["check_loc.py"]},
     {"id": "check-hot-path",    "group": "Checks",       "label": "Hot-path bans",     "scripts": ["check_hot_path.py"]},
@@ -37,6 +47,53 @@ SCRIPTS = [
     {"id": "gen-bundle",        "group": "Docs",         "label": "Regenerate frontend bundle", "scripts": ["gen_frontend_bundle.py"]},
     {"id": "mkdocs",            "group": "Docs",         "label": "MkDocs serve",      "scripts": ["mkdocs_serve.py"], "long_running": True, "url": "http://127.0.0.1:8000"},
 ]
+
+
+# USB VID:PID → friendly label for the ESP32 board family attached. The bridge
+# chip family is the strongest hint without actually opening the port and
+# probing the chip (which would conflict with an active monitor). Unknown
+# VID/PIDs fall back to pyserial's `description` string.
+ESP32_USB_HINTS = {
+    (0x10C4, 0xEA60): "ESP32 (CP210x)",         # Silicon Labs CP2102/CP2104 — common on DevKitC / NodeMCU-32
+    (0x1A86, 0x7523): "ESP32 (CH340)",          # QinHeng CH340G — common on cheap clones
+    (0x1A86, 0x55D4): "ESP32 (CH343)",          # QinHeng CH343 — newer ESP32 boards
+    (0x0403, 0x6010): "ESP32 (FT2232H)",        # FTDI — JTAG + UART debug boards
+    (0x0403, 0x6014): "ESP32 (FT232H)",
+    (0x0403, 0x6001): "ESP32 (FT232R)",
+    (0x303A, 0x1001): "ESP32-S2/S3 (USB-CDC)",  # Espressif USB-OTG native CDC
+    (0x303A, 0x0002): "ESP32-S3/C3 (USB-JTAG)", # Espressif built-in USB Serial/JTAG
+}
+
+
+def scan_ports():
+    """Enumerate USB-serial ports + their board-family label.
+
+    Uses pyserial's serial.tools.list_ports for cross-platform VID/PID access.
+    Filters to USB-only ports (macOS: /dev/cu.usb*; Linux: /dev/ttyUSB* and
+    /dev/ttyACM*) so /dev/cu.debug-console and Bluetooth-RFCOMM channels don't
+    pollute the picker. Returns a list of {path, label} objects sorted by path.
+    """
+    try:
+        from serial.tools import list_ports
+    except ImportError:
+        return []  # pyserial missing — UI shows "(no USB serial devices)"
+
+    out = []
+    for p in list_ports.comports():
+        if sys.platform == "darwin":
+            if not p.device.startswith("/dev/cu.usb"):
+                continue
+        elif sys.platform.startswith("linux"):
+            if not (p.device.startswith("/dev/ttyUSB") or p.device.startswith("/dev/ttyACM")):
+                continue
+        key = (p.vid, p.pid) if p.vid is not None and p.pid is not None else None
+        label = ESP32_USB_HINTS.get(key) or (p.product or p.description or "")
+        # pyserial's description on Linux often is just "ttyUSB0" — strip it.
+        if label == p.name:
+            label = ""
+        out.append({"path": p.device, "label": label})
+    out.sort(key=lambda x: x["path"])
+    return out
 
 # Long-running process registry: id -> subprocess.Popen
 _running = {}
@@ -50,8 +107,11 @@ INDEX_HTML = r"""<!doctype html>
 <title>projectMM v2 — scripts</title>
 <style>
   body { font-family: system-ui, sans-serif; margin: 0; background: #1e1e22; color: #e0e0e0; }
-  header { background: #2a2a30; padding: 14px 24px; border-bottom: 1px solid #444; }
-  header h1 { margin: 0; font-size: 1.1em; font-weight: 500; }
+  header { background: #2a2a30; padding: 14px 24px; border-bottom: 1px solid #444; display: flex; align-items: center; gap: 18px; }
+  header h1 { margin: 0; font-size: 1.1em; font-weight: 500; flex: 1; }
+  .ports { display: flex; align-items: center; gap: 6px; font-size: 0.85em; color: #aaa; }
+  .ports select { background: #1e1e22; color: #e0e0e0; border: 1px solid #555; border-radius: 4px; padding: 3px 6px; font: inherit; font-size: 0.9em; min-width: 220px; }
+  .ports button { padding: 3px 8px; }
   main { padding: 20px 24px; display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
   .group { margin-bottom: 18px; }
   .group h2 { font-size: 0.75em; letter-spacing: 0.08em; text-transform: uppercase; color: #888; margin: 0 0 6px 0; }
@@ -79,7 +139,14 @@ INDEX_HTML = r"""<!doctype html>
 </style>
 </head>
 <body>
-<header><h1>projectMM v2 — scripts</h1></header>
+<header>
+  <h1>projectMM v2 — scripts</h1>
+  <div class="ports">
+    <label for="port">Port</label>
+    <select id="port"></select>
+    <button id="refreshPorts" title="Rescan USB serial devices">↻</button>
+  </div>
+</header>
 <main>
   <div id="cards"></div>
   <pre id="output"><span class="meta">Click Run on any script.</span></pre>
@@ -89,8 +156,51 @@ const SCRIPTS = __SCRIPTS_JSON__;
 const DOCS_BASE = 'http://127.0.0.1:8000/projectMM-v2';
 const cards = document.getElementById('cards');
 const output = document.getElementById('output');
-const elById = {};   // id -> { card, button, urlSpan, eventSource }
+const portSelect = document.getElementById('port');
+const refreshBtn = document.getElementById('refreshPorts');
+const elById = {};   // id -> { card, button, urlSpan, eventSource, spec }
 const groups = {};
+
+function selectedPort() { return portSelect.value || ''; }
+
+function refreshPorts() {
+  return fetch('/ports').then(r => r.json()).then(({ ports }) => {
+    const prev = localStorage.getItem('port') || portSelect.value;
+    portSelect.innerHTML = '';
+    if (ports.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = ''; opt.textContent = '(no USB serial devices)';
+      portSelect.appendChild(opt);
+    } else {
+      for (const p of ports) {
+        const opt = document.createElement('option');
+        opt.value = p.path;
+        opt.textContent = p.label ? `${p.path} — ${p.label}` : p.path;
+        portSelect.appendChild(opt);
+      }
+      const paths = ports.map(p => p.path);
+      if (paths.includes(prev)) portSelect.value = prev;
+    }
+    updatePortGates();
+  });
+}
+portSelect.addEventListener('change', () => {
+  localStorage.setItem('port', portSelect.value);
+  updatePortGates();
+});
+refreshBtn.addEventListener('click', refreshPorts);
+
+function updatePortGates() {
+  // Disable buttons on cards that need a port when none is selected.
+  const hasPort = !!selectedPort();
+  for (const e of Object.values(elById)) {
+    if (!e.spec.needs_port) continue;
+    // Don't override a running long-runner's Stop button.
+    if (e.button.classList.contains('stop')) continue;
+    e.button.disabled = !hasPort;
+    e.button.title = hasPort ? '' : 'select a port first';
+  }
+}
 
 for (const s of SCRIPTS) (groups[s.group] = groups[s.group] || []).push(s);
 for (const [name, items] of Object.entries(groups)) {
@@ -116,8 +226,8 @@ for (const [name, items] of Object.entries(groups)) {
   cards.appendChild(g);
 }
 
-// On load, reflect anything currently running on the server.
-fetch('/status').then(r => r.json()).then(({ running }) => {
+// On load, populate ports then reflect anything currently running on the server.
+refreshPorts().then(() => fetch('/status')).then(r => r.json()).then(({ running }) => {
   for (const id of running) {
     const e = elById[id]; if (!e) continue;
     e.card.className = 'card running';
@@ -176,7 +286,11 @@ function toggle(s) {
 }
 
 function attachStream(e, alreadyRunning) {
-  const es = new EventSource(`/run/${encodeURIComponent(e.spec.id)}${alreadyRunning ? '?attach=1' : ''}`);
+  const qs = new URLSearchParams();
+  if (alreadyRunning) qs.set('attach', '1');
+  if (e.spec.needs_port && selectedPort()) qs.set('port', selectedPort());
+  const url = `/run/${encodeURIComponent(e.spec.id)}${qs.toString() ? '?' + qs : ''}`;
+  const es = new EventSource(url);
   e.eventSource = es;
   es.addEventListener('line', ev => append(esc(ev.data) + '\n'));
   es.addEventListener('step', ev => append(`<span class="meta">--- ${esc(ev.data)} ---\n</span>`));
@@ -185,12 +299,14 @@ function attachStream(e, alreadyRunning) {
     append(`<span class="${code === 0 ? 'ok' : 'fail'}">exit ${code}\n</span>`);
     setIdleUI(e, code);
     document.querySelectorAll('button').forEach(b => { if (!b.classList.contains('stop')) b.disabled = false; });
+    updatePortGates();
     es.close(); e.eventSource = null;
   });
   es.onerror = () => {
     if (e.card.classList.contains('running') && !e.spec.long_running) e.card.className = 'card fail';
     setIdleUI(e);
     document.querySelectorAll('button').forEach(b => { if (!b.classList.contains('stop')) b.disabled = false; });
+    updatePortGates();
     es.close(); e.eventSource = null;
   };
 }
@@ -224,8 +340,13 @@ class Handler(BaseHTTPRequestHandler):
             return self._send_index()
         if self.path == "/status":
             return self._send_status()
+        if self.path == "/ports":
+            return self._send_ports()
         if self.path.startswith("/run/"):
-            return self._send_run(self.path[len("/run/"):].split("?", 1)[0])
+            parts = urlsplit(self.path)
+            id_ = parts.path[len("/run/"):]
+            query = parse_qs(parts.query)
+            return self._send_run(id_, query)
         self.send_error(404)
 
     def do_POST(self):
@@ -251,6 +372,14 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _send_ports(self):
+        body = json.dumps({"ports": scan_ports()}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def _send_stop(self, id_):
         with _lock:
             proc = _running.get(id_)
@@ -259,16 +388,25 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(204)
         self.end_headers()
 
-    def _send_run(self, id_):
+    def _send_run(self, id_, query):
         s = _find(id_)
         if not s:
             self.send_error(404)
             return
+        attaching = "attach" in query
         with _lock:
-            if id_ in _running and "attach" not in self.path:
+            if id_ in _running and not attaching:
                 # already running; reject double-start
                 self.send_error(409)
                 return
+        # Build the dynamic args list once for this run. Fixed args come from
+        # the card spec; --port comes from the global selector when the card
+        # opts in via needs_port.
+        extra = []
+        if s.get("needs_port"):
+            port = query.get("port", [""])[0].strip()
+            if port:
+                extra.extend(["--port", port])
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
         self.send_header("Cache-Control", "no-cache")
@@ -279,15 +417,15 @@ class Handler(BaseHTTPRequestHandler):
             for script in s["scripts"]:
                 if len(s["scripts"]) > 1:
                     self._event("step", script)
-                rc = self._run_one(id_, script)
+                rc = self._run_one(id_, script, s.get("args", []) + extra)
                 if rc != 0:
                     break
             self._event("done", str(rc))
         except (BrokenPipeError, ConnectionResetError):
             pass  # client closed; process registered in _running keeps running
 
-    def _run_one(self, id_, script_name):
-        cmd = ["uv", "run", str(ROOT / "scripts" / script_name)]
+    def _run_one(self, id_, script_name, script_args):
+        cmd = ["uv", "run", str(ROOT / "scripts" / script_name), *script_args]
         proc = subprocess.Popen(
             cmd, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, bufsize=1, preexec_fn=os.setsid,

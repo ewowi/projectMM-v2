@@ -78,6 +78,9 @@ class WsServer {
  public:
   WsServer() : wsServer_(kWsPort), ws_("/") {}
 
+  // Sprint 4: same deferral as pal::HttpServer::begin — the listener cannot
+  // start until lwIP has a netif (Sprint 5 / WiFi). Routes still register
+  // via onEvent/addHandler so they're ready when Sprint 5 re-invokes begin().
   void begin() {
     ws_.onEvent([](AsyncWebSocket* /*srv*/, AsyncWebSocketClient* client,
                    AwsEventType type, void* /*arg*/,
@@ -86,8 +89,7 @@ class WsServer {
       else if (type == WS_EVT_DISCONNECT) printf("[WsServer] client #%u disconnected\n", client->id());
     });
     wsServer_.addHandler(&ws_);
-    wsServer_.begin();
-    printf("[WsServer] listening on ws://0.0.0.0:%u\n", (unsigned)kWsPort);
+    printf("[WsServer] deferred — no network until Sprint 5 lands WiFi\n");
   }
 
   void broadcastText(const char* data, size_t len) {

@@ -5,6 +5,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _pio import pio_bin
+
 ROOT = Path(__file__).resolve().parent.parent
 
 _TAGS = ("[PASSED]", "[FAILED]", "[SKIPPED]")
@@ -49,7 +52,7 @@ def _align(lines):
 
 def main(argv):
     proc = subprocess.Popen(
-        ["pio", "test", "-e", "pc-test", *argv],
+        [pio_bin(), "test", "-e", "pc-test", *argv],
         cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         text=True, bufsize=1,
     )

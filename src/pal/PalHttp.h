@@ -208,7 +208,14 @@ class HttpServer {
         });
   }
 
-  void begin() { server_.begin(); }
+  // Sprint 4: AsyncServer::begin() asserts inside FreeRTOS queue ops if the
+  // lwIP TCP/IP task isn't running, which on arduino-esp32 only happens
+  // once WiFi or Ethernet brings up a netif. v2 has no WiFi module yet
+  // (Sprint 5) so begin() is a no-op on Arduino — the listener will start
+  // when Sprint 5's WifiStaModule signals network-ready and re-invokes it.
+  void begin() {
+    printf("[HttpServer] deferred — no network until Sprint 5 lands WiFi\n");
+  }
 
  private:
   AsyncWebServer server_;
