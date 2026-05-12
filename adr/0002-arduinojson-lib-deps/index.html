@@ -12,31 +12,29 @@
         <meta name="author" content="MoonModules">
       
       
-        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/lights/">
+        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/adr/0002-arduinojson-lib-deps/">
       
       
-        <link rel="prev" href="../architecture/process/">
+        <link rel="prev" href="../0001-vendor-cpp-httplib/">
       
-      
-        <link rel="next" href="../deploy/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Lights - projectMM v2</title>
+        <title>0002 — ArduinoJson via lib_deps - projectMM v2</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,7 +53,7 @@
       
     
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#lights" class="md-skip">
+        <a href="#adr-0002-use-lib_deps-for-arduinojson-codify-the-registry-vs-vendor-rule" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +92,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="projectMM v2" class="md-header__button md-logo" aria-label="projectMM v2" data-md-component="logo">
+    <a href="../.." title="projectMM v2" class="md-header__button md-logo" aria-label="projectMM v2" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Lights
+              0002 — ArduinoJson via lib_deps
             
           </span>
         </div>
@@ -227,7 +225,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -248,7 +246,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../architecture/system/" class="md-tabs__link">
+        <a href="../../architecture/system/" class="md-tabs__link">
           
   
   
@@ -264,11 +262,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../../lights/" class="md-tabs__link">
         
   
   
@@ -287,7 +283,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../deploy/" class="md-tabs__link">
+      <a href="../../deploy/" class="md-tabs__link">
         
   
   
@@ -308,7 +304,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../development/" class="md-tabs__link">
+        <a href="../../development/" class="md-tabs__link">
           
   
   
@@ -324,11 +320,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../adr/0001-vendor-cpp-httplib/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../0001-vendor-cpp-httplib/" class="md-tabs__link">
           
   
   
@@ -362,7 +360,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="projectMM v2" class="md-nav__button md-logo" aria-label="projectMM v2" data-md-component="logo">
+    <a href="../.." title="projectMM v2" class="md-nav__button md-logo" aria-label="projectMM v2" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -392,7 +390,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -471,7 +469,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/system/" class="md-nav__link">
+      <a href="../../architecture/system/" class="md-nav__link">
         
   
   
@@ -499,7 +497,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/process/" class="md-nav__link">
+      <a href="../../architecture/process/" class="md-nav__link">
         
   
   
@@ -531,19 +529,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../lights/" class="md-nav__link">
         
   
   
@@ -559,7 +548,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -571,7 +559,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deploy/" class="md-nav__link">
+      <a href="../../deploy/" class="md-nav__link">
         
   
   
@@ -650,7 +638,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/" class="md-nav__link">
+      <a href="../../development/" class="md-nav__link">
         
   
   
@@ -678,7 +666,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/release-01/" class="md-nav__link">
+      <a href="../../development/release-01/" class="md-nav__link">
         
   
   
@@ -706,7 +694,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/release-02/" class="md-nav__link">
+      <a href="../../development/release-02/" class="md-nav__link">
         
   
   
@@ -738,26 +726,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
             
   
   
@@ -775,7 +768,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -793,7 +786,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/0001-vendor-cpp-httplib/" class="md-nav__link">
+      <a href="../0001-vendor-cpp-httplib/" class="md-nav__link">
         
   
   
@@ -818,10 +811,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../adr/0002-arduinojson-lib-deps/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0002 — ArduinoJson via lib_deps
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -837,6 +857,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-deps-cheat-sheet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future deps cheat sheet
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -869,6 +953,58 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-deps-cheat-sheet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future deps cheat sheet
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -887,9 +1023,69 @@
   
 
 
-<h1 id="lights">Lights<a class="headerlink" href="#lights" title="Permanent link">&para;</a></h1>
-<p>The first domain on top of the runtime. Effects produce frames, drivers consume them, layers and modifiers transform them in between. All of this is built on top of the core <code>Module</code> contract; the runtime itself has no knowledge of pixels.</p>
-<p>This page is filled in during <a href="../development/release-01/#sprint-4">Release 1 Sprint 4</a>.</p>
+<h1 id="adr-0002-use-lib_deps-for-arduinojson-codify-the-registry-vs-vendor-rule">ADR 0002 — Use <code>lib_deps</code> for ArduinoJson; codify the registry-vs-vendor rule<a class="headerlink" href="#adr-0002-use-lib_deps-for-arduinojson-codify-the-registry-vs-vendor-rule" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Accepted, 2026-05-12.
+<strong>Supersedes:</strong> none. <strong>Refines:</strong> <a href="../0001-vendor-cpp-httplib/">ADR 0001</a> by codifying the rule it implicitly applied.
+<strong>Related:</strong> <a href="../../development/release-01/#sprint-3">Release 1, Sprint 3</a> — <code>StatefulModule</code> port needs JSON.</p>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>Sprint 3's port of v1's <code>StatefulModule.h</code> brings in JSON-driven control schemas, value setting, and state persistence. v1 uses <code>bblanchon/ArduinoJson @ ^7</code> everywhere (<code>JsonDocument</code>, <code>JsonVariantConst</code>, <code>JsonObject</code>, <code>JsonObjectConst</code>, <code>JsonArray</code>). Replacing it with a hand-rolled JSON shim would force a rewrite of every ported module against the new shim — pushing us back toward the greenfield trap that triggered the Sprint 2 reset.</p>
+<p>v2 therefore needs ArduinoJson. The question is <strong>how</strong> to get it.</p>
+<p>ADR 0001 vendored cpp-httplib at <code>lib/httplib/</code>. That decision was driven by a specific gap: <code>cpp-httplib</code> is <strong>not in PlatformIO's library registry</strong>. The only alternative there was <code>lib_deps</code> pointing at the upstream GitHub URL — which would have made PlatformIO's library scanner try to compile cpp-httplib's demos and tests. Vendoring was the cleanest option <em>because the registry path wasn't available</em>, not because vendoring is the better default.</p>
+<p>ArduinoJson is <strong>in PIO's registry</strong>. The <code>lib_deps</code> path that was unworkable for cpp-httplib is the natural path here: <code>bblanchon/ArduinoJson @ ^7.2.1</code> — the same line v1 uses.</p>
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p><strong>Add ArduinoJson via <code>lib_deps</code> in <code>platformio.ini</code>:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="na">lib_deps</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="na">bblanchon/ArduinoJson @ ^7.2.1</span>
+</code></pre></div>
+<p><strong>Codify the rule for future third-party dependencies:</strong></p>
+<blockquote>
+<p>When a third-party library is <strong>in PlatformIO's registry</strong>, add it via <code>lib_deps</code> with a version constraint. When it is <strong>not in the registry</strong>, vendor it under <code>lib/&lt;name&gt;/</code> per ADR 0001.</p>
+</blockquote>
+<p>This rule explains both ADRs together: cpp-httplib gets vendored because it must; ArduinoJson gets <code>lib_deps</code> because it can. Both decisions still require their own ADR — the rule decides the <em>mechanism</em> but the ADR records the <em>dependency</em>.</p>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<p><strong>Cost.</strong>
+- Build needs network access on a cold PlatformIO cache (first build of a fresh checkout). CI caches <code>.pio/libdeps/</code> between runs, so this is a one-time cost per cache eviction.
+- The dependency is not visible in the source tree — readers have to consult <code>platformio.ini</code> to see what we depend on.
+- A version constraint (<code>@ ^7.2.1</code>) accepts patch and minor updates automatically. If upstream introduces a regression we'd inherit it; mitigate by pinning to <code>@ 7.2.1</code> exact if it ever bites.</p>
+<p><strong>Benefit.</strong>
+- PlatformIO devs recognize <code>lib_deps</code> immediately — no <code>lib/</code> directory hunt, no "why is there 6k LOC of vendored code in our repo".
+- Matches v1's exact dependency declaration: <code>bblanchon/ArduinoJson @ ^7</code> (v2 pins to <code>^7.2.1</code> for an explicit floor).
+- Updates are a one-line bump.
+- Build flag <code>-DARDUINOJSON_ENABLE_*</code> macros (if needed for footprint tuning on ESP32) live in <code>platformio.ini</code> next to the dependency itself.</p>
+<p><strong>What is <em>not</em> allowed under this ADR.</strong>
+- Adding any other third-party library without an ADR. The rule above tells you which bucket the new ADR fits — it does not authorize silent additions.
+- Mixing both for the same library (do not also vendor ArduinoJson). One source of truth per dep.</p>
+<h2 id="future-deps-cheat-sheet">Future deps cheat sheet<a class="headerlink" href="#future-deps-cheat-sheet" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Library</th>
+<th>In PIO registry?</th>
+<th>Mechanism</th>
+<th>ADR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cpp-httplib</td>
+<td>No</td>
+<td>Vendored at <code>lib/httplib/</code></td>
+<td>0001</td>
+</tr>
+<tr>
+<td>ArduinoJson</td>
+<td>Yes</td>
+<td><code>lib_deps</code></td>
+<td>0002 (this)</td>
+</tr>
+<tr>
+<td>ESPAsyncWebServer</td>
+<td>Yes</td>
+<td><code>lib_deps</code> (Sprint 4)</td>
+<td>TBD</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -945,10 +1141,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

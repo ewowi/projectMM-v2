@@ -318,6 +318,26 @@
   
 
       
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="adr/0001-vendor-cpp-httplib/" class="md-tabs__link">
+          
+  
+  
+  ADRs
+
+        </a>
+      </li>
+    
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -722,7 +742,150 @@
   <span class="md-ellipsis">
     
   
-    Release 1 — Restart to Parity
+    Release 1 — Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="development/release-02/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 2 — v1 parity + cutover
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ADRs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="adr/0001-vendor-cpp-httplib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0001 — Vendor cpp-httplib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="adr/0002-arduinojson-lib-deps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0002 — ArduinoJson via lib_deps
   
 
     
@@ -816,14 +979,15 @@
 <p>A <code>Module</code> has a six-method lifecycle: <code>setup()</code>, <code>loop()</code> (hot path), <code>loop20ms()</code>, <code>loop1s()</code>, <code>loop10s()</code>, <code>teardown()</code>. The <code>Scheduler</code> runs modules as a directed acyclic graph of stages, pinned across every core the platform offers, with lock-free SPSC ring buffers carrying data across core boundaries. The <code>Pal</code> exposes only what is truly platform-specific — timing, GPIO, filesystem basics, RTOS primitives, heap query — and nothing else.</p>
 <p>The entry domain is <strong>light control</strong>: LEDs over GPIO or network. Effects, layers, drivers, layouts, and modifiers all live in <code>modules/lights/</code> as a domain on top of the runtime. The runtime itself has no knowledge of pixels, frames, or LEDs.</p>
 <h2 id="the-main-driver">The main driver<a class="headerlink" href="#the-main-driver" title="Permanent link">&para;</a></h2>
-<p><strong>Frugality</strong> — frugal in code, in CPU cycles, and in resources. The full statement of the principle, the guardrails that enforce it, and the anti-drift rules that keep the framework itself from eroding live in <a href="architecture/process/">process architecture</a>. Both the system and process architectures ship as the contract under which every sprint executes.</p>
+<p><strong>Minimalism</strong> — minimal in code, in CPU cycles, and in resources. The full statement of the principle, the guardrails that enforce it, and the anti-drift rules that keep the framework itself from eroding live in <a href="architecture/process/">process architecture</a>. Both the system and process architectures ship as the contract under which every sprint executes.</p>
 <h2 id="where-to-go-next">Where to go next<a class="headerlink" href="#where-to-go-next" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="architecture/system/">System architecture</a> — the core in one page.</li>
-<li><a href="architecture/process/">Process architecture</a> — frugality, guardrails, anti-drift.</li>
+<li><a href="architecture/process/">Process architecture</a> — minimalism, guardrails, anti-drift.</li>
 <li><a href="lights/">Lights</a> — the first domain (filled in during Release 1 Sprint 4).</li>
 <li><a href="deploy/">Deploy</a> — build, flash, test (filled in during Release 1 Sprint 1).</li>
-<li><a href="development/release-01/">Release 1 plan</a> — six sprints to parity with v1.</li>
+<li><a href="development/release-01/">Release 1 plan</a> — foundation: skeleton → light pipeline + persistence + scaling (seven sprints).</li>
+<li><a href="development/release-02/">Release 2 plan</a> — ArtNet in, NTP, OTA, v1 → v2 cutover.</li>
 </ul>
 
 

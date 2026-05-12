@@ -320,6 +320,26 @@
   
 
       
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../adr/0001-vendor-cpp-httplib/" class="md-tabs__link">
+          
+  
+  
+  ADRs
+
+        </a>
+      </li>
+    
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -544,10 +564,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-frugality-the-main-driver" class="md-nav__link">
+  <a href="#1-minimalism-the-main-driver" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Frugality — the main driver
+        1. Minimalism — the main driver
       
     </span>
   </a>
@@ -555,10 +575,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-guardrails-frugality-enforced-mechanically" class="md-nav__link">
+  <a href="#2-guardrails-minimalism-enforced-mechanically" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Guardrails — frugality enforced mechanically
+        2. Guardrails — minimalism enforced mechanically
       
     </span>
   </a>
@@ -570,6 +590,17 @@
     <span class="md-ellipsis">
       
         3. Anti-drift — why these rules survive
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-port-and-minimize-where-substantive-modules-come-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Port-and-minimize — where substantive modules come from
       
     </span>
   </a>
@@ -740,7 +771,150 @@
   <span class="md-ellipsis">
     
   
-    Release 1 — Restart to Parity
+    Release 1 — Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/release-02/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 2 — v1 parity + cutover
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADRs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ADRs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/0001-vendor-cpp-httplib/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0001 — Vendor cpp-httplib
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../adr/0002-arduinojson-lib-deps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0002 — ArduinoJson via lib_deps
   
 
     
@@ -788,10 +962,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-frugality-the-main-driver" class="md-nav__link">
+  <a href="#1-minimalism-the-main-driver" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Frugality — the main driver
+        1. Minimalism — the main driver
       
     </span>
   </a>
@@ -799,10 +973,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-guardrails-frugality-enforced-mechanically" class="md-nav__link">
+  <a href="#2-guardrails-minimalism-enforced-mechanically" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Guardrails — frugality enforced mechanically
+        2. Guardrails — minimalism enforced mechanically
       
     </span>
   </a>
@@ -814,6 +988,17 @@
     <span class="md-ellipsis">
       
         3. Anti-drift — why these rules survive
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-port-and-minimize-where-substantive-modules-come-from" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Port-and-minimize — where substantive modules come from
       
     </span>
   </a>
@@ -844,8 +1029,8 @@
 <p>How projectMM v2 is built and changed. This page is a constraint on every release. A pull request that violates it either is rejected or carries a paired ADR file (<code>docs/adr/NNNN-*.md</code>) recording the change explicitly.</p>
 <p>The <a href="../system/">system architecture</a> constrains the artifact. This page constrains how the artifact changes.</p>
 <hr />
-<h2 id="1-frugality-the-main-driver">1. Frugality — the main driver<a class="headerlink" href="#1-frugality-the-main-driver" title="Permanent link">&para;</a></h2>
-<p><strong>Frugal in code, in CPU cycles, and in resources.</strong> Every change answers two questions before it lands:</p>
+<h2 id="1-minimalism-the-main-driver">1. Minimalism — the main driver<a class="headerlink" href="#1-minimalism-the-main-driver" title="Permanent link">&para;</a></h2>
+<p><strong>Minimal in code, in CPU cycles, and in resources.</strong> Every change answers two questions before it lands:</p>
 <ol>
 <li>Does this addition pay for itself? A new file, test surface, doc page, or deploy script — what does it replace or extend?</li>
 <li>What did you remove? Every release removes at least one thing. A release that adds without removing must justify why.</li>
@@ -853,29 +1038,29 @@
 <p>If the answer to (1) is "nothing", the PR is rejected.</p>
 <p>The three dimensions are tested differently:</p>
 <ul>
-<li><strong>Code frugality</strong> — whether a reader can hold the core in their head. Measured in LOC budgets per surface and in reviewer cognitive load.</li>
-<li><strong>CPU frugality</strong> — <code>loop()</code> time under realistic load on every active core.</li>
-<li><strong>Resource frugality</strong> — static and runtime footprint per module across RAM, flash, and any other constrained resource.</li>
+<li><strong>Code minimalism</strong> — whether a reader can hold the core in their head. Measured in LOC budgets per surface and in reviewer cognitive load.</li>
+<li><strong>CPU minimalism</strong> — <code>loop()</code> time under realistic load on every active core.</li>
+<li><strong>Resource minimalism</strong> — static and runtime footprint per module across RAM, flash, and any other constrained resource.</li>
 </ul>
-<p>Frugality applies equally to source, tests, deploy scripts, and documentation. The principle is not new: essential complexity only (Brooks), Gall's Law, and the Saint-Exupéry rule that perfection is reached not when nothing more can be added but when nothing more can be taken away.</p>
+<p>Minimalism applies equally to source, tests, deploy scripts, and documentation. The principle is not new: essential complexity only (Brooks), Gall's Law, and the Saint-Exupéry rule that perfection is reached not when nothing more can be added but when nothing more can be taken away.</p>
 <hr />
-<h2 id="2-guardrails-frugality-enforced-mechanically">2. Guardrails — frugality enforced mechanically<a class="headerlink" href="#2-guardrails-frugality-enforced-mechanically" title="Permanent link">&para;</a></h2>
-<p>Frugality is a property that erodes silently. Guardrails make the erosion mechanical to detect. They land in Sprint 1 of Release 1, before any module exists; no commit in v2 is ever written without them running against it.</p>
+<h2 id="2-guardrails-minimalism-enforced-mechanically">2. Guardrails — minimalism enforced mechanically<a class="headerlink" href="#2-guardrails-minimalism-enforced-mechanically" title="Permanent link">&para;</a></h2>
+<p>Minimalism is a property that erodes silently. Guardrails make the erosion mechanical to detect. They land in Sprint 1 of Release 1, before any module exists; no commit in v2 is ever written without them running against it.</p>
 <p>Three enforcement tiers, in order of when they fire:</p>
 <ul>
-<li><strong>Pre-commit</strong> — fires before the diff is finished. Catches violations of the hot-path rules (no allocations, no blocking calls, no logging in any <code>loop*()</code> body) and architectural fitness functions (pin numbers trace to typed board config — <code>pinMode(5, ...)</code> is rejected, <code>pinMode(BoardPins::WS2812_DATA, ...)</code> is the correct form).</li>
-<li><strong>CI gates</strong> — block PR merge. Enforce LOC budgets per surface, footprint baselines per module, test-count baselines, and a doc-growth budget per release. Overshoot fails; a bump requires an explicit signed-off line in the release plan.</li>
+<li><strong>Pre-commit</strong> — fires before the diff is finished. Catches violations of the hot-path rules (no allocations, no blocking calls, no logging in any <code>loop*()</code> body), architectural fitness functions (pin numbers trace to typed board config — <code>pinMode(5, ...)</code> is rejected, <code>pinMode(BoardPins::WS2812_DATA, ...)</code> is the correct form), and the platform-isolation rule (<code>#ifdef ARDUINO</code>, <code>#include &lt;Arduino.h&gt;</code>, ESP-IDF headers, and similar platform-identity gates appear only in <code>src/pal/</code> files — see <a href="../system/#pal-the-only-place-platform-conditionals-appear">system architecture</a>).</li>
+<li><strong>CI gates</strong> — block PR merge. Enforce LOC budgets per surface, footprint baselines per module, and a doc-growth budget per release. Overshoot fails; a bump requires an explicit signed-off line in the release plan. Test infrastructure — frameworks, helpers, metrics, baseline files — obeys the same minimalism rule as source code: a new test file, helper, or CI metric must answer "what drift does this catch that the existing guardrails miss?"</li>
 <li><strong>Structural additions</strong> — block additions that bypass the design. A new top-level directory requires an ADR. A new file under <code>scripts/</code>, <code>tests/</code>, or <code>docs/</code> requires an inline justification of what existing surface was insufficient.</li>
 <li><strong>Process visibility</strong> — every developer-facing process (build, test, checks, doc-serve, future flash/upload/log-tail) is a card in <code>scripts/ui.py</code>. The UI is the process layer's census: adding a script is visible work; removing one is visible work. v1 reached 20+ <code>deploy/</code> scripts partly because the surface was never rendered in one place; v2 renders it from day one.</li>
 </ul>
-<p>The specific tools that implement each tier (linters, formatters, static analysers, hook scripts) are an implementation detail of Sprint 1, not a constraint. They earn their place by paying for themselves under the same frugality rule they enforce.</p>
+<p>The specific tools that implement each tier (linters, formatters, static analysers, hook scripts) are an implementation detail of Sprint 1, not a constraint. They earn their place by paying for themselves under the same minimalism rule they enforce.</p>
 <hr />
 <h2 id="3-anti-drift-why-these-rules-survive">3. Anti-drift — why these rules survive<a class="headerlink" href="#3-anti-drift-why-these-rules-survive" title="Permanent link">&para;</a></h2>
 <p>The guardrails above describe <em>what</em> is enforced. Anti-drift describes <em>why the framework itself does not erode</em> — the lesson from v1, where the verifier always trailed the code it was meant to constrain.</p>
 <ul>
 <li><strong>Guardrails ahead, never behind.</strong> The framework ships before the code it constrains. This inverts the v1 timeline.</li>
 <li><strong>Mandatory subtraction.</strong> Every release removes at least one thing. "What did you remove?" is a sprint-close question alongside "what did you add?". A system that never removes anything will always grow until someone considers a restart.</li>
-<li><strong>Frugality is a review gate.</strong> Every PR answers the two questions in §1 before any other.</li>
+<li><strong>Minimalism is a review gate.</strong> Every PR answers the two questions in §1 before any other.</li>
 <li><strong>Fix causes, not symptoms.</strong> When a change does not behave correctly, find why and fix it at the cause. Do not add code that masks a symptom — every such patch creates a new failure mode that needs its own patch, and the system grows by accretion. Patterns to refuse: the retry added because something is flaky, the timer added because something races, the try/catch that swallows an error "just in case", the re-init that papers over inconsistent state. If the cause cannot be identified, the work is blocked — not a chance to add a band-aid.</li>
 <li><strong>Architecture is a constraint, not a description.</strong> <a href="../system/">System architecture</a> is the reference for every review. Changes to it happen only via ADR — never silently. v1's drift came from the architecture quietly becoming one document among many.</li>
 <li><strong>Recurring evaluation releases.</strong> Every fifth release is a no-feature evaluation that walks the code, checks for drift, and proposes removals. The schedule is set at the start of v2 Sprint 1, not at the end of Release 4.</li>
@@ -883,6 +1068,20 @@
 <li><strong>The verifier obeys the same rules it enforces.</strong> Adding a new pre-commit hook, CI gate, or analysis script requires the same justification as adding a new module: what it replaces, what it extends. Without this rule the guardrails framework drifts the way <code>deploy/</code> drifted in v1.</li>
 </ul>
 <p>None of these is sufficient on its own. Together they create the friction that prevents drift from accumulating below the threshold where anyone notices it.</p>
+<hr />
+<h2 id="4-port-and-minimize-where-substantive-modules-come-from">4. Port-and-minimize — where substantive modules come from<a class="headerlink" href="#4-port-and-minimize-where-substantive-modules-come-from" title="Permanent link">&para;</a></h2>
+<p>v2 is not a greenfield rewrite of v1. The first attempt at Sprint 2 and Sprint 3 of Release 1 tried that path and produced buggy distillations of code v1 had already debugged into stability (TCP fragmentation, WS handshake corner cases, threading races). The minimalism principle was being applied to a blank page; it should have been applied to v1's working code.</p>
+<p>The rule: any module above trivial size is <em>ported</em> from v1, not rewritten. Ported means brought in unchanged, then stripped until it pays for itself.</p>
+<p>The discipline that prevents this from degrading into copying:</p>
+<ul>
+<li><strong>Copy first, then strip.</strong> Bring the v1 file into v2 unchanged in the first commit. Read it line by line. Strip in a follow-up commit. Do not rearrange before you understand — rearranging-before-understanding is how v1's drift happened.</li>
+<li><strong>Strip patches, not features.</strong> The port-and-minimize target is v1 code that exists because something was patched over instead of fixed at the cause: retries around flaky behaviour, swallow-everything <code>try/catch</code> blocks, timers that paper over races, re-init paths that hide inconsistent state (the §3 list applied retroactively to v1). Each such patch is replaced by an architecture decision recorded in this document or a paired ADR — the cause goes away, the patch goes away with it. <strong>Future-needed features are not subtraction targets.</strong> If a later sprint in this release (or the next one) will use the code, leave it: stripping a working feature now means re-porting it later, which is the waste this doctrine exists to prevent. The goal of port-and-minimize is to fix v1's drift, not to delete v1's capability.</li>
+<li><strong>An empty port-and-minimize step is a valid outcome.</strong> Sometimes the v1 file is already well-built and the honest answer is "nothing to strip." The PR description records the deliberation regardless: which structures were examined, why each was kept, whether any "patches over symptoms" were found. This is different from "copied without reading," which the PR description proves by naming the decisions examined.</li>
+<li><strong>Guardrails are the verifier.</strong> The same LOC budgets, hot-path bans, GPIO ban, and structural-additions allowlist that govern new code govern ports. A port arriving over its surface's LOC budget fails CI; bumping requires the same signed-off release-plan line as any other bump.</li>
+<li><strong>The architecture is not negotiable.</strong> <a href="../system/">System architecture</a> defines what belongs in core vs. modules. v1 mixed networking and system info into <code>Pal.h</code>; v2 does not. Anything that would cross a v2 core boundary as it is ported needs an ADR — never silently. If the v1 file mixes concerns the v2 architecture separates, split it during the port.</li>
+<li><strong>What is <em>not</em> ported.</strong> Trivial code — a 30-line helper, a hello module, a tiny test — is faster to write fresh than to port. The threshold is judgement: if v1's version is ≤ ~50 LOC <em>and</em> writing the v2 version fresh takes an afternoon, write it. Otherwise, port.</li>
+<li><strong>The core skeleton is exempt.</strong> <code>Module</code>, <code>ModuleManager</code>, <code>Scheduler</code>, and <code>Pal</code> were re-decided in v2 (the boundary between core and modules is one of the things v2 fixes). They are not ports — they are the frame everything else is ported into.</li>
+</ul>
 
 
 
