@@ -23,8 +23,24 @@ class WebSocketModule : public MoonModule {
   void loop20ms() override;  // ESP32: cleanup closed clients; PC: no-op
   void loop1s() override;    // broadcast schema + state if hasClients
 
+  // Push a raw binary frame to all connected clients. Used by Sprint 6's
+  // PreviewModule for the preview-frame pixel blob; callers handle their
+  // own framing (e.g. the [0x02, w, h, d, RGB...] header the frontend's
+  // renderPixelFrame parses).
+  void broadcastBinary(const uint8_t* data, size_t len) {
+    if (ws_) ws_->broadcastBinary(data, len);
+  }
+  bool hasClients() const { return ws_ && ws_->hasClients(); }
+
  private:
   std::unique_ptr<pal::WsServer> ws_;
+  // Tracked across loop1s ticks so schema only re-broadcasts when something
+  // actually changed (new client, module added/removed, schemaDirty bumped).
+  // Sprint 5 broadcast schema every second, which tore down the frontend's
+  // DOM at 1 Hz — input focus jumped, preview canvas reset, modules card
+  // flickered. Now only state goes out periodically.
+  size_t last_client_count_ = 0;
+  size_t last_module_count_ = 0;
 
   void broadcast_schema_();
   void broadcast_state_();

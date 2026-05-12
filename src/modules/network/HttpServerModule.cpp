@@ -130,6 +130,26 @@ void HttpServerModule::setup() {
     return pal::HttpResponse{200, "application/json", std::move(body)};
   });
 
+  // POST /api/control — single-control update from the frontend's `input`
+  // handler. Body: {"id":"<module-id>","key":"<control>","value":<v>}.
+  // The frontend was ported verbatim from v1, which uses this endpoint;
+  // we expose it here to honour the v1 wire contract. PATCH /api/modules/{id}
+  // is available too — same setControl() flow under the hood — for callers
+  // who prefer a REST-shaped path.
+  server_->onPost("/api/control", [this](const std::string& body) {
+    if (!manager_) return json_err(500, "no manager");
+    JsonDocument doc;
+    if (deserializeJson(doc, body)) return json_err(400, "bad json");
+    const char* id  = doc["id"]  | "";
+    const char* key = doc["key"] | "";
+    if (!*id || !*key) return json_err(400, "id and key required");
+    std::lock_guard<std::recursive_mutex> lk(manager_->mutex());
+    MoonModule* m = manager_->find(id);
+    if (!m) return json_err(404, "not found");
+    m->setControl(key, JsonVariantConst(doc["value"]));
+    return pal::HttpResponse{200, "application/json", "{\"ok\":true}"};
+  });
+
   // GET /api/log — recent log lines from pmm::Logger's ring buffer. Format
   // matches the frontend's app.js poller: {"entries":["line",...]}.
   server_->onGet("/api/log", [](const std::string&) {

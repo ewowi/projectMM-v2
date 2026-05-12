@@ -26,12 +26,14 @@ BUDGETS = {
     "src/pal/Pal.h":           100,  # millis, micros, yield, sleep
     "src/pal/PalFs.h":         150,  # LittleFS (ESP32) + std::filesystem (PC) — lands in Sprint 5 for WiFi credentials
     "src/pal/PalWifi.h":       100,  # WiFi STA primitives — lands in Sprint 5 with WifiStaModule
+    "src/pal/PalUdp.h":        150,  # UDP send abstraction — lands in Sprint 6 with ArtnetOutModule
     "src/pal/PalHttp.h":       350,  # HTTP server abstraction (Sprint 2 port, v1 verbatim is 332)
     "src/pal/PalWs.h":         450,  # WebSocket abstraction (Sprint 3 port, v1 verbatim is 483)
     "src/pal/PalSystemInfo.h": 250,  # chip_model, reset_reason_str, build info — bumped 200→250 in Sprint 4 when the ESP32 branch landed
 
     "src/modules/network": 250,      # Module wrappers only (HttpServerModule + WebSocketModule)
-    "src/modules/system":  400,      # SystemStatusModule + WifiStaModule + Logger — bumped 300→400 in Sprint 5
+    "src/modules/system":  500,      # SystemStatusModule + WifiStaModule + Logger + StateStoreModule — bumped 400→500 in Sprint 6
+    "src/modules/lights":  600,      # RGB.h + Pixelable.h + PixelRegistry.h + Ripples/Preview/ArtnetOut (Sprint 6)
 }
 
 EXTS = {".h", ".hpp", ".cpp", ".cc"}

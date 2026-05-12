@@ -332,7 +332,12 @@ function handleStateUpdate(state) {
                     'input[data-mid="' + mid + '"][data-key="' + k + '"]');
                 if (input) {
                     const lastDrag = dragTs[entry.id + ':' + key] || 0;
-                    if (Date.now() - lastDrag > 1000) {
+                    // Skip the value write if the user is actively editing
+                    // this field (focused). Without this, a text field like
+                    // artnet-out's dest_ip gets clobbered every 1 s while
+                    // the user is still typing.
+                    const editing = document.activeElement === input;
+                    if (!editing && Date.now() - lastDrag > 1000) {
                         if (input.dataset.toggle) {
                             input.checked = !!value;
                         } else {

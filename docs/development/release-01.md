@@ -46,10 +46,10 @@ Sprint 2 and Sprint 3 were initially attempted as greenfield rewrites of v1's HT
 | [Sprint 3](#sprint-3) | `Module` → `MoonModule` (merge controls); port `WsServer` + frontend sources + `SystemStatusModule`; UI shows live system status | MoonModule ≤ 600, system ≤ 300 LOC |
 | [Sprint 4](#sprint-4) | Pal-minimum + ESP32 builds green + on-target tests + HIL | Pal ≤ 200 LOC |
 | [Sprint 5](#sprint-5) | WiFi-STA + REST + WebSocket over hardware; frontend connects unchanged | per-module ≤ 300 LOC |
-| [Sprint 6](#sprint-6) | Light domain: producer → SPSC ring → consumer; one effect, one preview driver | per-module ≤ 200 LOC |
-| [Sprint 7](#sprint-7) | ArtNet, OTA, NTP, state persistence — parity with v1 first-boot pipeline | per-module ≤ 300 LOC |
+| [Sprint 6](#sprint-6) | Light domain foundation + LittleFS state persistence: RipplesEffect + Preview + Art-Net out + modules.json / per-module state survive reboot | per-module ≤ 300 LOC |
+| [Sprint 7](#sprint-7) | Two-core + PSRAM scaling: PalRtos pinned tasks, PalHeap PSRAM, FrameRing SPSC, ArtnetOut pinned to core 1, stress-test 128×128 on s3 | per-module ≤ 300 LOC |
 
-Each sprint closes with a working device (or working PC application for sprints 2–3). After Sprint 7, v1 is tagged `v1.8.x-legacy`, this repo is renamed from `projectMM-v2` to `projectMM`, and v2 ships its first stable tag `v2.0.0`.
+Each sprint closes with a working device (or working PC application for sprints 2–3). After Sprint 7, Release 1 is tagged `v1.0.0-foundation` — the v2 codebase has a real light pipeline, scaled persistence, and a stress-tested dual-core path on hardware. The v1 → v2 cutover (rename + final stable tag) closes [Release 2](release-02.md), which adds ArtNet **in**, OTA, NTP, and any remaining v1 parity bits.
 
 ---
 
@@ -207,33 +207,142 @@ Deferred to Sprint 2+ as "earn its place":
 
 ---
 
-## Sprint 6 — Light domain {#sprint-6}
+## Sprint 6 — Light domain foundation + state persistence {#sprint-6}
 
-> **Scope:** Port the light pipeline as modules. One producer (effect), one consumer (preview driver), SPSC ring buffer between them at depth 2. `RGB`, `pixelBuf`, and the producer / consumer base classes live in `modules/lights/`, not in core. The DAG declaration API (`scheduler.connect(producer, consumer)`) is exercised by this sprint.
+> **Scope:** Three lighting modules — `RipplesEffect` produces an RGB buffer, `PreviewModule` ships it to the frontend as a binary WS frame, `ArtnetOutModule` packs Art-Net (OpDmx) over UDP. All on the single inline core 0 from Sprint 5; cross-module sharing via a tiny `PixelRegistry`. Pixel buffers in internal heap (≤ 64×64×1 ≈ 12 KB); two-core + PSRAM scaling lands in Sprint 7.
+>
+> Plus **LittleFS state persistence** so the device survives reboots: a `StateStoreModule` reads `/modules.json` + `/state/<id>.json` on boot to rebuild the user's module configuration and per-control values; saves the same on add / remove / control change. Without this, a Sprint 6 device loses its lighting modules every flash — clearly insufficient for daily use.
+>
+> Frugality first: **no parent modules**, **no producer / consumer base classes**, **no SPSC ring**, **no PSRAM allocator**, **no per-module core affinity**, **no effect layering**, **no FastLED / WS2812 driver**. The data flow lives in three lighting modules + four headers in `modules/lights/`, one new pal file, one new state-store module. `src/core/` is untouched — the StateStoreModule walks `manager_` from the outside and uses the existing `MoonModule::saveState` / `loadState` / `getControlValues` API.
 
 ### Definition of Done
 
-- [ ] `EffectBase` and `DriverBase` in `modules/lights/`
-- [ ] At least one effect (`SineEffect` or similar) producing a frame
-- [ ] At least one preview driver consuming it and exposing pixels via the Sprint 5 WebSocket
-- [ ] SPSC ring buffer primitive in core, depth 2, ESP32 + PC
-- [ ] PreviewModule frame rate matches v1 on the same hardware
-- [ ] Per-module footprint ≤ 200 LOC
+- [x] `modules/lights/RGB.h` — `struct RGB { r, g, b }` + inline `black()` and `fromHsv(h,s,v)`. 39 LOC. `static_assert(sizeof(RGB) == 3)` so consumers can `memcpy` straight into Art-Net DMX bytes and the preview frame body.
+- [x] `modules/lights/Pixelable.h` — `PixelBufferRef { data, width, height, depth, revision }` + `PixelSource` abstract base. 35 LOC. The `w/h/d` shape lines up with the frontend's `renderPixelFrame` so 1D, 2D, and 3D buffers are all the same type.
+- [x] `modules/lights/PixelRegistry.h` — singleton with `publish(id, src)` / `unpublish(src)` / `find(id)`. 41 LOC. Sidesteps `-fno-rtti` cleanly; no core changes, no virtual on `MoonModule`.
+- [x] `modules/lights/RipplesEffect.h` — extends `MoonModule` + `PixelSource`. Controls `width` (1..64, default 16), `height` (1..64, default 16), `depth` (1..16, default 1), `speed` (default 1.0), `hue_base` (default 0.6). Allocates via `new RGB[w*h*d]` in `onAllocateMemory()`; any dimension change rebuilds the buffer and bumps `revision_++`. 2D radial-ripple pattern (`cos(distance·0.6 − t·2)` brightness, hue rotates with distance for visible bands). Logs `[ripples] allocated WxHxD = N bytes` on each rebuild.
+- [x] `modules/lights/PreviewModule.h` — control `source` (default `ripples-0`). Resolves source via `PixelRegistry` and `ws-0` via `manager_->find()` + a `type()=="ws"` check + `static_cast<WebSocketModule*>` (no RTTI). In `loop20ms()` packs `[0x02, u16 w, u16 h, u16 d, RGB[w*h*d]]` (7-byte LE header — matches `renderPixelFrame` in `app.js`) and calls `WebSocketModule::broadcastBinary`. Skip-when-no-clients: a `hasClients()` pre-check avoids the memcpy when nobody is watching.
+- [x] `modules/lights/ArtnetOutModule.h` — controls `source` (default `ripples-0`), `dest_ip` (default `255.255.255.255`), `universe` (0..15, default 0). In `loop20ms()`, reads `pixelBuffer()`, packs `ceil(count*3 / 510)` Art-Net OpDmx packets (18-byte header, 510 DMX bytes = 170 RGB per packet), universe increments per packet from the base, sends via `pal::Udp::send`. Packet header verified on the wire: `Art-Net\0` + `0x5000` OpDmx + ProtVer 14.
+- [x] `src/pal/PalUdp.h` — `Udp::begin()` / `Udp::send(ip, port, data, len)`. ESP32 wraps `WiFiUDP` (`beginPacket`/`write`/`endPacket`), PC uses BSD `socket(SOCK_DGRAM)` + `sendto` with `SO_BROADCAST` enabled. 58 / 150 LOC.
+- [x] `main.cpp` registers `ripples` / `preview` / `artnet-out`. Default boot still adds only the four head modules (`system / wifi-sta / http / ws`); lighting modules come in via the UI's "Add module" picker. Scheduler stays at 1 core on ESP32 — two-core lands in Sprint 7.
+- [x] `src/modules/lights/` budget: 600 LOC in `check_loc.py` and `deploy.md`. Actual: 328 / 600 — comfortable headroom for Sprint 7's `FrameRing.h` + the PSRAM-allocation call sites.
+- [x] `src/pal/PalUdp.h` budget: 150 LOC. Actual: 58 / 150.
+- [x] HIL verification on `esp32dev` at `192.168.1.234`: open the device's frontend, add `ripples` + `preview` + `artnet-out` via the UI. Logs show `[ripples] allocated 16x16x1 = 768 bytes`. Art-Net listener on the host captures ~26 packets/sec at the 16×16×1 default — universe 0 carries 510 DMX bytes (170 RGB), universe 1 carries 258 DMX (86 RGB), total 768 channels = 16×16 RGB. Rate is below the 100 pps target because WiFi UDP latency stretches the single-core scheduler's 20 ms cadence; Sprint 7's core 1 will give Art-Net its own loop budget.
+- [x] PC end-to-end verified separately: WS binary preview frame validates as `0x02 | w=16 | h=16 | d=1 | RGB[768]`, Art-Net listener on `127.0.0.1:6454` receives the same two-universe split.
+- [x] Per-module footprint well under 300 LOC each: `RipplesEffect.h` 128 LOC, `PreviewModule.h` 106 LOC, `ArtnetOutModule.h` 107 LOC.
+
+#### State persistence (LittleFS)
+
+- [ ] `modules/system/StateStoreModule.h` — added FIRST in `main.cpp` after the four head modules. On `setup()`: reads `/modules.json` via `pal::fs_read_text`, for each `{type, id}` entry calls `manager_->add()` (skipping any id already present so the default head modules aren't duplicated). For each successfully-added module, reads `/state/<id>.json`, parses as JSON, calls `module->loadState(obj)` — restores per-control values onto the just-built module.
+- [ ] `loop10s()` walks the current module list, builds the `modules.json` candidate JSON, compares to the last-written snapshot. If the list changed (add / remove / reorder), writes the new snapshot. Same cadence checks each module's `saveState` output vs its last-written snapshot; differences trigger a write of `/state/<id>.json`. State files for IDs that no longer exist are deleted.
+- [ ] `WifiStaModule` already uses `pal::fs_write_text` for `/wifi.json` (Sprint 5) — that file stays orthogonal to the new `/modules.json` + `/state/*.json` scheme; WiFi creds live separately because they precede module construction.
+- [ ] Frontend interactions through the existing endpoints — no protocol changes needed:
+  - `POST /api/modules` (add) → next `loop10s` notices the new id → modules.json rewritten.
+  - `DELETE /api/modules/<id>` (remove) → next `loop10s` notices the gone id → modules.json rewritten, `/state/<id>.json` deleted.
+  - `POST /api/modules/reorder` → next `loop10s` notices the order change → modules.json rewritten.
+  - `POST /api/control` / `PATCH /api/modules/<id>` → next `loop10s` notices the new state hash → `/state/<id>.json` rewritten.
+- [ ] HIL: add `ripples` + `preview` + `artnet-out` via the UI, edit `speed` / `dest_ip`, wait ≥ 10 s, reboot the device (flash button or power-cycle). After WiFi reconnects, the three lighting modules are back at the same settings — confirmed via `/api/modules` and the live preview.
+- [ ] `src/modules/system/` budget bump if needed for `StateStoreModule` — current `372 / 400`, expected ~100 LOC addition → budget 400 → 500 if it overflows. Bump signed off here.
+
+### Pixel-buffer sharing — design note
+
+Producer (`RipplesEffect`) owns `RGB pixels_[count]`. On every `onUpdate("count")` it reallocates and bumps `revision_++`. It implements the `PixelSource` interface from `Pixelable.h`:
+
+```cpp
+PixelBufferRef pixelBuffer() const override {
+  return { pixels_, count_, revision_ };
+}
+```
+
+**Why a registry, not `dynamic_cast`.** The natural shape — `dynamic_cast<PixelSource*>(manager_->find(id))` — does not work on hardware: arduino-esp32 builds with `-fno-rtti`. Adding `-frtti` is a hammer (binary size, framework-wide effect) and adding a virtual `asPixelSource()` to `MoonModule` violates the "nothing in core" rule for this sprint. The frugal answer: a small **publish-on-setup / find-by-id registry** living entirely in `modules/lights/`.
+
+```cpp
+// modules/lights/PixelRegistry.h  (≈ 30 LOC)
+class PixelRegistry {
+ public:
+  static PixelRegistry& instance();
+  void   publish(const char* id, PixelSource* s);
+  void   unpublish(PixelSource* s);
+  PixelSource* find(const char* id) const;
+};
+```
+
+Producer side:
+
+```cpp
+void RipplesEffect::setup() {
+  PixelRegistry::instance().publish(id().c_str(), this);
+}
+void RipplesEffect::teardown() {
+  PixelRegistry::instance().unpublish(this);
+}
+```
+
+Consumer side:
+
+```cpp
+void PreviewModule::setup() {
+  source_ptr_ = PixelRegistry::instance().find(source_.c_str());
+}
+void PreviewModule::onUpdate(const char* k) {
+  if (std::strcmp(k, "source") == 0)
+    source_ptr_ = PixelRegistry::instance().find(source_.c_str());
+}
+void PreviewModule::loop20ms() {
+  if (!source_ptr_) source_ptr_ = PixelRegistry::instance().find(source_.c_str()); // late-add tolerance
+  if (!source_ptr_) return;
+  PixelBufferRef ref = source_ptr_->pixelBuffer();
+  if (ref.revision != last_rev_) { /* re-size derived state */ last_rev_ = ref.revision; }
+  // hot path: read ref.data[0..ref.count] directly
+}
+```
+
+**This is publish/subscribe — just the cheap version.** Publish happens on `setup()`, subscribe (= `find`) happens on `setup()` / `onUpdate("source")` / a fallback in `loop20ms` for tolerance to module-add order. The hot path is zero overhead: a cached pointer + one virtual call + one `uint32` revision compare. No event bus, no per-tick dispatch, no allocation. **Both consumers run on the same core as the producer in Sprint 6**, so no atomics are needed — a simple pointer read sees a consistent buffer because the scheduler ticks each module to completion before moving on. Sprint 7 splits one consumer off to core 1 and introduces an SPSC ring; the `PixelSource` interface and the registry stay unchanged.
+
+| | Registry + polling (this sprint) | Full event bus (deferred) |
+|---|---|---|
+| Hot-path cost per tick | 1 virtual call + 1 u32 compare | event lookup + dispatch + queue ops |
+| Allocation | none (post-setup) | per-event (or per-subscriber list mutation) |
+| Code surface | ≈ 30 LOC interface + registry | ≈ 150 LOC bus + boilerplate |
+| Best at | 1 producer + few consumers | many-to-many + selective updates |
+
+### Deferred
+
+- [ ] Two-core scheduler + SPSC ring + PSRAM buffers — promoted to Sprint 7 as the next focused sprint.
+- [ ] Parent modules + child trees (`addChild`). Land when effect-on-effect composition arrives.
+- [ ] Generic Producer / Consumer base classes. Sprint 7 ships one hand-rolled `FrameRing` in `modules/lights/`; promote to a generic interface only when a second producer/consumer pair appears.
+- [ ] FastLED / WS2812 GPIO driver (and `PalGpio.h` + typed board-config codegen). Lands when there's a board with a strip wired up.
+- [ ] Effect layering / blending. Comes with parent modules.
+- [ ] Pub/sub event bus. Registry + (later, ring) is enough; revisit when many-to-many fan-out + selective updates demand it.
 
 ---
 
-## Sprint 7 — Parity sprint {#sprint-7}
+## Sprint 7 — Two-core + PSRAM scaling {#sprint-7}
 
-> **Scope:** ArtNet (in + out), OTA firmware update, NTP wall-clock, LittleFS state persistence. Sprint closes when the v1 first-boot pipeline runs identically on v2 hardware.
+> **Scope:** Scale the Sprint 6 light pipeline to 128×128 by moving `ArtnetOutModule` onto **core 1** with an SPSC ring across cores, allocating the effect's pixel buffers from **PSRAM** when available, and re-enabling multi-core scheduling on ESP32 (which Sprint 5 was forced to disable when arduino-esp32's std::thread overflowed its 3 KB pthread stack). Foundation modules from Sprint 6 (`RipplesEffect`, `PreviewModule`, `ArtnetOutModule`, the registry, the `PixelSource` interface) all carry through unchanged on their hot paths — only *how* `ArtnetOutModule` acquires its frame and *where* the effect allocates change.
+>
+> **Risks isolated by the Sprint 6 → 7 split:** atomic memory ordering on cross-core SPSC is easy to get wrong; PSRAM-backed buffers are slower than internal heap (~5–10 MB/s vs ~30 MB/s) and may need cadence tweaks; xTaskCreatePinnedToCore replacing std::thread needs stack-size validation. Each risk has a clean rollback (revert to Sprint 6) if it goes sideways.
 
 ### Definition of Done
 
-- [ ] `ArtNetInModule`, `ArtNetOutModule` ship, wired by `autoWireKeys()`
-- [ ] `FirmwareUpdateModule` accepts file upload and GitHub-release flashing
-- [ ] `NtpModule` syncs and exposes `local_time`
-- [ ] State persistence via LittleFS modules
-- [ ] First-boot pipeline runs identically on v2 hardware (visual + metrics parity check against v1)
-- [ ] v1 tagged `v1.8.x-legacy`; this repo renamed from `projectMM-v2` to `projectMM`; v2 tagged `v2.0.0`
+- [ ] `src/pal/PalRtos.h` — `pal::task_create_pinned(fn, name, stack_bytes, arg, priority, core_id)`. ESP32: `xTaskCreatePinnedToCore` with the explicit stack size (avoids the pthread 3 KB default that bit Sprint 5). PC: `std::thread` (core_id ignored). Budget 80 LOC.
+- [ ] `src/pal/PalHeap.h` — `pal::psram_alloc(bytes)` / `pal::psram_free(ptr)`. ESP32 with PSRAM: `heap_caps_malloc(bytes, MALLOC_CAP_SPIRAM)`. ESP32 without PSRAM (classic `esp32dev` if not populated): falls back to internal heap via `heap_caps_malloc(MALLOC_CAP_INTERNAL)`. PC: regular `malloc` / `free`. Caller treats nullptr return as "alloc failed, skip frame" — no exceptions thrown. Budget 80 LOC.
+- [ ] `modules/lights/FrameRing.h` — depth-2 SPSC ring carrying RGB buffers. Two slots allocated alongside the effect's working buffer (PSRAM-backed). `acquire_write_slot()` returns the slot the producer should fill; `publish()` advances the head atomic with release semantics. `try_acquire_read()` returns the most recent published slot or nullptr; `release_read()` advances the tail atomic. ≤ 80 LOC. Producer never waits — on full, overwrites (drop frame). At 50 fps with one consumer ~20 ms behind, both producer and consumer settle near depth 1.
+- [ ] `MoonModule`: adds `uint8_t core_ = 0` field + `coreAffinity() const` accessor. `getSchema()` already emits a `core` field (Sprint 5 hardcoded it); this sprint wires it through. ~5 LOC change in core (the only one this release). Concrete modules set `core_ = 1` in their constructor when they want core 1; default stays 0.
+- [ ] `Scheduler::core_loop` reads `m->coreAffinity()` instead of `i % cores` for module-to-core assignment. Each core ticks only its own modules. Sprint 5's "core 0 inline" pattern stays for the calling thread; the extra cores are spawned via `pal::task_create_pinned` at 8 KB stacks.
+- [ ] `main.cpp` calls `pmm::Scheduler sched(&mm, 2)` on ESP32 (was 1 since Sprint 5).
+- [ ] `RipplesEffect` switches to `pal::psram_alloc` for its working buffer + the FrameRing's two slots. Any dimension change reallocates all three and bumps `revision_`. `width` / `height` max bumped 64 → 128 (so 128×128×1 = 49 152 B per slot, ~144 KB total — comfortable in PSRAM).
+- [ ] `ArtnetOutModule` switches data acquisition: instead of `source_->pixelBuffer()`, it grabs the source's `FrameRing*` (exposed via an extended `PixelSource::frameRing()` virtual that returns `nullptr` by default; `RipplesEffect` overrides it) and calls `try_acquire_read()` / `release_read()` around the packet-pack loop. `coreAffinity() = 1`.
+- [ ] `src/modules/lights/` budget bumped 600 → 700 LOC for the FrameRing addition + `pal::psram_alloc` call sites.
+- [ ] HIL verification on `esp32dev`: same scenarios as Sprint 6 still pass at 16×16×1 and 64×64×1. Confirm `[sched] core 1: entering loop` appears in `/api/log` (Sprint 5 never saw this).
+- [ ] HIL verification on `esp32s3_n16r8`: scale `width` + `height` to 128 — `/api/system`'s `psram_used_kb` jumps by ~150 KB for the three slots, preview keeps rendering, Art-Net receiver still sees the stream (97 universes/frame at ~24 Mbps). On `esp32dev` (no PSRAM), bumping to 128 returns null from `psram_alloc`, effect logs `[ripples] alloc failed at 128x128`, downstream modules skip — no crash.
+- [ ] Per-module footprint still ≤ 300 LOC each.
+
+### Deferred
+
+- [ ] Generic Producer / Consumer base classes. The Sprint 7 `FrameRing` is single-shape; promote when a second producer/consumer pair appears.
+- [ ] Per-module core affinity via UI control. `core_` is hardcoded per module class; making it a settable schema control lands when there's user demand for runtime remapping.
+- [ ] FastLED / WS2812 GPIO driver (still). Lands when a board with a strip is on the bench.
 
 ---
 
@@ -253,4 +362,4 @@ The [process architecture](../architecture/process.md) states the contract in hi
 
 **Verifier-of-the-verifier.** v1's answer was: the testing system's growth is gated by the structural rule, and its correctness is asserted only by the unit test that every module's `healthReport()` is non-empty — no meta-tests. v2 inherits this stance by default but should validate it once `healthReport()` exists.
 
-Each item closes with a one-line outcome in this section by Sprint 6 (kept, dropped, or replaced). What is kept moves into [process architecture](../architecture/process.md); what is dropped disappears.
+Each item closes with a one-line outcome in this section by Sprint 7 (kept, dropped, or replaced). What is kept moves into [process architecture](../architecture/process.md); what is dropped disappears.

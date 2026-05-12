@@ -20,8 +20,14 @@
 #include "../../pal/Pal.h"
 #include "../../pal/PalSystemInfo.h"
 
-// Build-time identification — typically set by the build system. Fall back
-// to compile-date stamps so PC builds still show something meaningful.
+// Build-time identification — `scripts/inject_build_info.py` generates
+// `BuildInfo.h` at the start of every PlatformIO build and adds its dir
+// to CPPPATH, so BUILD_DATE / BUILD_TIME refresh on every compile. The
+// __DATE__/__TIME__ fallback only fires if the script didn't run (e.g.,
+// editor "go to definition" with no project build active).
+#if __has_include("BuildInfo.h")
+  #include "BuildInfo.h"
+#endif
 #ifndef APP_VERSION
   #define APP_VERSION "v2-dev"
 #endif

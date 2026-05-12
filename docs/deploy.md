@@ -100,7 +100,7 @@ Counts non-blank lines in each surface and compares against the budget:
 | `src/pal/PalWs.h` | 450 | WebSocket (POSIX sockets on PC, AsyncWebSocket on ESP32) |
 | `src/pal/PalSystemInfo.h` | 250 | chip_model, reset_reason_str, build info (bumped 200→250 in Sprint 4 when the ESP32 branch landed) |
 | `src/modules/network/` | 250 | Module wrappers only: `HttpServerModule` + `WebSocketModule` |
-| `src/modules/system/` | 400 | SystemStatusModule + WifiStaModule + Logger ring buffer — bumped 300→400 in Sprint 5 |
+| `src/modules/system/` | 500 | SystemStatusModule + WifiStaModule + Logger + StateStoreModule — bumped 300→400 in Sprint 5, 400→500 in Sprint 6 |
 
 Pal files for `PalGpio`, `PalRtos`, and `PalHeap` are intentionally **not** pre-registered — each lands with its first consumer (Sprint 6 for the light driver and FreeRTOS task pin). Pre-registering a budget for a file that has no caller is the v1 kitchen-sink pattern this list exists to prevent.
 

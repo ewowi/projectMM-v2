@@ -46,7 +46,7 @@ void MoonModule::runLoop() {
 }
 
 void MoonModule::runLoop20ms() {
-  loop20ms();
+  if (enabled_) loop20ms();
   for (uint8_t i = 0; i < childCount_; ++i) children_[i]->runLoop20ms();
 }
 
@@ -58,11 +58,15 @@ void MoonModule::runLoop1s() {
   }
   timingPrevMs_    = now;
   timingPrevTicks_ = tickCount_;
-  loop1s();
+  if (enabled_) loop1s();
   for (uint8_t i = 0; i < childCount_; ++i) children_[i]->runLoop1s();
 }
 
 void MoonModule::runLoop10s() {
+  if (!enabled_) {
+    for (uint8_t i = 0; i < childCount_; ++i) children_[i]->runLoop10s();
+    return;
+  }
   loop10s();
   for (uint8_t i = 0; i < childCount_; ++i) children_[i]->runLoop10s();
 }

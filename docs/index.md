@@ -16,4 +16,5 @@ The entry domain is **light control**: LEDs over GPIO or network. Effects, layer
 - [Process architecture](architecture/process.md) — frugality, guardrails, anti-drift.
 - [Lights](lights.md) — the first domain (filled in during Release 1 Sprint 4).
 - [Deploy](deploy.md) — build, flash, test (filled in during Release 1 Sprint 1).
-- [Release 1 plan](development/release-01.md) — six sprints to parity with v1.
+- [Release 1 plan](development/release-01.md) — foundation: skeleton → light pipeline + persistence + scaling (seven sprints).
+- [Release 2 plan](development/release-02.md) — ArtNet in, NTP, OTA, v1 → v2 cutover.

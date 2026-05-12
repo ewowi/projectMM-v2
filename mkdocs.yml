@@ -41,7 +41,8 @@ nav:
   - Deploy: deploy.md
   - Development:
     - Overview: development/index.md
-    - Release 1 — Restart to Parity: development/release-01.md
+    - Release 1 — Foundation: development/release-01.md
+    - Release 2 — v1 parity + cutover: development/release-02.md
 
 markdown_extensions:
   - admonition

@@ -21,7 +21,34 @@ void WebSocketModule::loop1s() {
   // Idempotent; cheap once started.
   ws_->begin();
   if (!ws_->hasClients()) return;
-  broadcast_schema_();
+
+  // Broadcast schema only when something actually changed. The frontend
+  // tears down the DOM on every schema event (render() rebuilds every
+  // module card from scratch), so re-sending it every second would steal
+  // input focus and reset the preview canvas — both observed bugs.
+  // Triggers: extra client connected, modules added/removed (size
+  // changed), or any module flagged its schema dirty.
+  bool need_schema = false;
+  const size_t clients = ws_->clientCount();
+  if (clients > last_client_count_) need_schema = true;
+  last_client_count_ = clients;
+  {
+    std::lock_guard<std::recursive_mutex> lk(manager_->mutex());
+    const size_t n = manager_->size();
+    if (n != last_module_count_) need_schema = true;
+    last_module_count_ = n;
+    for (size_t i = 0; i < n; ++i) {
+      if (manager_->at(i)->schemaDirty()) { need_schema = true; break; }
+    }
+  }
+
+  if (need_schema) {
+    broadcast_schema_();
+    std::lock_guard<std::recursive_mutex> lk(manager_->mutex());
+    for (size_t i = 0; i < manager_->size(); ++i) {
+      manager_->at(i)->clearSchemaDirty();
+    }
+  }
   broadcast_state_();
 }
 

@@ -2,9 +2,13 @@
 
 #include "core/ModuleManager.h"
 #include "core/Scheduler.h"
+#include "modules/lights/ArtnetOutModule.h"
+#include "modules/lights/PreviewModule.h"
+#include "modules/lights/RipplesEffect.h"
 #include "modules/network/HttpServerModule.h"
 #include "modules/network/WebSocketModule.h"
 #include "modules/system/Logger.h"
+#include "modules/system/StateStoreModule.h"
 #include "modules/system/SystemStatusModule.h"
 #include "modules/system/WifiStaModule.h"
 #include "pal/Pal.h"
@@ -33,11 +37,19 @@ void setup() {
   mm.register_type<pmm::WifiStaModule>("wifi-sta");
   mm.register_type<pmm::HttpServerModule>("http", pal::default_http_port());
   mm.register_type<pmm::WebSocketModule>("ws");
+  mm.register_type<pmm::StateStoreModule>("state-store");
+  mm.register_type<pmm::RipplesEffect>("ripples");
+  mm.register_type<pmm::PreviewModule>("preview");
+  mm.register_type<pmm::ArtnetOutModule>("artnet-out");
 
+  // Head modules first (always added, never persisted by state-store).
   mm.add("system",   "system-0");
   mm.add("wifi-sta", "wifi-sta-0");
   mm.add("http",     "http-0");
   mm.add("ws",       "ws-0");
+  // State-store runs after the heads so its setup() can rehydrate any
+  // user-added modules from /modules.json + /state/<id>.json.
+  mm.add("state-store", "state-store-0");
   pmm::log("[main] %zu module(s) running  (UI on :%u, WS on :81)\n",
            mm.size(), (unsigned)pal::default_http_port());
 

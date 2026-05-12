@@ -110,8 +110,9 @@ class WsServer {
       if (c.status() == WS_CONNECTED && !c.queueIsFull()) c.binary(data, len);
   }
 
-  bool hasClients() const { return ws_.count() > 0; }
-  void tick() { ws_.cleanupClients(); }
+  bool   hasClients() const  { return ws_.count() > 0; }
+  size_t clientCount() const { return (size_t)ws_.count(); }
+  void   tick()              { ws_.cleanupClients(); }
 
  private:
   bool           started_ = false;
@@ -265,6 +266,11 @@ class WsServer {
   bool hasClients() const {
     std::lock_guard<std::mutex> lk(mx_);
     return !clients_.empty();
+  }
+
+  size_t clientCount() const {
+    std::lock_guard<std::mutex> lk(mx_);
+    return clients_.size();
   }
 
   void tick() {}  // no-op on PC
