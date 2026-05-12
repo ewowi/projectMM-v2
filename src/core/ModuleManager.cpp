@@ -38,6 +38,34 @@ bool ModuleManager::remove(const char* id) {
   return false;
 }
 
+void ModuleManager::reorder(const std::vector<std::string>& ids) {
+  std::lock_guard<std::recursive_mutex> lk(mu_);
+  std::vector<std::unique_ptr<MoonModule>> out;
+  out.reserve(modules_.size());
+  for (const auto& id : ids) {
+    for (auto it = modules_.begin(); it != modules_.end(); ++it) {
+      if (*it && (*it)->id_ == id) {
+        out.push_back(std::move(*it));
+        modules_.erase(it);
+        break;
+      }
+    }
+  }
+  for (auto& m : modules_) {
+    if (m) out.push_back(std::move(m));
+  }
+  modules_ = std::move(out);
+  std::printf("[mm] reorder: %zu ids requested\n", ids.size());
+}
+
+std::vector<std::string> ModuleManager::registered_types() const {
+  std::lock_guard<std::recursive_mutex> lk(mu_);
+  std::vector<std::string> out;
+  out.reserve(factories_.size());
+  for (const auto& kv : factories_) out.push_back(kv.first);
+  return out;
+}
+
 MoonModule* ModuleManager::find(const char* id) const {
   std::lock_guard<std::recursive_mutex> lk(mu_);
   for (const auto& m : modules_) {

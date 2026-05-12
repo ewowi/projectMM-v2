@@ -36,6 +36,22 @@ void HttpServerModule::setup() {
   // GET / — serve the v1 SPA bundle (gzipped).
   server_->onGetStaticGzip("/", "text/html", FRONTEND_HTML_GZ, FRONTEND_HTML_GZ_LEN);
 
+  // GET /api/types — registered module type names, for the frontend "Add
+  // module" picker. Default category "system" until more domains land.
+  server_->onGet("/api/types", [this](const std::string&) {
+    std::string body = "[";
+    if (manager_) {
+      bool first = true;
+      for (const auto& name : manager_->registered_types()) {
+        if (!first) body += ",";
+        first = false;
+        body += "{\"name\":\"" + name + "\",\"category\":\"system\"}";
+      }
+    }
+    body += "]";
+    return pal::HttpResponse{200, "application/json", std::move(body)};
+  });
+
   // GET /api/modules — list all modules as JSON. The manager lock is held
   // during iteration so a concurrent add/remove cannot invalidate the vector.
   server_->onGet("/api/modules", [this](const std::string&) {
@@ -49,6 +65,23 @@ void HttpServerModule::setup() {
     }
     body += "]";
     return pal::HttpResponse{200, "application/json", std::move(body)};
+  });
+
+  // POST /api/modules/reorder — reorder root modules. Body: {"parent_id":"",
+  // "ids":["id1","id2",...]}. parent_id is reserved for nested reorder once
+  // child trees exist (Sprint 6); ignored here. Registered before the more
+  // general "/api/modules" POST so exact-path matching cannot clash.
+  server_->onPost("/api/modules/reorder", [this](const std::string& body) {
+    if (!manager_) return json_err(500, "no manager");
+    JsonDocument doc;
+    if (deserializeJson(doc, body)) return json_err(400, "bad json");
+    std::vector<std::string> ids;
+    for (JsonVariantConst v : doc["ids"].as<JsonArrayConst>()) {
+      const char* s = v.as<const char*>();
+      if (s) ids.emplace_back(s);
+    }
+    manager_->reorder(ids);
+    return pal::HttpResponse{200, "application/json", "{\"ok\":true}"};
   });
 
   // POST /api/modules — add a module. Body: {"type":"<t>","id":"<i>"}.

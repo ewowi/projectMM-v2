@@ -19,6 +19,7 @@ jobs:
       - run: uv run scripts/check_gpio.py
       - run: uv run scripts/check_structure.py
       - run: uv run scripts/check_platform_guards.py
+      - run: uv run scripts/check_bundle.py
 
   build:
     name: Build PC

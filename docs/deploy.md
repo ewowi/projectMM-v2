@@ -8,7 +8,7 @@ Build, flash, and test on PC (and ESP32 from Sprint 3). The deploy pipeline targ
 uv run scripts/ui.py        # prints http://127.0.0.1:8765 — open it in your browser
 ```
 
-A small local page lists every script grouped by purpose. Click **Run** to execute one; stdout and stderr stream live to the output panel; the card's status dot turns green on exit 0, red otherwise. "Run all checks" runs all five guardrail checks in sequence and stops at the first failure.
+A small local page lists every script grouped by purpose. Click **Run** to execute one; stdout and stderr stream live to the output panel; the card's status dot turns green on exit 0, red otherwise. "Run all checks" runs all six guardrail checks in sequence and stops at the first failure.
 
 Long-running scripts (currently: **MkDocs serve**) have **Start** / **Stop** instead of Run, plus a clickable link to their served URL while running. The UI reflects state across page reloads via `/status`, so reopening the tab shows what's already running and lets you stop it from any session. Children are killed via process group, so the full `uv run mkdocs serve` → mkdocs chain shuts down cleanly.
 
@@ -30,7 +30,7 @@ uv run scripts/check_loc.py
 git config core.hooksPath .githooks
 ```
 
-The hook runs all five `check_*.py` scripts against the working tree before every commit. Same scripts CI runs. Requires [uv](https://docs.astral.sh/uv/) on PATH.
+The hook runs all six `check_*.py` scripts against the working tree before every commit. Same scripts CI runs. Requires [uv](https://docs.astral.sh/uv/) on PATH.
 
 ## Scripts
 
@@ -98,6 +98,14 @@ Lists tracked top-level paths (`git ls-files`) and fails on anything not in the 
 ### Platform guards {#check-platform}
 
 Scans every `.h` / `.hpp` / `.cpp` / `.cc` file under `src/` **except** files in `src/pal/`, and fails on any platform-identity gate: `#ifdef ARDUINO`, `#ifdef ESP_PLATFORM`, `#ifdef ESP32`, `#ifdef ARDUINO_ARCH_*`, `#include <Arduino.h>`, `#include <esp_*.h>`, `#include <freertos/...>`. Platform-conditional code lives only in `src/pal/` files; modules consume it through the `pal::*` interface. See [system architecture — Pal](architecture/system.md#pal--the-only-place-platform-conditionals-appear). Source: `scripts/check_platform_guards.py`.
+
+### Frontend bundle drift {#check-bundle}
+
+Re-generates `src/frontend/frontend_bundle.h` in-memory from the sources (`index.html` + `style.css` + `app.js`) and fails if the committed bundle differs byte-for-byte. The generator (`scripts/gen_frontend_bundle.py`) is deterministic — `gzip` is invoked with `mtime=0` so identical sources always produce identical bundles. Fix drift by running `uv run scripts/gen_frontend_bundle.py` and committing the regenerated bundle. Source: `scripts/check_bundle.py`.
+
+### Regenerate frontend bundle {#gen-bundle}
+
+Inlines `style.css` and `app.js` into `index.html`, gzip-compresses the result, and writes `src/frontend/frontend_bundle.h` as a `uint8_t` array. `HttpServerModule` serves this on `GET /` with `Content-Encoding: gzip`. Source: `scripts/gen_frontend_bundle.py`.
 
 ### MkDocs serve {#mkdocs}
 

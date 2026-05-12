@@ -206,6 +206,8 @@ bool MoonModule::setControl(const char* key, float value) {
 void MoonModule::getSchema(JsonObject out) const {
   out["id"] = id_;
   out["type"] = type_;
+  out["name"] = type_;            // v2: name doubles as type until/unless a
+                                  // module needs a separate human label
   out["category"] = category();
   JsonArray arr = out["controls"].to<JsonArray>();
   for (uint8_t i = 0; i < controlCount_; ++i) {

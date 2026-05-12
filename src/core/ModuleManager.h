@@ -43,6 +43,16 @@ class ModuleManager {
   bool remove(const char* id);
   MoonModule* find(const char* id) const;
 
+  // Reorder the root module list to match `ids`. Any modules whose ids are
+  // not in `ids` are appended at the end, preserving their existing relative
+  // order. Unknown ids in `ids` are ignored. Driven by frontend drag/drop.
+  void reorder(const std::vector<std::string>& ids);
+
+  // Snapshot of registered type names for the frontend's "Add module"
+  // picker. Category defaults to "system" — future sprints record the
+  // module's category at register_type time when more categories exist.
+  std::vector<std::string> registered_types() const;
+
   // Unlocked accessors — callers must hold mutex() while using the returned pointer.
   size_t size() const { return modules_.size(); }
   MoonModule* at(size_t i) const { return modules_[i].get(); }

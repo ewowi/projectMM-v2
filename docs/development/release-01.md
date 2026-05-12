@@ -151,11 +151,13 @@ Deferred to Sprint 2+ as "earn its place":
 
 #### Step 4: Frontend sources
 
-- [ ] Port v1's `src/frontend/index.html` (84 LOC), `style.css` (744 LOC), `app.js` (1647 LOC) verbatim
-- [ ] Port v1's `scripts/gen_frontend_bundle.py`; add a "Bundle" card to `scripts/ui.py` that regenerates `src/frontend/frontend_bundle.h` from the sources
-- [ ] **Frugalize the frontend** under a UI-specific corollary of §4: strip UI for features v2 does not yet ship (lighting-domain controls, OTA upload screens, etc.). Future sprints add the UI for the features they introduce.
-- [ ] Regenerated `frontend_bundle.h` is committed; CI's "Bundle" check (added with this work) verifies the bundle matches a fresh regeneration from the sources — drift between sources and bundle fails CI.
-- [ ] **End-of-sprint verification:** open `http://127.0.0.1:8080`, see live SystemStatusModule with ticking uptime, heap, fps; controls render from schema; WebSocket "connected" indicator green; the served bundle is smaller than v1's because lighting-domain UI was stripped.
+- [x] Ported v1's `src/frontend/index.html` (84 LOC), `style.css` (744 LOC), `app.js` (1647 LOC) verbatim — byte-identical to v1.
+- [x] Ported `scripts/gen_frontend_bundle.py` (v1's PIO pre-script handling dropped — v2 generates on-demand, not as part of the PlatformIO build). Generator made **deterministic** by setting `gzip mtime=0`; v1's version embedded the current timestamp, so two regenerations produced different bytes — that prevented any meaningful drift check. v2's drift check now works because identical sources always produce identical bundles.
+- [x] `scripts/check_bundle.py` regenerates the bundle in-memory and diffs against the committed `frontend_bundle.h`. Wired into pre-commit + CI + ui.py. Drift between sources and bundle fails CI.
+- [x] `scripts/ui.py` gains two cards: "Frontend bundle drift" (runs check_bundle) and "Regenerate frontend bundle" (runs gen).
+- [x] **Frugalize the frontend** under §4: the deliberation yields **nothing stripped**. The §4 rule is "future-needed features stay" — and the v1 frontend's lighting UI is needed by Sprint 6, WiFi UI by Sprint 5, firmware-upload UI by Sprint 7. All three sprints land in this release. Stripping any of it now would only mean re-porting later — exactly the waste §4 exists to prevent. The earlier Sprint 3 DoD bullet that proposed stripping "UI for features v2 does not yet ship" contradicted §4 and was wrong; the frontend is left as v1 ships it. Real UI changes happen *when* those sprints add their own features and need their own frontend bits.
+- [x] **End-of-sprint verification:** open `http://127.0.0.1:8080`, see live SystemStatusModule with ticking uptime, heap, fps, local_time; controls render from schema; WS "connected" indicator green. Bundle is 24422 bytes gzipped (same compressed size as v1; bytes differ only in the gzip header timestamp now being deterministic at zero).
+- [x] In-flight fixes surfaced by the end-of-sprint browser test: (a) Add-module picker was empty — frontend `GET /api/types` had no handler. Added `ModuleManager::registered_types()` and the matching `HttpServerModule` route returning `[{name, category}]`. (b) Module cards showed title "undefined" — `getSchema` emitted only `id`/`type` but the frontend reads `name`. Added `name = type` in `getSchema` (no separate human label until a module needs one). (c) Drag-and-drop reorder did nothing — frontend posts to `/api/modules/reorder` which had no handler. Added `ModuleManager::reorder(ids)` (matched ids first, unmatched modules appended in original relative order, unknown ids ignored) and the matching `HttpServerModule` route.
 
 ---
 

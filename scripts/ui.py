@@ -27,12 +27,14 @@ SCRIPTS = [
     {"id": "build",             "group": "Build & Test", "label": "Build",             "scripts": ["build.py"]},
     {"id": "test",              "group": "Build & Test", "label": "Test",              "scripts": ["test.py"]},
     {"id": "run",               "group": "Build & Test", "label": "Run",               "scripts": ["run.py"], "long_running": True, "url": "http://127.0.0.1:8080"},
-    {"id": "all-checks",        "group": "Checks",       "label": "Run all checks",    "scripts": ["check_loc.py", "check_hot_path.py", "check_gpio.py", "check_structure.py", "check_platform_guards.py"]},
+    {"id": "all-checks",        "group": "Checks",       "label": "Run all checks",    "scripts": ["check_loc.py", "check_hot_path.py", "check_gpio.py", "check_structure.py", "check_platform_guards.py", "check_bundle.py"]},
     {"id": "check-loc",         "group": "Checks",       "label": "LOC budgets",       "scripts": ["check_loc.py"]},
     {"id": "check-hot-path",    "group": "Checks",       "label": "Hot-path bans",     "scripts": ["check_hot_path.py"]},
     {"id": "check-gpio",        "group": "Checks",       "label": "Raw-GPIO ban",      "scripts": ["check_gpio.py"]},
     {"id": "check-structure",   "group": "Checks",       "label": "Structure",         "scripts": ["check_structure.py"]},
     {"id": "check-platform",    "group": "Checks",       "label": "Platform guards",   "scripts": ["check_platform_guards.py"]},
+    {"id": "check-bundle",      "group": "Checks",       "label": "Frontend bundle drift", "scripts": ["check_bundle.py"]},
+    {"id": "gen-bundle",        "group": "Docs",         "label": "Regenerate frontend bundle", "scripts": ["gen_frontend_bundle.py"]},
     {"id": "mkdocs",            "group": "Docs",         "label": "MkDocs serve",      "scripts": ["mkdocs_serve.py"], "long_running": True, "url": "http://127.0.0.1:8000"},
 ]
 
