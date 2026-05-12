@@ -103,12 +103,12 @@ Deferred to Sprint 2+ as "earn its place":
   - Trailing `/.+` → `/*` wildcard adaptation in `onDelete`/`onPatch` — cross-platform syntax adapter between cpp-httplib regex and ESPAsyncWebServer glob; deliberate.
   - `std::map<request, body>` buffering for ESP32 `onPost`/`onPatch` — required by ESPAsyncWebServer's chunked-body API; not a patch.
   - `onPostBinary` + `BinaryChunkFn`/`BinaryEndFn` — kept for Sprint 7 (`FirmwareUpdateModule` OTA upload). Future-needed feature; per §4, not a subtraction target.
-- [ ] `HttpServerModule` (in `src/modules/network/`) wraps `pal::HttpServer`, registers `GET /api/modules` (list — matching v1's route set; v1 has no GET-by-id and the WebSocket schema covers per-module reads). Mutations (`POST` / `DELETE` / `PATCH`) land in Sprint 3 with the control system. Contains **zero** platform conditionals.
-- [ ] Port v1's `src/frontend/frontend_bundle.h` verbatim into `src/frontend/frontend_bundle.h` (generated data — not counted by LOC checks)
-- [ ] `HttpServerModule` serves the bundle on `GET /` via `pal::HttpServer::onGetStaticGzip` with `Content-Encoding: gzip`
-- [ ] **End-of-sprint verification:** open `http://127.0.0.1:8080`, see v1's UI render, see modules list (just `hello-0`), see the WebSocket-disconnected indicator (because Sprint 3 hasn't landed yet)
-- [ ] LOC budgets: `src/pal/PalHttp.h` ≤ 350 (v1 verbatim is 332 LOC; frugalize target ~250), `src/modules/network/` ≤ 250
-- [ ] Host unit + integration tests via doctest: `HttpServerModule` REST endpoints covered via cpp-httplib's in-process `Client`
+- [x] `HttpServerModule` (in `src/modules/network/`) wraps `pal::HttpServer`, registers `GET /api/modules` (list — matching v1's route set; v1 has no GET-by-id and the WebSocket schema covers per-module reads). Mutations (`POST` / `DELETE` / `PATCH`) land in Sprint 3 with the control system. Contains **zero** platform conditionals.
+- [x] Port v1's `src/frontend/frontend_bundle.h` verbatim into `src/frontend/frontend_bundle.h` (generated data — not counted by LOC checks)
+- [x] `HttpServerModule` serves the bundle on `GET /` via `pal::HttpServer::onGetStaticGzip` with `Content-Encoding: gzip`
+- [x] **End-of-sprint verification:** open `http://127.0.0.1:8080`, see v1's UI render, see modules list (just `hello-0`), see the WebSocket-disconnected indicator (because Sprint 3 hasn't landed yet)
+- [x] LOC budgets in range: `src/pal/PalHttp.h` 247 / 350 (v1 verbatim 332; frugalize was empty — no patches found), `src/modules/network/` 41 / 250
+- [x] Host unit + integration tests via doctest: three `HttpServerModule` cases covering `GET /`, `GET /api/modules`, and unknown-route 404. Probe uses a 30-line raw-TCP helper rather than `httplib::Client` — cpp-httplib's Client returns `"Failed to read connection"` when used in the same process as its Server on macOS (production code is Server-only and works fine; reason captured in `test_http.cpp`).
 
 ---
 
