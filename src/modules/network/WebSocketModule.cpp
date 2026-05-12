@@ -22,9 +22,13 @@ void WebSocketModule::loop1s() {
   broadcast_state_();
 }
 
+// Wire format matches v1's app.js dispatcher:
+//   schema → {"t":"schema", "modules":[ {id,type,category,controls:[...]}, ... ]}
+//   state  → [ {id, controls: {key: value, ...}}, ... ]   (raw top-level array)
+
 void WebSocketModule::broadcast_schema_() {
   JsonDocument doc;
-  doc["event"] = "schema";
+  doc["t"] = "schema";
   JsonArray arr = doc["modules"].to<JsonArray>();
   {
     std::lock_guard<std::recursive_mutex> lk(manager_->mutex());
@@ -40,14 +44,13 @@ void WebSocketModule::broadcast_schema_() {
 
 void WebSocketModule::broadcast_state_() {
   JsonDocument doc;
-  doc["event"] = "state";
-  JsonArray arr = doc["modules"].to<JsonArray>();
+  JsonArray arr = doc.to<JsonArray>();  // top-level array, no envelope
   {
     std::lock_guard<std::recursive_mutex> lk(manager_->mutex());
     for (size_t i = 0; i < manager_->size(); ++i) {
-      JsonObject m = arr.add<JsonObject>();
-      m["id"] = manager_->at(i)->id();
-      manager_->at(i)->getControlValues(m);
+      JsonObject entry = arr.add<JsonObject>();
+      entry["id"] = manager_->at(i)->id();
+      manager_->at(i)->getControlValues(entry["controls"].to<JsonObject>());
     }
   }
   std::string out;

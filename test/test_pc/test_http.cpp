@@ -11,8 +11,8 @@
 #include <doctest/doctest.h>
 
 #include "core/ModuleManager.h"
-#include "modules/hello/HelloModule.h"
 #include "modules/network/HttpServerModule.h"
+#include "modules/system/SystemStatusModule.h"
 
 // HttpServerModule integration tests: drive the real pal::HttpServer (which
 // wraps cpp-httplib on PC) and probe it with a minimal raw-TCP client.
@@ -115,19 +115,19 @@ TEST_CASE("HttpServerModule: GET / serves the gzipped frontend bundle") {
 
 TEST_CASE("HttpServerModule: GET /api/modules lists registered modules") {
   ModuleManager mm;
-  mm.register_type<HelloModule>("hello");
+  mm.register_type<SystemStatusModule>("system");
   mm.register_type<HttpServerModule>("http", static_cast<uint16_t>(kPortListing));
-  mm.add("hello", "hello-t");
-  mm.add("http",  "http-t");
+  mm.add("system", "system-t");
+  mm.add("http",   "http-t");
   await_listener(kPortListing);
 
   auto r = http_get(kPortListing, "/api/modules");
   REQUIRE(r.ok);
   CHECK(r.status == 200);
   CHECK(r.headers.find("Content-Type: application/json") != std::string::npos);
-  CHECK(r.body.find("\"id\":\"hello-t\"") != std::string::npos);
-  CHECK(r.body.find("\"type\":\"hello\"") != std::string::npos);
-  CHECK(r.body.find("\"id\":\"http-t\"")  != std::string::npos);
+  CHECK(r.body.find("\"id\":\"system-t\"") != std::string::npos);
+  CHECK(r.body.find("\"type\":\"system\"") != std::string::npos);
+  CHECK(r.body.find("\"id\":\"http-t\"")   != std::string::npos);
 }
 
 TEST_CASE("HttpServerModule: unknown route returns 404") {

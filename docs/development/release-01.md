@@ -143,11 +143,11 @@ Deferred to Sprint 2+ as "earn its place":
 
 #### Step 3: `SystemStatusModule` (the first real `MoonModule`)
 
-- [ ] Port v1's system-info `pal::*` accessors into `src/pal/PalSystemInfo.h`: `chip_model`, `mac_address`, `reset_reason_str`, `sketch_kb`, `total_heap_kb`, `total_psram_kb`, `fs_total_kb`, `fs_used_kb`, `platform_version`. Platform conditionals live in the pal file.
-- [ ] Copy v1's `src/modules/system/SystemStatus.h` verbatim into `src/modules/system/SystemStatusModule.h`; frugalize
-- [ ] `SystemStatusModule` inherits `MoonModule`, calls `addControl(...)` in `setup()` for `heap_used_kb`, `heap_free_kb`, `uptime_s`, `fps`, `local_time`, `chip_model`, `reset_reason`, etc.; updates fields in `loop1s`. **Zero platform conditionals** (enforced by `check_platform_guards.py`).
-- [ ] `src/modules/system` LOC ≤ 300; `src/pal/PalSystemInfo.h` LOC ≤ 200
-- [ ] `main.cpp` swaps `mm.add("hello", ...)` → `mm.add("system", "system-0")`; `src/modules/hello/` deleted (mandatory subtraction for Sprint 3)
+- [x] `src/pal/PalSystemInfo.h` ports v1's system-info `pal::*` accessors as a v2 pal-domain file. **PC stubs** for now — `chip_model="pc"`, `mac_address=""`, `total_heap_kb=0`, `cpu_cores=hardware_concurrency`, `local_time_str` via `localtime_r+strftime`, etc. Real ESP32 implementations land in Sprint 4 under `#ifdef ARDUINO` HERE in pal/, never in the modules. 48 / 200 LOC.
+- [x] `SystemStatusModule` ported from v1's 198-LOC `SystemStatus.h`. Inherits `MoonModule` (not v1's `StatefulModule<Derived>` — Step 1c's factory-injected `classSize` replaced the CRTP layer). All 28 `addControl(...)` calls moved from `setup()` into `onBuildControls()` per Step 1c refinement #3 — `setup()` does the one-time hardware reads (`chip_model`, totals); `loop1s()` samples dynamic fields (heap, temp, time, fps). **Zero platform conditionals** in the module — enforced by `check_platform_guards.py`. 147 / 300 LOC.
+- [x] `main.cpp` swaps `mm.add("hello", ...)` → `mm.add("system", "system-0")`; `src/modules/hello/HelloModule.h` and `test/test_pc/test_hello.cpp` deleted (mandatory subtraction for Sprint 3 close). `test_http.cpp` + `test_module.cpp` updated to use `SystemStatusModule` as the test fixture.
+- [x] **Wire-format alignment with v1's frontend** (uncovered when the browser saw no controls): v2's `WebSocketModule` was emitting `{"event":"schema",...}` + a wrapped state envelope `{"event":"state","modules":[...]}` with flat key:value entries — but v1's `app.js` dispatches on `msg.t === 'schema'` and expects state as a **raw top-level array** `[{id, controls:{...}}, ...]`. The reinvention had no justification. v2 now emits v1's exact wire format: schema is `{"t":"schema","modules":[...]}`, state is a raw array with each entry `{id, controls:{key:value, ...}}`. Port-and-frugalize default applied — use v1's working design, don't reinvent.
+- [x] **End-of-step verification**: open WebSocket on `:81`, see `system-0` schema with 28 controls (uptime_s, fps, local_time, heap_*, psram_*, fs_*, chip_model, mac_address, firmware_version, build_date, build_time, cpu_*, flash_*, reset_reason). State frames show `uptime_s` and `local_time` advancing each second. Browser hits `http://127.0.0.1:8080`, sees v1 UI render system status live with all 28 controls.
 
 #### Step 4: Frontend sources
 

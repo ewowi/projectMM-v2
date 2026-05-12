@@ -11,7 +11,7 @@ int main(int argc, char** argv) {
 #include <string>
 
 #include "core/ModuleManager.h"
-#include "modules/hello/HelloModule.h"
+#include "modules/system/SystemStatusModule.h"
 
 using namespace pmm;
 
@@ -26,12 +26,12 @@ TEST_CASE("ModuleManager: add base module") {
 
 TEST_CASE("ModuleManager: factory builds concrete type") {
   ModuleManager mm;
-  mm.register_type<HelloModule>("hello");
-  MoonModule* m = mm.add("hello", "h0");
+  mm.register_type<SystemStatusModule>("system");
+  MoonModule* m = mm.add("system", "s0");
   CHECK(m != nullptr);
-  CHECK(dynamic_cast<HelloModule*>(m) != nullptr);
-  CHECK(std::string(m->type()) == "hello");
-  CHECK(m->classSize() == sizeof(HelloModule));  // factory injected sizeof(T)
+  CHECK(dynamic_cast<SystemStatusModule*>(m) != nullptr);
+  CHECK(std::string(m->type()) == "system");
+  CHECK(m->classSize() == sizeof(SystemStatusModule));  // factory injected sizeof(T)
 }
 
 TEST_CASE("ModuleManager: manager pointer set on add") {

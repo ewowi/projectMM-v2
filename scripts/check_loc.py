@@ -28,7 +28,6 @@ BUDGETS = {
     "src/pal/PalWs.h":         450,  # WebSocket abstraction (Sprint 3 port, v1 verbatim is 483)
     "src/pal/PalSystemInfo.h": 200,  # chip_model, reset_reason_str, build info (Sprint 3)
 
-    "src/modules/hello":   200,      # deleted at Sprint 3 close once SystemStatusModule lands
     "src/modules/network": 250,      # Module wrappers only (HttpServerModule + WebSocketModule)
     "src/modules/system":  300,      # SystemStatusModule (Sprint 3) + future NTP/WiFi modules
 }
