@@ -120,11 +120,17 @@ Deferred to Sprint 2+ as "earn its place":
 
 #### Step 1: `MoonModule` (merge `Module` + v1's `StatefulModule`)
 
-- [ ] Rename v2's `src/core/Module.h` → `src/core/MoonModule.h`; `pmm::Module` → `pmm::MoonModule` across the tree (HelloModule, HttpServerModule, ModuleManager, Scheduler, tests). `ModuleManager` keeps its name (it manages `MoonModule` instances; the asymmetry is honest).
-- [ ] Copy v1's `src/core/StatefulModule.h` verbatim alongside v2's `MoonModule.h` (port-step)
-- [ ] Merge: take v1's control system (`addControl`, `rebuildControls`, schema serialization, value dispatch) into v2's `MoonModule.h`. v2 keeps its tiered cadences (`loop20ms`/`loop1s`/`loop10s` — v1 has fewer). v1's CRTP `classSize()` is kept only if the footprint-introspection actually pays for itself in v2's scope.
-- [ ] **Frugalize** the merger under §4: strip patches, not features. PR description names what was removed and why.
-- [ ] `src/core/MoonModule.h` LOC ≤ 600
+- [x] Rename v2's `src/core/Module.h` → `src/core/MoonModule.h`; `pmm::Module` → `pmm::MoonModule` across the tree (HelloModule, HttpServerModule, ModuleManager, Scheduler, tests). `ModuleManager` keeps its name (it manages `MoonModule` instances; the asymmetry is honest).
+- [x] Add ArduinoJson via `lib_deps` (ADR 0002 codifies registry-vs-vendor rule)
+- [x] Merge: v1's control system (`addControl` × 10, `setControl`, `getSchema`, `getControlValues`, `clearControls`, pending props, state persistence, children, autowire hooks, `fillSystemJson`) merged into `MoonModule`. v2's tiered cadences kept (`loop20ms`/`loop1s`/`loop10s` — v1 has fewer). CRTP `StatefulModule<Derived>` wrapper dropped (single class).
+- [x] **Frugalize** the merger under §4 — five refinements landed beyond a 1:1 port:
+  1. Factory-injected `classSize` via `ModuleManager::register_type<T, Args...>()` — captures `sizeof(T)` once, modules write zero per-class boilerplate (replaces v1's CRTP).
+  2. `onAllocateMemory()` generalizes v1's `onSizeChanged` (was lighting-only) to a no-args reallocation hook.
+  3. `onBuildControls()` replaces v1's `rebuildControls()` duplication — modules put all `addControl()` calls here, framework calls it from `runSetup()` and external code calls it directly for rebuilds.
+  4. `dynamicMemorySize()` derived from a single cached value the module sets in its `onAllocateMemory()`. No separate `heapSize()` to drift; PSRAM/heap not split (when PSRAM is present it's used by default; reporters care about the total).
+  5. Single-method public API per concern — no `rebuild*()` wrappers; the `on*()` methods are the sole entry points. Modules pay one line of bookkeeping in the override (set `moduleAllocBytes_`; call `clearControls()` if supporting rebuild) instead of two methods per concern in the API.
+- [x] **Split** into `src/core/MoonModule.h` (declarations + small inlines, 122 LOC) + `src/core/MoonModule.cpp` (substantive bodies, 328 LOC). Consistent with v2's existing pattern (ModuleManager and Scheduler are also split). Total 450 LOC vs v1's 875 inline (51%).
+- [x] LOC budgets: `src/core/MoonModule.h` ≤ 250 (122 actual), `src/core/MoonModule.cpp` ≤ 350 (328 actual). `src/core/` ≤ 300 for ModuleManager + Scheduler only (excludes nested MoonModule.{h,cpp}).
 
 #### Step 2: WebSocket transport (`PalWs.h` + `WebSocketModule`)
 

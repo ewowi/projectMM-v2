@@ -14,8 +14,7 @@ class HelloModule : public MoonModule {
            ",\"enabled\":" + (enabled_ ? "true" : "false") + "}";
   }
 
-  bool enabled_ = true;
-  int counter_ = 0;
+  int counter_ = 0;  // enabled_ inherited from MoonModule
 };
 
 }  // namespace pmm

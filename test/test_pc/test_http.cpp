@@ -98,7 +98,7 @@ void await_listener(int port) {
 
 TEST_CASE("HttpServerModule: GET / serves the gzipped frontend bundle") {
   ModuleManager mm;
-  mm.register_type("http", [] { return std::make_unique<HttpServerModule>(kPortFrontend); });
+  mm.register_type<HttpServerModule>("http", static_cast<uint16_t>(kPortFrontend));
   mm.add("http", "http-fe");
   await_listener(kPortFrontend);
 
@@ -115,8 +115,8 @@ TEST_CASE("HttpServerModule: GET / serves the gzipped frontend bundle") {
 
 TEST_CASE("HttpServerModule: GET /api/modules lists registered modules") {
   ModuleManager mm;
-  mm.register_type("hello", [] { return std::make_unique<HelloModule>(); });
-  mm.register_type("http",  [] { return std::make_unique<HttpServerModule>(kPortListing); });
+  mm.register_type<HelloModule>("hello");
+  mm.register_type<HttpServerModule>("http", static_cast<uint16_t>(kPortListing));
   mm.add("hello", "hello-t");
   mm.add("http",  "http-t");
   await_listener(kPortListing);
@@ -132,7 +132,7 @@ TEST_CASE("HttpServerModule: GET /api/modules lists registered modules") {
 
 TEST_CASE("HttpServerModule: unknown route returns 404") {
   ModuleManager mm;
-  mm.register_type("http", [] { return std::make_unique<HttpServerModule>(kPort404); });
+  mm.register_type<HttpServerModule>("http", static_cast<uint16_t>(kPort404));
   mm.add("http", "http-404");
   await_listener(kPort404);
 

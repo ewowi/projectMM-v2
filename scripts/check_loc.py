@@ -14,8 +14,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 BUDGETS = {
-    "src/core": 300,                  # ModuleManager + Scheduler (excludes MoonModule.h)
-    "src/core/MoonModule.h": 600,     # contract: lifecycle + controls + identity (Sprint 3 port)
+    "src/core": 300,                  # ModuleManager + Scheduler (excludes MoonModule.{h,cpp})
+    "src/core/MoonModule.h": 250,     # contract declarations + small inlines (Sprint 3 port)
+    "src/core/MoonModule.cpp": 350,   # non-trivial method implementations (Sprint 3 port)
 
     # Pal — one budget per platform concern. New pal file → new entry here.
     "src/pal/Pal.h":           100,  # millis, micros, yield, sleep
