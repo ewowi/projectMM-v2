@@ -11,7 +11,7 @@
 // `xTaskCreatePinnedToCore` lets us pick 8 KB and choose a core; both fix
 // the crash and enable the Sprint 7 effect→artnet split.
 //
-// Frugality: this file does not own a thread-management abstraction beyond
+// Minimalism: this file does not own a thread-management abstraction beyond
 // "start a task that runs forever, never joined". Sprint 5's `Scheduler`
 // joins its std::thread vector on PC; on ESP32 the tasks run for the
 // process lifetime and are never joined. The PalRtos `task_create_pinned`

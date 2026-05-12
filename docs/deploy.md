@@ -129,7 +129,7 @@ Lists tracked top-level paths (`git ls-files`) and fails on anything not in the 
 
 ### Platform guards {#check-platform}
 
-Scans every `.h` / `.hpp` / `.cpp` / `.cc` file under `src/` **except** files in `src/pal/`, and fails on any platform-identity gate: `#ifdef ARDUINO`, `#ifdef ESP_PLATFORM`, `#ifdef ESP32`, `#ifdef ARDUINO_ARCH_*`, `#include <Arduino.h>`, `#include <esp_*.h>`, `#include <freertos/...>`. Platform-conditional code lives only in `src/pal/` files; modules consume it through the `pal::*` interface. See [system architecture — Pal](architecture/system.md#pal--the-only-place-platform-conditionals-appear). Source: `scripts/check_platform_guards.py`.
+Scans every `.h` / `.hpp` / `.cpp` / `.cc` file under `src/` **except** files in `src/pal/`, and fails on any platform-identity gate: `#ifdef ARDUINO`, `#ifdef ESP_PLATFORM`, `#ifdef ESP32`, `#ifdef ARDUINO_ARCH_*`, `#include <Arduino.h>`, `#include <esp_*.h>`, `#include <freertos/...>`. Platform-conditional code lives only in `src/pal/` files; modules consume it through the `pal::*` interface. See [system architecture — Pal](architecture/system.md#pal-the-only-place-platform-conditionals-appear). Source: `scripts/check_platform_guards.py`.
 
 ### Frontend bundle drift {#check-bundle}
 

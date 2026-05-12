@@ -1,6 +1,6 @@
 # Release 1 — Restart to Parity
 
-> **Theme:** Bring v2 to parity with v1's first-boot pipeline — effect → blend → driver → preview, served over HTTP / WS with WiFi-STA, persisted to LittleFS, OTA-updatable, NTP-synced, ArtNet-capable — over six sprints. The decision to restart from v1 is documented in v1's [Release 9](https://ewowi.github.io/projectMM/development/release-09/). The contract under which this release executes is [process architecture](../architecture/process.md): frugality, guardrails, anti-drift.
+> **Theme:** Bring v2 to parity with v1's first-boot pipeline — effect → blend → driver → preview, served over HTTP / WS with WiFi-STA, persisted to LittleFS, OTA-updatable, NTP-synced, ArtNet-capable — over six sprints. The decision to restart from v1 is documented in v1's [Release 9](https://ewowi.github.io/projectMM/development/release-09/). The contract under which this release executes is [process architecture](../architecture/process.md): minimalism, guardrails, anti-drift.
 
 ---
 
@@ -10,7 +10,7 @@
 
 A v2 codebase that runs the same first-boot pipeline as v1, implemented as modules over a small core that fits in one head. The core is `Module` + `ModuleManager` + `Scheduler` + a minimal `Pal`; networking, OTA, NTP, persistence, the HTTP / WS server, and the entire lighting domain (`RGB`, `pixelBuf`, effects, layers, layouts, modifiers) are modules. The deploy pipeline is three scripts: build, flash, test. v2's first user is lights, but lights live in `modules/lights/` and depend on the core, not the other way around.
 
-### Frugality targets (CI-enforced)
+### Minimalism targets (CI-enforced)
 
 | Surface | Target |
 |---------|--------|
@@ -31,15 +31,15 @@ Arbitrary DAG topology, SPSC lock-free ring buffer per edge, depth 2 by default.
 
 Release 5 is the first recurring evaluation release (per the [process architecture](../architecture/process.md): every fifth release is a no-feature evaluation). It is scheduled here, in Release 1 Sprint 1, not at the end of Release 4.
 
-### Mid-release pivot: port-and-frugalize (2026-05-12)
+### Mid-release pivot: port-and-minimize (2026-05-12)
 
-Sprint 2 and Sprint 3 were initially attempted as greenfield rewrites of v1's HTTP server, WebSocket server, and frontend. The result was buggy distillations of code v1 had already debugged: TCP fragmentation, WebSocket handshake corner cases, threading races between the scheduler and HTTP handlers — all rediscovered, all fixed by reading v1's solutions after the fact. The first attempts were deleted; the sprints below are rewritten around *porting* v1's working code and frugalizing it. The discipline is codified in [process architecture §4](../architecture/process.md#4-port-and-frugalize--where-substantive-modules-come-from). Surviving artefacts from the first attempt: guardrails framework, `Module` / `ModuleManager` / `Scheduler` skeleton, `HelloModule`, factory, doctest harness, the test files covering the core and `HelloModule`.
+Sprint 2 and Sprint 3 were initially attempted as greenfield rewrites of v1's HTTP server, WebSocket server, and frontend. The result was buggy distillations of code v1 had already debugged: TCP fragmentation, WebSocket handshake corner cases, threading races between the scheduler and HTTP handlers — all rediscovered, all fixed by reading v1's solutions after the fact. The first attempts were deleted; the sprints below are rewritten around *porting* v1's working code and minimizing it. The discipline is codified in [process architecture §4](../architecture/process.md#4-port-and-minimize-where-substantive-modules-come-from). Surviving artefacts from the first attempt: guardrails framework, `Module` / `ModuleManager` / `Scheduler` skeleton, `HelloModule`, factory, doctest harness, the test files covering the core and `HelloModule`.
 
 ---
 
 ## Sprints
 
-| Sprint | Goal | Frugality target |
+| Sprint | Goal | Minimalism target |
 |--------|------|------------------|
 | [Sprint 1](#sprint-1) | Guardrails framework + empty Module/Manager/Scheduler/Pal skeleton + Linux PC CI green | core ≤ 300 LOC |
 | [Sprint 2](#sprint-2) | Port `HttpServer` + v1 frontend bundle; UI shell visible at `:8080` (disconnected indicator OK) | network ≤ 500 LOC |
@@ -48,8 +48,10 @@ Sprint 2 and Sprint 3 were initially attempted as greenfield rewrites of v1's HT
 | [Sprint 5](#sprint-5) | WiFi-STA + REST + WebSocket over hardware; frontend connects unchanged | per-module ≤ 300 LOC |
 | [Sprint 6](#sprint-6) | Light domain foundation + LittleFS state persistence: RipplesEffect + Preview + Art-Net out + modules.json / per-module state survive reboot | per-module ≤ 300 LOC |
 | [Sprint 7](#sprint-7) | Two-core + PSRAM scaling: PalRtos pinned tasks, PalHeap PSRAM, FrameRing SPSC, ArtnetOut pinned to core 1, stress-test 128×128 on s3 | per-module ≤ 300 LOC |
+| [Sprint 8](#sprint-8) | Test foundation: classified unit tests + behavioral coverage for Sprints 4–7, `[MemBoot]` / `[MemLive]` runtime events, declarative scenarios replayed in-process | `test/` grows to ~25 % of `src/` |
+| [Sprint 9](#sprint-9) | Release 1 polish: per-file minimalism review (source + guardrails + `test/`), deploy walk via `scripts/ui.py`, docs read-through; tag `v1.0.0-foundation` | net LOC ≤ 0 across `src/` + `docs/` |
 
-Each sprint closes with a working device (or working PC application for sprints 2–3). After Sprint 7, Release 1 is tagged `v1.0.0-foundation` — the v2 codebase has a real light pipeline, scaled persistence, and a stress-tested dual-core path on hardware. The v1 → v2 cutover (rename + final stable tag) closes [Release 2](release-02.md), which adds ArtNet **in**, OTA, NTP, and any remaining v1 parity bits.
+Each sprint closes with a working device (or working PC application for sprints 2–3). After Sprint 9, Release 1 is tagged `v1.0.0-foundation` — the v2 codebase has a real light pipeline, scaled persistence, a stress-tested dual-core path on hardware, a test surface that exercises what Sprints 4–7 actually built, and a reviewed, trimmed foundation that the next release inherits. The v1 → v2 cutover (rename + final stable tag) closes [Release 2](release-02.md), which adds ArtNet **in**, OTA, NTP, and any remaining v1 parity bits.
 
 ---
 
@@ -85,9 +87,9 @@ Deferred to Sprint 2+ as "earn its place":
 
 ## Sprint 2 — Port `HttpServer` + serve v1 UI shell {#sprint-2}
 
-> **Pivot:** A first pass at this sprint built `HttpServerModule` from scratch and ran into the classes of bugs (TCP fragmentation, threading races, HTTP body parsing edge cases) that v1's `core/HttpServer.h` has already debugged into stability. The sprint was reset: substantive modules in v2 are *ported* from v1, then frugalized. See [process architecture §4](../architecture/process.md#4-port-and-frugalize--where-substantive-modules-come-from). Survivors of the first attempt: guardrails framework, core skeleton, `HelloModule`, `ModuleManager` factory, doctest harness.
+> **Pivot:** A first pass at this sprint built `HttpServerModule` from scratch and ran into the classes of bugs (TCP fragmentation, threading races, HTTP body parsing edge cases) that v1's `core/HttpServer.h` has already debugged into stability. The sprint was reset: substantive modules in v2 are *ported* from v1, then minimized. See [process architecture §4](../architecture/process.md#4-port-and-minimize-where-substantive-modules-come-from). Survivors of the first attempt: guardrails framework, core skeleton, `HelloModule`, `ModuleManager` factory, doctest harness.
 
-> **Scope:** Port v1's `src/core/HttpServer.h` (332 LOC) — landing at `src/pal/PalHttp.h` because it is a platform-conditional header wrapping `cpp-httplib`/`ESPAsyncWebServer` — and v1's `src/frontend/frontend_bundle.h` (the gzipped SPA). Frugalize `PalHttp.h`. Wrap it as a platform-neutral `HttpServerModule` (no `#ifdef`s) that serves `/` from the bundle and exposes minimal REST so v1's UI shell loads and renders. The bundle's WebSocket reconnect logic shows a "disconnected" indicator until Sprint 3 lands the WS module — that is the expected end-of-Sprint-2 visual state. PC only — ESP32 envs land in Sprint 4 but `PalHttp.h`'s `#ifdef ARDUINO` branch is kept intact so it compiles when ESP32 arrives.
+> **Scope:** Port v1's `src/core/HttpServer.h` (332 LOC) — landing at `src/pal/PalHttp.h` because it is a platform-conditional header wrapping `cpp-httplib`/`ESPAsyncWebServer` — and v1's `src/frontend/frontend_bundle.h` (the gzipped SPA). Minimize `PalHttp.h`. Wrap it as a platform-neutral `HttpServerModule` (no `#ifdef`s) that serves `/` from the bundle and exposes minimal REST so v1's UI shell loads and renders. The bundle's WebSocket reconnect logic shows a "disconnected" indicator until Sprint 3 lands the WS module — that is the expected end-of-Sprint-2 visual state. PC only — ESP32 envs land in Sprint 4 but `PalHttp.h`'s `#ifdef ARDUINO` branch is kept intact so it compiles when ESP32 arrives.
 
 ### Definition of Done
 
@@ -97,7 +99,7 @@ Deferred to Sprint 2+ as "earn its place":
 - [x] Vendor cpp-httplib v0.18.5 in `lib/httplib/src/` (header-only) — see [ADR 0001](../adr/0001-vendor-cpp-httplib.md); `lib` added to structural allowlist
 - [x] Port v1's `HttpServer.h` verbatim into `src/pal/PalHttp.h` (port-step, no modifications) — lives in `pal/` because it contains the only platform conditional in v2; module code that uses HTTP gets the abstraction, not the conditional
 - [x] New guardrail `scripts/check_platform_guards.py` rejects `#ifdef ARDUINO` / `#include <Arduino.h>` / ESP-IDF headers outside `src/pal/`; wired into pre-commit + CI + ui.py
-- [x] **Frugalize** `PalHttp.h` under the §4 rule (strip patches, not features): read line by line, looking for retries / swallow-everything try/catch / timer band-aids / re-init paths. Result: **no patches over symptoms found**; LOC unchanged from v1 verbatim (332). Examined and kept:
+- [x] **Minimize** `PalHttp.h` under the §4 rule (strip patches, not features): read line by line, looking for retries / swallow-everything try/catch / timer band-aids / re-init paths. Result: **no patches over symptoms found**; LOC unchanged from v1 verbatim (332). Examined and kept:
   - 4× `catch (std::bad_alloc&)` blocks in ESP32 handlers (return 503 instead of crash) — graceful API boundary for ESP32's tight heap; a deliberate architecture decision, not a patch.
   - `catch (...)` around `listen_after_bind()` in PC branch — broader than ideal, but logs to stderr rather than swallowing silently. Acceptable.
   - Trailing `/.+` → `/*` wildcard adaptation in `onDelete`/`onPatch` — cross-platform syntax adapter between cpp-httplib regex and ESPAsyncWebServer glob; deliberate.
@@ -107,14 +109,14 @@ Deferred to Sprint 2+ as "earn its place":
 - [x] Port v1's `src/frontend/frontend_bundle.h` verbatim into `src/frontend/frontend_bundle.h` (generated data — not counted by LOC checks)
 - [x] `HttpServerModule` serves the bundle on `GET /` via `pal::HttpServer::onGetStaticGzip` with `Content-Encoding: gzip`
 - [x] **End-of-sprint verification:** open `http://127.0.0.1:8080`, see v1's UI render, see modules list (just `hello-0`), see the WebSocket-disconnected indicator (because Sprint 3 hasn't landed yet)
-- [x] LOC budgets in range: `src/pal/PalHttp.h` 247 / 350 (v1 verbatim 332; frugalize was empty — no patches found), `src/modules/network/` 41 / 250
+- [x] LOC budgets in range: `src/pal/PalHttp.h` 247 / 350 (v1 verbatim 332; the port-and-minimize step found no patches), `src/modules/network/` 41 / 250
 - [x] Host unit + integration tests via doctest: three `HttpServerModule` cases covering `GET /`, `GET /api/modules`, and unknown-route 404. Probe uses a 30-line raw-TCP helper rather than `httplib::Client` — cpp-httplib's Client returns `"Failed to read connection"` when used in the same process as its Server on macOS (production code is Server-only and works fine; reason captured in `test_http.cpp`).
 
 ---
 
 ## Sprint 3 — `MoonModule` + `WsServer` + `SystemStatusModule` + frontend sources {#sprint-3}
 
-> **Scope:** Three substantive ports land together because they validate each other: the control system (lifecycle in v2's `Module` + control mechanism from v1's `StatefulModule`, merged into a single `MoonModule` class), the WebSocket transport (`PalWs.h` + `WebSocketModule`), and a real module that exercises both (`SystemStatusModule`). The v1 frontend *sources* (HTML/CSS/JS + bundle generator) come in too, frugalized to render only what v2 ships. After this sprint the UI shows live system status, controls are interactive, and the bundle can be regenerated from sources in-tree.
+> **Scope:** Three substantive ports land together because they validate each other: the control system (lifecycle in v2's `Module` + control mechanism from v1's `StatefulModule`, merged into a single `MoonModule` class), the WebSocket transport (`PalWs.h` + `WebSocketModule`), and a real module that exercises both (`SystemStatusModule`). The v1 frontend *sources* (HTML/CSS/JS + bundle generator) come in too, minimized to render only what v2 ships. After this sprint the UI shows live system status, controls are interactive, and the bundle can be regenerated from sources in-tree.
 
 ### Definition of Done
 
@@ -123,7 +125,7 @@ Deferred to Sprint 2+ as "earn its place":
 - [x] Rename v2's `src/core/Module.h` → `src/core/MoonModule.h`; `pmm::Module` → `pmm::MoonModule` across the tree (HelloModule, HttpServerModule, ModuleManager, Scheduler, tests). `ModuleManager` keeps its name (it manages `MoonModule` instances; the asymmetry is honest).
 - [x] Add ArduinoJson via `lib_deps` (ADR 0002 codifies registry-vs-vendor rule)
 - [x] Merge: v1's control system (`addControl` × 10, `setControl`, `getSchema`, `getControlValues`, `clearControls`, pending props, state persistence, children, autowire hooks, `fillSystemJson`) merged into `MoonModule`. v2's tiered cadences kept (`loop20ms`/`loop1s`/`loop10s` — v1 has fewer). CRTP `StatefulModule<Derived>` wrapper dropped (single class).
-- [x] **Frugalize** the merger under §4 — five refinements landed beyond a 1:1 port:
+- [x] **Minimize** the merger under §4 — five refinements landed beyond a 1:1 port:
   1. Factory-injected `classSize` via `ModuleManager::register_type<T, Args...>()` — captures `sizeof(T)` once, modules write zero per-class boilerplate (replaces v1's CRTP).
   2. `onAllocateMemory()` generalizes v1's `onSizeChanged` (was lighting-only) to a no-args reallocation hook.
   3. `onBuildControls()` replaces v1's `rebuildControls()` duplication — modules put all `addControl()` calls here, framework calls it from `runSetup()` and external code calls it directly for rebuilds.
@@ -134,7 +136,7 @@ Deferred to Sprint 2+ as "earn its place":
 
 #### Step 2: WebSocket transport (`PalWs.h` + `WebSocketModule`)
 
-- [x] Port v1's `src/core/WsServer.h` into `src/pal/PalWs.h` (483 LOC → 247, frugalized). ESP32 branch: deferred frame-buffer pre-allocation infrastructure + heap_caps_get_largest_free_block guards (Sprint 4, when PalHeap lands); deferred broadcastLog (Sprint 5+, when v2 has logging). PC branch: inlined the POSIX socket calls instead of carrying v1's `PcSocketShims.h` (Windows path dropped — v2 targets Linux/macOS PC + ESP32).
+- [x] Port v1's `src/core/WsServer.h` into `src/pal/PalWs.h` (483 LOC → 247, minimized). ESP32 branch: deferred frame-buffer pre-allocation infrastructure + heap_caps_get_largest_free_block guards (Sprint 4, when PalHeap lands); deferred broadcastLog (Sprint 5+, when v2 has logging). PC branch: inlined the POSIX socket calls instead of carrying v1's `PcSocketShims.h` (Windows path dropped — v2 targets Linux/macOS PC + ESP32).
 - [x] Wrap as `WebSocketModule` in `src/modules/network/` — platform-neutral, no `#ifdef`s; owns a `pal::WsServer`, broadcasts schema + state JSON each `loop1s` when there are connected clients. **Deviation from initial plan**: WS lives on its own port (81), not as a `/ws` upgrade on the HTTP port. cpp-httplib has no WebSocket support and adding HTTP-upgrade handling would force a second HTTP library — v1's two-port pattern is cleaner here. Frontend connects to `ws://host:81/`.
 - [x] REST mutations on `HttpServerModule`: `POST /api/modules` (add by type+id), `DELETE /api/modules/{id}` (remove), `PATCH /api/modules/{id}` (set controls — body is a JSON object of `{key: value, ...}`, each key dispatched through `setControl`). All hold `manager_->mutex()` across find+mutate to avoid races with the Scheduler.
 - [x] **Bug uncovered + fixed during Step 2**: `ModuleManager::add()` was calling `m->setup()` directly instead of `m->runSetup()`. This skipped the framework's auto-registration of the `enabled_` control and any other onBuildControls work — meaning `setControl("enabled", false)` silently returned false because the control wasn't registered. Both `add()` and `remove()` now use `runSetup()` / `runTeardown()` dispatch wrappers; `Scheduler::core_loop` correspondingly uses `runLoop` / `runLoop20ms` / etc. so child recursion + enabled-gating in the dispatch wrappers actually fire.
@@ -146,7 +148,7 @@ Deferred to Sprint 2+ as "earn its place":
 - [x] `src/pal/PalSystemInfo.h` ports v1's system-info `pal::*` accessors as a v2 pal-domain file. **PC stubs** for now — `chip_model="pc"`, `mac_address=""`, `total_heap_kb=0`, `cpu_cores=hardware_concurrency`, `local_time_str` via `localtime_r+strftime`, etc. Real ESP32 implementations land in Sprint 4 under `#ifdef ARDUINO` HERE in pal/, never in the modules. 48 / 200 LOC.
 - [x] `SystemStatusModule` ported from v1's 198-LOC `SystemStatus.h`. Inherits `MoonModule` (not v1's `StatefulModule<Derived>` — Step 1c's factory-injected `classSize` replaced the CRTP layer). All 28 `addControl(...)` calls moved from `setup()` into `onBuildControls()` per Step 1c refinement #3 — `setup()` does the one-time hardware reads (`chip_model`, totals); `loop1s()` samples dynamic fields (heap, temp, time, fps). **Zero platform conditionals** in the module — enforced by `check_platform_guards.py`. 147 / 300 LOC.
 - [x] `main.cpp` swaps `mm.add("hello", ...)` → `mm.add("system", "system-0")`; `src/modules/hello/HelloModule.h` and `test/test_pc/test_hello.cpp` deleted (mandatory subtraction for Sprint 3 close). `test_http.cpp` + `test_module.cpp` updated to use `SystemStatusModule` as the test fixture.
-- [x] **Wire-format alignment with v1's frontend** (uncovered when the browser saw no controls): v2's `WebSocketModule` was emitting `{"event":"schema",...}` + a wrapped state envelope `{"event":"state","modules":[...]}` with flat key:value entries — but v1's `app.js` dispatches on `msg.t === 'schema'` and expects state as a **raw top-level array** `[{id, controls:{...}}, ...]`. The reinvention had no justification. v2 now emits v1's exact wire format: schema is `{"t":"schema","modules":[...]}`, state is a raw array with each entry `{id, controls:{key:value, ...}}`. Port-and-frugalize default applied — use v1's working design, don't reinvent.
+- [x] **Wire-format alignment with v1's frontend** (uncovered when the browser saw no controls): v2's `WebSocketModule` was emitting `{"event":"schema",...}` + a wrapped state envelope `{"event":"state","modules":[...]}` with flat key:value entries — but v1's `app.js` dispatches on `msg.t === 'schema'` and expects state as a **raw top-level array** `[{id, controls:{...}}, ...]`. The reinvention had no justification. v2 now emits v1's exact wire format: schema is `{"t":"schema","modules":[...]}`, state is a raw array with each entry `{id, controls:{key:value, ...}}`. Port-and-minimize default applied — use v1's working design, don't reinvent.
 - [x] **End-of-step verification**: open WebSocket on `:81`, see `system-0` schema with 28 controls (uptime_s, fps, local_time, heap_*, psram_*, fs_*, chip_model, mac_address, firmware_version, build_date, build_time, cpu_*, flash_*, reset_reason). State frames show `uptime_s` and `local_time` advancing each second. Browser hits `http://127.0.0.1:8080`, sees v1 UI render system status live with all 28 controls.
 
 #### Step 4: Frontend sources
@@ -155,7 +157,7 @@ Deferred to Sprint 2+ as "earn its place":
 - [x] Ported `scripts/gen_frontend_bundle.py` (v1's PIO pre-script handling dropped — v2 generates on-demand, not as part of the PlatformIO build). Generator made **deterministic** by setting `gzip mtime=0`; v1's version embedded the current timestamp, so two regenerations produced different bytes — that prevented any meaningful drift check. v2's drift check now works because identical sources always produce identical bundles.
 - [x] `scripts/check_bundle.py` regenerates the bundle in-memory and diffs against the committed `frontend_bundle.h`. Wired into pre-commit + CI + ui.py. Drift between sources and bundle fails CI.
 - [x] `scripts/ui.py` gains two cards: "Frontend bundle drift" (runs check_bundle) and "Regenerate frontend bundle" (runs gen).
-- [x] **Frugalize the frontend** under §4: the deliberation yields **nothing stripped**. The §4 rule is "future-needed features stay" — and the v1 frontend's lighting UI is needed by Sprint 6, WiFi UI by Sprint 5, firmware-upload UI by Sprint 7. All three sprints land in this release. Stripping any of it now would only mean re-porting later — exactly the waste §4 exists to prevent. The earlier Sprint 3 DoD bullet that proposed stripping "UI for features v2 does not yet ship" contradicted §4 and was wrong; the frontend is left as v1 ships it. Real UI changes happen *when* those sprints add their own features and need their own frontend bits.
+- [x] **Minimize the frontend** under §4: the deliberation yields **nothing stripped**. The §4 rule is "future-needed features stay" — and the v1 frontend's lighting UI is needed by Sprint 6, WiFi UI by Sprint 5, firmware-upload UI by Sprint 7. All three sprints land in this release. Stripping any of it now would only mean re-porting later — exactly the waste §4 exists to prevent. The earlier Sprint 3 DoD bullet that proposed stripping "UI for features v2 does not yet ship" contradicted §4 and was wrong; the frontend is left as v1 ships it. Real UI changes happen *when* those sprints add their own features and need their own frontend bits.
 - [x] **End-of-sprint verification:** open `http://127.0.0.1:8080`, see live SystemStatusModule with ticking uptime, heap, fps, local_time; controls render from schema; WS "connected" indicator green. Bundle is 24422 bytes gzipped (same compressed size as v1; bytes differ only in the gzip header timestamp now being deterministic at zero).
 - [x] In-flight fixes surfaced by the end-of-sprint browser test: (a) Add-module picker was empty — frontend `GET /api/types` had no handler. Added `ModuleManager::registered_types()` and the matching `HttpServerModule` route returning `[{name, category}]`. (b) Module cards showed title "undefined" — `getSchema` emitted only `id`/`type` but the frontend reads `name`. Added `name = type` in `getSchema` (no separate human label until a module needs one). (c) Drag-and-drop reorder did nothing — frontend posts to `/api/modules/reorder` which had no handler. Added `ModuleManager::reorder(ids)` (matched ids first, unmatched modules appended in original relative order, unknown ids ignored) and the matching `HttpServerModule` route.
 
@@ -177,7 +179,7 @@ Deferred to Sprint 2+ as "earn its place":
 - [x] HIL probe: `esp32dev` flashed to `/dev/cu.usbserial-20213431`; serial output verified at 115200 — device boots, `SystemStatusModule` constructs (heap/PSRAM/chip queries executed without crash), HTTP and WS modules log a deferred message and skip `AsyncServer::begin()` (their listeners cannot start before lwIP has a netif — see "Deferred" below), Scheduler enters both core loops. CI skips this step without hardware.
 - [x] `scripts/ui.py` gains a USB-port picker in the header (auto-populates from `/dev/cu.usb*` / `/dev/ttyUSB*` + `/dev/ttyACM*`, persisted via `localStorage`) and six ESP32 cards: Build esp32dev / esp32s3_n16r8, Flash esp32dev / esp32s3_n16r8 (consume the picker), Serial monitor for each env (long-running, consume the picker). `scripts/flash.py` and `scripts/monitor.py` are the underlying CLIs; CI doesn't use them (no hardware). `scripts/_pio.py` resolves the right `pio` binary — prefers `~/.platformio/penv/bin/pio` (PlatformIO's bundled Python 3.11) over a Homebrew shim that may resolve to a Python 3.12 with a system `fatfs` package whose API doesn't match the espressif32 platform's expectations (causes `ImportError: cannot import name 'create_extended_partition' from 'fatfs'` at build start). Falls back to PATH lookup when the penv isn't present (CI containers install PlatformIO via pip).
 
-### Deferred (frugality)
+### Deferred (minimalism)
 
 - [ ] **HTTP + WebSocket listener startup on ESP32** — `pal::HttpServer::begin()` / `pal::WsServer::begin()` no-op on Arduino because `AsyncServer::begin()` asserts `xQueueSemaphoreTake` when the lwIP TCP/IP task is not running, and that task only starts once WiFi or Ethernet brings up a netif. Sprint 5's `WifiStaModule` will signal network-ready and re-invoke `begin()`. The route registrations (`onGet`, `onPost`, `onPatch`, `onDelete`) still fire in module `setup()` so Sprint 5 only needs to add the trigger, not re-wire any routes.
 - [ ] `PalFs.h` — lands in Sprint 5 with `WifiStaModule` (credentials persistence). `fs_total_kb` / `fs_used_kb` return 0 from `PalSystemInfo.h` on both branches until then.
@@ -213,7 +215,7 @@ Deferred to Sprint 2+ as "earn its place":
 >
 > Plus **LittleFS state persistence** so the device survives reboots: a `StateStoreModule` reads `/modules.json` + `/state/<id>.json` on boot to rebuild the user's module configuration and per-control values; saves the same on add / remove / control change. Without this, a Sprint 6 device loses its lighting modules every flash — clearly insufficient for daily use.
 >
-> Frugality first: **no parent modules**, **no producer / consumer base classes**, **no SPSC ring**, **no PSRAM allocator**, **no per-module core affinity**, **no effect layering**, **no FastLED / WS2812 driver**. The data flow lives in three lighting modules + four headers in `modules/lights/`, one new pal file, one new state-store module. `src/core/` is untouched — the StateStoreModule walks `manager_` from the outside and uses the existing `MoonModule::saveState` / `loadState` / `getControlValues` API.
+> Minimalism first: **no parent modules**, **no producer / consumer base classes**, **no SPSC ring**, **no PSRAM allocator**, **no per-module core affinity**, **no effect layering**, **no FastLED / WS2812 driver**. The data flow lives in three lighting modules + four headers in `modules/lights/`, one new pal file, one new state-store module. `src/core/` is untouched — the StateStoreModule walks `manager_` from the outside and uses the existing `MoonModule::saveState` / `loadState` / `getControlValues` API.
 
 ### Definition of Done
 
@@ -254,7 +256,7 @@ PixelBufferRef pixelBuffer() const override {
 }
 ```
 
-**Why a registry, not `dynamic_cast`.** The natural shape — `dynamic_cast<PixelSource*>(manager_->find(id))` — does not work on hardware: arduino-esp32 builds with `-fno-rtti`. Adding `-frtti` is a hammer (binary size, framework-wide effect) and adding a virtual `asPixelSource()` to `MoonModule` violates the "nothing in core" rule for this sprint. The frugal answer: a small **publish-on-setup / find-by-id registry** living entirely in `modules/lights/`.
+**Why a registry, not `dynamic_cast`.** The natural shape — `dynamic_cast<PixelSource*>(manager_->find(id))` — does not work on hardware: arduino-esp32 builds with `-fno-rtti`. Adding `-frtti` is a hammer (binary size, framework-wide effect) and adding a virtual `asPixelSource()` to `MoonModule` violates the "nothing in core" rule for this sprint. The minimal answer: a small **publish-on-setup / find-by-id registry** living entirely in `modules/lights/`.
 
 ```cpp
 // modules/lights/PixelRegistry.h  (≈ 30 LOC)
@@ -346,20 +348,134 @@ void PreviewModule::loop20ms() {
 
 ---
 
-## To be validated during Release 1
+## Sprint 8 — Test foundation: classified units + MemBoot/MemLive + in-process scenarios {#sprint-8}
 
-The [process architecture](../architecture/process.md) states the contract in high-level terms. The items below are specifics inherited from v1's Release 9 guardrails outline that need to earn their place under the frugality rule (does this addition pay for itself?) before they are codified. Each is a sprint-time decision in Release 1, not a Release-1 entry condition.
+> **Scope:** The current test surface (203 LOC / 9 cases under `test/test_pc/`) is honest smoke coverage but does not exercise what Sprints 4–7 built. This sprint lands three rails that give Sprint 9 a real safety net for the minimalism review and give every future sprint a place to assert behavior:
+>
+> 1. **Classified unit tests + behavioral coverage** of the Sprint 4–7 surface (FrameRing SPSC, RipplesEffect LUT, PalHeap fallback, Scheduler core affinity, PreviewModule wire format, ArtnetOutModule packet packing, StateStoreModule round-trip).
+> 2. **Runtime `[MemBoot]` / `[MemLive]` events** emitted through `pmm::Logger` so heap deltas are visible in stdout / `/api/log` / the ui.py log window.
+> 3. **Declarative scenarios replayed in-process** via doctest — `deploy/test/scenarios/*.json` parsed and run through `ModuleManager`, with Rail 2's events firing during replay.
+>
+> **Minimalism stance, fixed by Sprint 1's Rule #1.** Events flow to `pmm::Logger`'s ring → serial / `/api/log` / ui.py log window. The firmware writes no log file; no `.md` status doc is generated; no per-chip baseline JSON is committed. Yesterday's run is not preserved on disk. Each deferred test artefact (REST scenario runner, baseline diffing, devicelist orchestration, summarise.py, committed serial logs) has an explicit drift episode that unlocks it — see [Deferred](#sprint-8-deferred) below. v1 reached 20+ test-artefact files; v2 stays at zero until drift demands the first one.
 
-**Tool choices for the three guardrail tiers.** Specific formatters, linters, and static analysers — for example `clang-format`, `ruff`, `clang-tidy` with `bugprone-*`/`modernize-*`, `cppcheck`. Each must justify itself or be dropped. The *rules* are fixed by process architecture; the *tools* are not.
+### Definition of Done
 
-**Hot-path enforcement mechanism.** Whether hot-path bans (no allocations, no blocking calls, no logging in `loop*()` bodies) are enforced by regex over `void <name>::loop\b.*\{` … matching `}`, by a clang-tidy plugin, by AST tooling, or by something else. Whatever it is must be cheap to maintain.
+#### Rail 1 — Classified unit tests + behavioral coverage
 
-**Footprint baseline format.** Where module footprint baselines live (`baselines/footprint.json` was the v1 proposal) and what triggers an update — PR description entry, signed-off bump line, or another mechanism.
+- [ ] `scripts/classify_tests.py` (≤ 30 LOC): regex over `TEST_CASE("…")` names emits a `[smoke]` / `[format]` / `[behavioral]` / `[integration]` prefix in the doctest output stream. Visible in ui.py's log window; nothing written. Classifier keys ported from v1's `deploy/unittest.py` (`_INTEGRATION_KEYS`, `_SMOKE_KEYS`, `_FORMAT_KEYS`); `behavioral` is the default.
+- [ ] New `test/test_pc/` files exercising real call sequences from Sprints 4–7. Each file's PR description names the drift class it catches (per [process arch §2](../architecture/process.md#2-guardrails-minimalism-enforced-mechanically)):
 
-**Doc-growth budget number.** v1 proposed 500 lines per release; v2 picks a number when it has enough data to pick one.
+    | File | What it asserts |
+    |---|---|
+    | `test_ripples_lut.cpp` | 128×128 LUT path produces deterministic pixel pattern; `revision_` bumps on geometry / `hue_base` change; `base_color_` table matches expected hue gradient |
+    | `test_frame_ring.cpp` | Producer + consumer on two `std::thread`s — SPSC ordering, slot rotation, no torn reads, release/acquire pairing |
+    | `test_pal_heap.cpp` | `psram_alloc(N)` returns byte-addressable aligned pointer; `psram_free` idempotent on null; survives N>0 and N=0 |
+    | `test_scheduler_affinity.cpp` | Two modules with `coreAffinity()` 0 and 1 — per-core tick counters increment in isolation; affinity beyond `cores_` doesn't tick |
+    | `test_preview_wire.cpp` | Feed a known 4×4 RGB grid; assert 7-byte header + RGB body byte-for-byte against the `renderPixelFrame` contract |
+    | `test_artnet_packing.cpp` | 64×64 frame → 25 universes; header bytes 0..17 match Art-Net OpDmx; universe increment correct |
+    | `test_state_store.cpp` | Mutate a control via `setControl`, wait for the 10 s window, simulate reboot (manager teardown + `StateStoreModule` re-construct), assert control restored |
 
-**Structural-additions justification format.** Whether `// WHY:` (C++) and a top-of-file Python docstring are the right way to record why a new file in `scripts/`, `tests/`, or `docs/` exists, or whether a single mechanism (e.g. PR template field) is cheaper.
+- [ ] `test/test_pc/` grows from 203 LOC → roughly 600–800 LOC. Per-file LOC budgets added to `scripts/check_loc.py` with the post-write count + ~15 % headroom.
 
-**Verifier-of-the-verifier.** v1's answer was: the testing system's growth is gated by the structural rule, and its correctness is asserted only by the unit test that every module's `healthReport()` is non-empty — no meta-tests. v2 inherits this stance by default but should validate it once `healthReport()` exists.
+#### Rail 2 — `[MemBoot]` / `[MemLive]` runtime events
 
-Each item closes with a one-line outcome in this section by Sprint 7 (kept, dropped, or replaced). What is kept moves into [process architecture](../architecture/process.md); what is dropped disappears.
+- [ ] Extend `pmm::Logger` (or add `src/modules/system/MemTracker.h`, ≤ 100 LOC) to emit stable line-prefixed events through the existing log ring:
+  - `[MemBoot]   ModuleName  setup +ΔKB = MKB (frag=P%, largest=LKB)` after each module's `setup()` returns — hooked in `MoonModule::runSetup`.
+  - `[MemLive]   ModuleName  setup +ΔKB = MKB (...)` one second later, after `onAllocateMemory` and steady state. Catches modules whose true cost only shows up post-setup.
+  - `[MemLive] periodic = MKB (...)` at 1 Hz, only when heap moved by > 1 KB threshold.
+  - ESP32 only: append `PR: +ΔKB = MKB` suffix on the same line for PSRAM.
+- [ ] Events flow through `pmm::Logger`'s ring → serial + `/api/log` + ui.py log window. **No file written by firmware. No `docs/status/*.md` generated.**
+- [ ] Format is intentionally machine-parseable so an LLM reading the ui.py log can answer "did module X leak during the scenario?" without a custom parser. The format is stable enough to become a contract on its own line shape.
+
+#### Rail 3 — Declarative scenarios, in-process only
+
+- [ ] `deploy/test/scenarios/base-pipeline.json` (≤ 30 LOC) — describes the current default light pipeline (ripples + preview + artnet-out at 16×16). Step ops: `add_module`, `set_control`, `set_input`. Steps marked `"measure": true` carry optional `"bounds": { "fps": { "min": N } }` for assertion. Schema mirrors v1's `deploy/test/scenarios/*.json` so the format can be reused later if a REST runner earns its place.
+- [ ] `test/test_pc/test_scenarios.cpp` (~100 LOC) parses each JSON file under `deploy/test/scenarios/`, replays via `ModuleManager`, asserts step bounds. Rail 2's MemBoot/MemLive events fire during replay; the test stdout shows the same memory trail a real boot does.
+- [ ] No REST runner. No `scripts/scenario.py`. No baseline file. Adding a new scenario adds coverage automatically via the JSON-glob loop — no extra test code per scenario.
+
+#### Growth ledger
+
+- [ ] An "Artefact promotions" subsection added under [Validated during Release 1](#validated-during-release-1). Each future promotion of a deferred test artefact gets one line, dated, with the drift episode that unlocked it. Without a drift episode entry, no promotion lands. This is the [§3 anti-drift rule](../architecture/process.md#3-anti-drift-why-these-rules-survive) applied to test infrastructure itself.
+
+### Deferred {#sprint-8-deferred}
+
+Each deferred artefact lists the drift episode that would unlock its promotion:
+
+- [ ] **REST scenario runner** (`scripts/scenario.py` against a live device) — unlocks when a behavior bug appears on hardware that the in-process replay missed (likely first cause: WiFi / netif races, WS queue depth).
+- [ ] **Per-chip baseline JSON** (`deploy/test/scenario-baseline.json`) — unlocks when a slow numeric regression slips past because today's number looked normal relative to last week. Introduce baseline diff for the one metric that drifted, not all metrics.
+- [ ] **Devicelist + parallel orchestration** — unlocks when more than one device is tested *every PR*. Today: one s3 at 192.168.1.156, optionally an esp32dev at 192.168.1.234.
+- [ ] **Committed `deploy/run/*.log` serial-log artefacts** — unlocks when a diff episode requires last week's serial output to spot today's drift. Default: read the log live in ui.py; no commit.
+- [ ] **Status-doc aggregator** (`summarise.py` → `docs/status/index.md`) — unlocks when more than one human reads test results regularly. Today: one human.
+- [ ] **`test_techdebt.cpp`-style encoded TODO tests** — do not promote. v1 drift candidate. Use ADRs with explicit closure dates instead.
+- [ ] **`test_health_checks.cpp` as the "verifier-of-the-verifier"** — already DROPPED in [Validated during Release 1](#validated-during-release-1).
+
+---
+
+## Sprint 9 — Release 1 polish: minimalism review + deploy & docs read-through {#sprint-9}
+
+> **Scope:** Sprints 1–8 built the foundation; Sprint 9 *reviews* it. No new features. Three workstreams, one sprint:
+>
+> 1. **Per-file minimalism review** of `src/`, `test/`, and the guardrails in `scripts/`. Walk each file with §1 and §4 in hand; delete what doesn't pay for itself; tighten guardrails where Sprint 4–8 hindsight surfaces a real drift class.
+> 2. **Deploy process walk** via `scripts/ui.py`. Every card exercised end-to-end on a fresh clone. The Sprint 7 fatfs/PIO-Python collision is either fixed at the source or made the documented path — a new contributor on macOS with `brew install python` must run "Build esp32s3_n16r8" from `ui.py` without manual intervention.
+> 3. **Documentation read-through** of `docs/`. Trim what no longer pays for itself; fix anchor drift left by the Minimalism rename; reconcile `process.md` / `system.md` with what actually shipped.
+>
+> **Bias:** this sprint removes more than it adds. Net LOC ≤ 0 across `src/` + `docs/` combined (the test-surface growth in Sprint 8 is intentional and stays); per-surface budget *tightening* is preferred over loosening. A green guardrail run is necessary but not sufficient — the read test is whether a new reader can hold the foundation in their head after one pass through `docs/`.
+
+### Definition of Done
+
+#### Minimalism review (source + test)
+
+- [ ] Per-file walk of `src/` and `test/`. PR description carries a one-line outcome per file: `kept verbatim` / `trimmed N LOC` / `deleted`. "Nothing to strip" is a valid outcome when recorded with what was examined (per [process arch §4](../architecture/process.md#4-port-and-minimize-where-substantive-modules-come-from)).
+- [ ] At least one substantive deletion lands. Per the [§3 anti-drift rule](../architecture/process.md#3-anti-drift-why-these-rules-survive) ("every release removes at least one thing"), the Sprint 9 commit is the natural place to honour that.
+- [ ] Surface-level LOC budgets re-checked. Any surface where actual ≤ 50 % of budget gets the budget *tightened* in `scripts/check_loc.py` (with the post-trim count + ~10 % headroom). PR records the new numbers. Sprint 8's test budgets land at "post-write + 15 % headroom" and stay there.
+
+#### Guardrails review (enforcement)
+
+- [ ] Each `scripts/check_*.py` walked: what drift class does it catch, what did it miss across Sprints 4–8? A new check or refinement lands only when a real Sprint 4–8 incident motivates it. Concrete candidates from this release:
+  - The `MALLOC_CAP_8BIT` IRAM-fault class — can a regex flag `heap_caps_malloc(..., MALLOC_CAP_INTERNAL[^|]*)` without the 8BIT bit?
+  - Is the `printf` / `Serial.print` family in scope of `check_hot_path.py`'s banned list, given CLAUDE.md's existing in-prose ban on info-level logging in `loop*`?
+  - Does Sprint 8's `[MemBoot]` / `[MemLive]` line-shape want its own format guard, or is the doctest replay's assertion enough?
+- [ ] Pre-commit + CI green on the post-walk tree with the post-walk guardrails.
+- [ ] Any new guardrail justifies itself per [process arch §2](../architecture/process.md#2-guardrails-minimalism-enforced-mechanically) in the PR description.
+
+#### Deploy process walk
+
+- [ ] Every card in `scripts/ui.py` exercised end-to-end on a fresh clone. Each gets a one-line "verified ✓ on $DATE" or "failed → fixed by $X" entry in `docs/deploy.md`.
+- [ ] The fatfs / PlatformIO-Python collision is closed: either `scripts/_pio.py` resolves cleanly without manual `uv` invocation, or `docs/deploy.md` documents the `uv run --with platformio --with fatfs-ng ...` path prominently enough that a new contributor finds it on first build failure.
+- [ ] Any `scripts/*.py` file that no longer maps to a `ui.py` card or a CI step is deleted.
+
+#### Documentation read-through
+
+- [ ] `docs/index.md`, `docs/architecture/{system,process}.md`, `docs/development/{index,release-01,release-02}.md`, every `docs/adr/*.md`, `docs/deploy.md`, `docs/lights.md` read end-to-end. Outcomes: link rot fixed, stale references updated or deleted.
+- [ ] Anchor audit post-Minimalism rename: every cross-reference resolves; no broken anchors left behind by the renamed headings (`port-and-minimize`, etc.). MkDocs build green on links.
+- [ ] `process.md` and `system.md` reconciled with what shipped. The `MALLOC_CAP_8BIT` rationale (today only in `PalHeap.h`'s header) is promoted to `system.md § Pal` if other Pal files would benefit from the same byte-store discipline. The `[MemBoot]` / `[MemLive]` line-format contract is documented in `system.md § Logger` (or wherever Sprint 8 places it).
+- [ ] The renamed [Validated during Release 1](#validated-during-release-1) section reviewed: does its history value justify staying in `release-01.md`, or does the substance move into `process.md` and the section get deleted? Decide and act.
+
+#### Release 1 closure
+
+- [ ] `v1.0.0-foundation` tag created from the Sprint 9 head once all the above are green.
+- [ ] One-paragraph retrospective added at the top of [Release 2](release-02.md): what the Release 1 baseline actually delivers, what Release 2 inherits, what Release 2 is *not* allowed to redo (per the [port-and-minimize §4](../architecture/process.md#4-port-and-minimize-where-substantive-modules-come-from) discipline applied recursively to v2 itself).
+
+### Deferred
+
+- [ ] Recurring-evaluation sprint (Release 5 per the [Release Overview](#release-overview)) — framing is set in Release 1; concrete scope earns its place when Release 4 wraps.
+- [ ] Doc-growth budget number. Already DROPPED in [Validated during Release 1](#validated-during-release-1); revisit only if `docs/` drift becomes a felt problem.
+- [ ] `healthReport()` meta-test. Already DROPPED — reconsider only when the test surface exceeds the "readable in one sitting" threshold the v2 stance relies on.
+
+---
+
+## Validated during Release 1
+
+The [process architecture](../architecture/process.md) states the contract in high-level terms; the items below were Release-1 specifics inherited from v1's Release 9 guardrails outline. Each had to earn its place under the minimalism rule. Outcomes by Sprint 7:
+
+**Tool choices for the three guardrail tiers** — **REPLACED.** None of v1's candidates (`clang-format`, `ruff`, `clang-tidy` with `bugprone-*`/`modernize-*`, `cppcheck`) were adopted. Each tier ships a purpose-built Python check in `scripts/`: `check_loc`, `check_hot_path`, `check_gpio`, `check_structure`, `check_platform_guards`, `check_bundle`. No formatter was added — mechanical formatting wasn't on v1's failure list. Pre-commit via `.githooks/pre-commit`; the same scripts run in `.github/workflows/ci.yml`.
+
+**Hot-path enforcement mechanism** — **KEPT (regex/Python).** `scripts/check_hot_path.py` matches `void [Class::]loop*() {` with brace-balanced body extraction and a banned-pattern scan (no `new` / `malloc` / `psram_malloc` / `JsonDocument` / `delay` / `vTaskDelay` / `sleep` / `usleep` / `recv`). ~50 LOC. The clang-tidy plugin and AST options were not adopted — overkill for the surface.
+
+**Footprint baseline format** — **REPLACED.** Budgets live inline in `scripts/check_loc.py`'s `BUDGETS = {...}` dict, each entry annotated with a rationale comment. Bumps are PR-visible inline edits to that dict. No separate `baselines/footprint.json` was created.
+
+**Doc-growth budget number** — **DROPPED.** No automated count was added. Doc growth is judged at review time. Revisit only if drift becomes a felt problem.
+
+**Structural-additions justification format** — **REPLACED.** Convention is top-of-file docstring (Python) or top-of-file `//` block (C++). Top-level directory additions additionally require an ADR, enforced by `scripts/check_structure.py`'s allowlist. No `// WHY:` marker syntax, no PR-template field.
+
+**Verifier-of-the-verifier** — **REPLACED.** The "growth gated by the structural rule" half stayed and is now enforced by `check_structure.py`'s top-level allowlist. The `healthReport()` meta-test never landed and isn't needed — the test surface is 203 LOC across two files (`test/test_pc/test_module.cpp`, `test_http.cpp`), small enough to read in one sitting; a meta-assertion buys nothing at that size.

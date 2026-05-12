@@ -8,7 +8,7 @@ which is why we use a header file instead of `env.Append(CPPDEFINES=…)` —
 the latter would invalidate every .o file in the build whenever the time
 ticks, costing 30 s+ on ESP32 incremental rebuilds.
 
-Ported and frugalized from v1's inject_build_info.py: drops the
+Ported and minimized from v1's inject_build_info.py: drops the
 APP_VERSION read from library.json (no library.json in v2 yet — lands
 with OTA in Release 2's Sprint 9).
 """

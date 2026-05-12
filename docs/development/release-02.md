@@ -4,7 +4,7 @@ Release 2 closes the v1 → v2 transition. Release 1 shipped a working device wi
 
 ## Sprints
 
-| Sprint | Goal | Frugality target |
+| Sprint | Goal | Minimalism target |
 |--------|------|------------------|
 | Sprint 8 | ArtNet **in** + NTP wall-clock — first network-consumer light module + first time service | per-module ≤ 300 LOC |
 | Sprint 9 | OTA firmware update + GitHub-release flash path | per-module ≤ 300 LOC |

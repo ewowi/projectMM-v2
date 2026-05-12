@@ -45,7 +45,7 @@ The contract is the entire module-facing API of the runtime. Six lifecycle virtu
 
 **Multi-core.** The runtime is built to exploit every core the platform offers. Several `loop()` instances run in parallel, connected as a DAG. The scheduler pins a separate task per core and arranges the topology declared at wire time.
 
-`MoonModule` total target: ≤ 600 LOC. v1's `Module` + `StatefulModule` together is ~996 LOC; v2's frugalized merger lands smaller.
+`MoonModule` total target: ≤ 600 LOC. v1's `Module` + `StatefulModule` together is ~996 LOC; v2's minimized merger lands smaller.
 
 ---
 
@@ -91,7 +91,7 @@ Pal is not one file. It is a directory of small, single-concern headers. The def
 
 > **`#ifdef ARDUINO`, `#include <Arduino.h>`, ESP-IDF includes, and every other platform-identity gate live in `src/pal/` and nowhere else.** Modules see only `pal::*` calls; modules contain zero platform conditionals.
 
-This is enforced mechanically by [`scripts/check_platform_guards.py`](../../scripts/check_platform_guards.py): any platform guard outside `src/pal/` fails CI. Porting v2 to a new platform means writing new pal files; it never means touching a module.
+This is enforced mechanically by `scripts/check_platform_guards.py`: any platform guard outside `src/pal/` fails CI. Porting v2 to a new platform means writing new pal files; it never means touching a module.
 
 The drift this rule guards against is twofold:
 

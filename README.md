@@ -6,7 +6,7 @@ The entry domain is light control: LEDs and other light sources driven directly 
 
 ## Status
 
-Pre-release. v2 is being brought to parity with [v1](https://github.com/ewowi/projectMM) over six sprints — see [Release 1 — Restart to Parity](docs/development/release-01.md). The main driver is **frugality**: frugal in code, in CPU cycles, and in resources. The contract under which every sprint executes is [process architecture](docs/architecture/process.md) — frugality, the guardrails that enforce it, and the anti-drift rules that keep the framework itself from eroding.
+Pre-release. v2 is being brought to parity with [v1](https://github.com/ewowi/projectMM) over six sprints — see [Release 1 — Restart to Parity](docs/development/release-01.md). The main driver is **minimalism**: minimal in code, in CPU cycles, and in resources. The contract under which every sprint executes is [process architecture](docs/architecture/process.md) — minimalism, the guardrails that enforce it, and the anti-drift rules that keep the framework itself from eroding.
 
 ## Docs
 

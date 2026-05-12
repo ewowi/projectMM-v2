@@ -1,7 +1,7 @@
 #pragma once
 //
 // RipplesEffect — radial sine ripples on a 2D panel (with optional repeated
-// depth slices). Sprint 6 frugal: writes its own RGB buffer in loop20ms,
+// depth slices). Sprint 6 minimal: writes its own RGB buffer in loop20ms,
 // publishes itself to PixelRegistry so PreviewModule and ArtnetOutModule
 // can pick up the frame.
 //

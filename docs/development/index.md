@@ -4,7 +4,7 @@ projectMM v2 follows an Agile process adapted for AI-collaborative development. 
 
 ## The contract
 
-[Process architecture](../architecture/process.md) is the contract under which every release executes — frugality (the main driver), the guardrails that enforce it, and the anti-drift rules that keep the framework itself from eroding. It is not a release artefact but a constraint on every release that follows. Any pull request that bypasses or relaxes it carries a paired ADR file (`docs/adr/NNNN-*.md`).
+[Process architecture](../architecture/process.md) is the contract under which every release executes — minimalism (the main driver), the guardrails that enforce it, and the anti-drift rules that keep the framework itself from eroding. It is not a release artefact but a constraint on every release that follows. Any pull request that bypasses or relaxes it carries a paired ADR file (`docs/adr/NNNN-*.md`).
 
 ## Releases
 

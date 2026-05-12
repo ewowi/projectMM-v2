@@ -8,12 +8,12 @@ The entry domain is **light control**: LEDs over GPIO or network. Effects, layer
 
 ## The main driver
 
-**Frugality** — frugal in code, in CPU cycles, and in resources. The full statement of the principle, the guardrails that enforce it, and the anti-drift rules that keep the framework itself from eroding live in [process architecture](architecture/process.md). Both the system and process architectures ship as the contract under which every sprint executes.
+**Minimalism** — minimal in code, in CPU cycles, and in resources. The full statement of the principle, the guardrails that enforce it, and the anti-drift rules that keep the framework itself from eroding live in [process architecture](architecture/process.md). Both the system and process architectures ship as the contract under which every sprint executes.
 
 ## Where to go next
 
 - [System architecture](architecture/system.md) — the core in one page.
-- [Process architecture](architecture/process.md) — frugality, guardrails, anti-drift.
+- [Process architecture](architecture/process.md) — minimalism, guardrails, anti-drift.
 - [Lights](lights.md) — the first domain (filled in during Release 1 Sprint 4).
 - [Deploy](deploy.md) — build, flash, test (filled in during Release 1 Sprint 1).
 - [Release 1 plan](development/release-01.md) — foundation: skeleton → light pipeline + persistence + scaling (seven sprints).

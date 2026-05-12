@@ -19,7 +19,7 @@
 //   }
 //   ws.tick();   // ESP32: cleanup closed slots; PC: no-op
 //
-// Frugalize log (§4 deliberation vs v1's WsServer.h, 483 LOC → 244):
+// Port-and-minimize log (§4 deliberation vs v1's WsServer.h, 483 LOC → 244):
 //
 //   DEFERRED to Sprint 4 (ESP32 OOM hardening — depends on PalHeap):
 //     - Pre-allocated frame buffer infrastructure (pixBuf_, textBuf_,

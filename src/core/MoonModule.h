@@ -9,7 +9,7 @@
 // lazily-grown vector) and the architectural simplification removes a
 // concept boundary that paid for nothing.
 //
-// Frugalize log (§4 deliberation, vs v1's StatefulModule.h):
+// Port-and-minimize log (§4 deliberation, vs v1's StatefulModule.h):
 //   KEPT verbatim or with minor renames (future-needed in Release 1):
 //     - ControlDescriptor + CtrlType (control schema descriptors)
 //     - addControl overloads (float, uint8, uint32, bool, char*, const char*,

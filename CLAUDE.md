@@ -2,9 +2,9 @@
 
 Guidance for Claude Code (claude.ai/code) and other AI agents working on projectMM v2.
 
-## Rule #1: Frugality
+## Rule #1: Minimalism
 
-Frugal in code, in CPU cycles, and in resources. This is the load-bearing constraint of the project. Every change answers two questions before it lands:
+Minimal in code, in CPU cycles, and in resources. This is the load-bearing constraint of the project. Every change answers two questions before it lands:
 
 1. **Does this addition pay for itself?** A new file, a new test surface, a new doc page, a new deploy script — what does it replace or extend?
 2. **What did you remove?** Every release removes at least one thing. A PR that adds without removing must justify why.
