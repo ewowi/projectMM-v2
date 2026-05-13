@@ -49,7 +49,7 @@ Sprint 2 and Sprint 3 were initially attempted as greenfield rewrites of v1's HT
 | [Sprint 6](#sprint-6) | Light domain foundation + LittleFS state persistence: RipplesEffect + Preview + Art-Net out + modules.json / per-module state survive reboot | per-module ≤ 300 LOC |
 | [Sprint 7](#sprint-7) | Two-core + PSRAM scaling: PalRtos pinned tasks, PalHeap PSRAM, FrameRing SPSC, ArtnetOut pinned to core 1, stress-test 128×128 on s3 | per-module ≤ 300 LOC |
 | [Sprint 8](#sprint-8) | Test foundation: classified unit tests + behavioral coverage for Sprints 4–7, `[MemBoot]` / `[MemLive]` runtime events, declarative scenarios replayed in-process | `test/` grows to ~25 % of `src/` |
-| [Sprint 9](#sprint-9) | Release 1 polish: per-file minimalism review (source + guardrails + `test/`), deploy walk via `scripts/ui.py`, docs read-through; tag `v1.0.0-foundation` | net LOC ≤ 0 across `src/` + `docs/` |
+| [Sprint 9](#sprint-9) | Release 1 polish: per-file minimalism review (source + guardrails + `test/`), deploy walk via `scripts/moondeck.py`, docs read-through; tag `v1.0.0-foundation` | net LOC ≤ 0 across `src/` + `docs/` |
 
 Each sprint closes with a working device (or working PC application for sprints 2–3). After Sprint 9, Release 1 is tagged `v1.0.0-foundation` — the v2 codebase has a real light pipeline, scaled persistence, a stress-tested dual-core path on hardware, a test surface that exercises what Sprints 4–7 actually built, and a reviewed, trimmed foundation that the next release inherits. The v1 → v2 cutover (rename + final stable tag) closes [Release 2](release-02.md), which adds ArtNet **in**, OTA, NTP, and any remaining v1 parity bits.
 
@@ -61,7 +61,7 @@ Each sprint closes with a working device (or working PC application for sprints 
 
 The framework is the load-bearing deliverable. Without it, the same drift that produced v1 reaches v2 by Sprint 4. [Process architecture](../architecture/process.md) is the spec; the first commit of this sprint is its implementation. `loop20ms()` is new in v2 (v1 had only `runLoop1s` via timing windows); the scheduler maintains four cadences per core (hot, 20 ms, 1 s, 10 s) and modules opt into each by overriding the corresponding method. Empty overrides cost nothing.
 
-`scripts/ui.py` renders the project's process surface as a browser-based control panel from day one — see [Deploy → Interactive UI](../deploy.md#interactive) and [process architecture §2](../architecture/process.md). Pre-commit and CI invoke scripts directly (non-interactive contexts).
+`scripts/moondeck.py` renders the project's process surface as a browser-based control panel from day one — see [Deploy → MoonDeck](../deploy.md#moondeck) and [process architecture §2](../architecture/process.md). Pre-commit and CI invoke scripts directly (non-interactive contexts).
 
 ### Definition of Done
 
@@ -74,7 +74,7 @@ The framework is the load-bearing deliverable. Without it, the same drift that p
 - [x] `ModuleManager` adds / removes a no-op module via API
 - [x] `Pal` skeleton has timing only (`millis`, `micros`, `sleep`, `yield`)
 - [x] Core total ≤ 300 LOC; verified by `scripts/check_loc.py`
-- [x] Developer control panel: `scripts/ui.py` — see [Deploy → Interactive UI](../deploy.md#interactive); per-script docs at [Deploy → Scripts](../deploy.md#scripts)
+- [x] Developer control panel: `scripts/moondeck.py` — see [Deploy → MoonDeck](../deploy.md#moondeck); per-script docs at [Deploy → Scripts](../deploy.md#scripts)
 - [x] Release 5 evaluation sprint scheduled (see Release Overview above)
 
 Deferred to Sprint 2+ as "earn its place":
@@ -98,7 +98,7 @@ Deferred to Sprint 2+ as "earn its place":
 - [x] Test-count baseline dropped — counting test *files* adds friction without catching real drift; LOC budgets and the structural allowlist are sufficient
 - [x] Vendor cpp-httplib v0.18.5 in `lib/httplib/src/` (header-only) — see [ADR 0001](../adr/0001-vendor-cpp-httplib.md); `lib` added to structural allowlist
 - [x] Port v1's `HttpServer.h` verbatim into `src/pal/PalHttp.h` (port-step, no modifications) — lives in `pal/` because it contains the only platform conditional in v2; module code that uses HTTP gets the abstraction, not the conditional
-- [x] New guardrail `scripts/check_platform_guards.py` rejects `#ifdef ARDUINO` / `#include <Arduino.h>` / ESP-IDF headers outside `src/pal/`; wired into pre-commit + CI + ui.py
+- [x] New guardrail `scripts/check_platform_guards.py` rejects `#ifdef ARDUINO` / `#include <Arduino.h>` / ESP-IDF headers outside `src/pal/`; wired into pre-commit + CI + moondeck.py
 - [x] **Minimize** `PalHttp.h` under the §4 rule (strip patches, not features): read line by line, looking for retries / swallow-everything try/catch / timer band-aids / re-init paths. Result: **no patches over symptoms found**; LOC unchanged from v1 verbatim (332). Examined and kept:
   - 4× `catch (std::bad_alloc&)` blocks in ESP32 handlers (return 503 instead of crash) — graceful API boundary for ESP32's tight heap; a deliberate architecture decision, not a patch.
   - `catch (...)` around `listen_after_bind()` in PC branch — broader than ideal, but logs to stderr rather than swallowing silently. Acceptable.
@@ -155,8 +155,8 @@ Deferred to Sprint 2+ as "earn its place":
 
 - [x] Ported v1's `src/frontend/index.html` (84 LOC), `style.css` (744 LOC), `app.js` (1647 LOC) verbatim — byte-identical to v1.
 - [x] Ported `scripts/gen_frontend_bundle.py` (v1's PIO pre-script handling dropped — v2 generates on-demand, not as part of the PlatformIO build). Generator made **deterministic** by setting `gzip mtime=0`; v1's version embedded the current timestamp, so two regenerations produced different bytes — that prevented any meaningful drift check. v2's drift check now works because identical sources always produce identical bundles.
-- [x] `scripts/check_bundle.py` regenerates the bundle in-memory and diffs against the committed `frontend_bundle.h`. Wired into pre-commit + CI + ui.py. Drift between sources and bundle fails CI.
-- [x] `scripts/ui.py` gains two cards: "Frontend bundle drift" (runs check_bundle) and "Regenerate frontend bundle" (runs gen).
+- [x] `scripts/check_bundle.py` regenerates the bundle in-memory and diffs against the committed `frontend_bundle.h`. Wired into pre-commit + CI + moondeck.py. Drift between sources and bundle fails CI.
+- [x] `scripts/moondeck.py` gains two cards: "Frontend bundle drift" (runs check_bundle) and "Regenerate frontend bundle" (runs gen).
 - [x] **Minimize the frontend** under §4: the deliberation yields **nothing stripped**. The §4 rule is "future-needed features stay" — and the v1 frontend's lighting UI is needed by Sprint 6, WiFi UI by Sprint 5, firmware-upload UI by Sprint 7. All three sprints land in this release. Stripping any of it now would only mean re-porting later — exactly the waste §4 exists to prevent. The earlier Sprint 3 DoD bullet that proposed stripping "UI for features v2 does not yet ship" contradicted §4 and was wrong; the frontend is left as v1 ships it. Real UI changes happen *when* those sprints add their own features and need their own frontend bits.
 - [x] **End-of-sprint verification:** open `http://127.0.0.1:8080`, see live SystemStatusModule with ticking uptime, heap, fps, local_time; controls render from schema; WS "connected" indicator green. Bundle is 24422 bytes gzipped (same compressed size as v1; bytes differ only in the gzip header timestamp now being deterministic at zero).
 - [x] In-flight fixes surfaced by the end-of-sprint browser test: (a) Add-module picker was empty — frontend `GET /api/types` had no handler. Added `ModuleManager::registered_types()` and the matching `HttpServerModule` route returning `[{name, category}]`. (b) Module cards showed title "undefined" — `getSchema` emitted only `id`/`type` but the frontend reads `name`. Added `name = type` in `getSchema` (no separate human label until a module needs one). (c) Drag-and-drop reorder did nothing — frontend posts to `/api/modules/reorder` which had no handler. Added `ModuleManager::reorder(ids)` (matched ids first, unmatched modules appended in original relative order, unknown ids ignored) and the matching `HttpServerModule` route.
@@ -177,7 +177,7 @@ Deferred to Sprint 2+ as "earn its place":
 - [x] `check_platform_guards.py` still passes — every new `#ifdef ARDUINO` lives in `src/pal/` files. Sprint 4 added two new pal entry points hidden behind that interface: `pal::log_init(baud)` (PC: `setbuf(stdout, nullptr)`; ESP32: `Serial.begin + delay`) and `pal::on_interrupt(handler)` (PC: SIGINT; ESP32: no-op — arduino-esp32 newlib lacks `signal()`).
 - [x] `main.cpp` refactored to define `setup()` + `loop()` + `int main()` on both platforms without a single `#ifdef`. Each platform's loader picks the entry point that applies: arduino-esp32's `loopTask` calls `setup()`; PC's `int main()` does the same. `setup()` blocks in `Scheduler::run()` until shutdown on both platforms, so `loop()` is never invoked.
 - [x] HIL probe: `esp32dev` flashed to `/dev/cu.usbserial-20213431`; serial output verified at 115200 — device boots, `SystemStatusModule` constructs (heap/PSRAM/chip queries executed without crash), HTTP and WS modules log a deferred message and skip `AsyncServer::begin()` (their listeners cannot start before lwIP has a netif — see "Deferred" below), Scheduler enters both core loops. CI skips this step without hardware.
-- [x] `scripts/ui.py` gains a USB-port picker in the header (auto-populates from `/dev/cu.usb*` / `/dev/ttyUSB*` + `/dev/ttyACM*`, persisted via `localStorage`) and six ESP32 cards: Build esp32dev / esp32s3_n16r8, Flash esp32dev / esp32s3_n16r8 (consume the picker), Serial monitor for each env (long-running, consume the picker). `scripts/flash.py` and `scripts/monitor.py` are the underlying CLIs; CI doesn't use them (no hardware). `scripts/_pio.py` resolves the right `pio` binary — prefers `~/.platformio/penv/bin/pio` (PlatformIO's bundled Python 3.11) over a Homebrew shim that may resolve to a Python 3.12 with a system `fatfs` package whose API doesn't match the espressif32 platform's expectations (causes `ImportError: cannot import name 'create_extended_partition' from 'fatfs'` at build start). Falls back to PATH lookup when the penv isn't present (CI containers install PlatformIO via pip).
+- [x] `scripts/moondeck.py` gains a USB-port picker in the header (auto-populates from `/dev/cu.usb*` / `/dev/ttyUSB*` + `/dev/ttyACM*`, persisted via `localStorage`) and six ESP32 cards: Build esp32dev / esp32s3_n16r8, Flash esp32dev / esp32s3_n16r8 (consume the picker), Serial monitor for each env (long-running, consume the picker). `scripts/flash.py` and `scripts/monitor.py` are the underlying CLIs; CI doesn't use them (no hardware). `scripts/_pio.py` resolves the right `pio` binary — prefers `~/.platformio/penv/bin/pio` (PlatformIO's bundled Python 3.11) over a Homebrew shim that may resolve to a Python 3.12 with a system `fatfs` package whose API doesn't match the espressif32 platform's expectations (causes `ImportError: cannot import name 'create_extended_partition' from 'fatfs'` at build start). Falls back to PATH lookup when the penv isn't present (CI containers install PlatformIO via pip).
 
 ### Deferred (minimalism)
 
@@ -353,10 +353,10 @@ void PreviewModule::loop20ms() {
 > **Scope:** The pre-Sprint-8 test surface (203 LOC / 9 cases under `test/test_pc/`) was honest smoke coverage but did not exercise what Sprints 4–7 built. This sprint landed three rails that give Sprint 9 a real safety net for the minimalism review and give every future sprint a place to assert behavior:
 >
 > 1. **Classified unit tests + behavioral coverage** of the Sprint 4–7 surface (FrameRing SPSC, RipplesEffect LUT, PalHeap fallback, Scheduler core affinity, PreviewModule wire format, ArtnetOutModule packet packing, StateStoreModule round-trip).
-> 2. **Runtime `[MemBoot]` / `[MemLive]` events** emitted through `pmm::Logger` so heap deltas are visible in stdout / `/api/log` / the ui.py log window.
+> 2. **Runtime `[MemBoot]` / `[MemLive]` events** emitted through `pmm::Logger` so heap deltas are visible in stdout / `/api/log` / the moondeck.py log window.
 > 3. **Declarative scenarios replayed in-process** via doctest — `test/test_pc/scenarios/*.json` parsed and run through `ModuleManager`, with Rail 2's events firing during replay.
 >
-> **Minimalism stance, fixed by Sprint 1's Rule #1.** Events flow to `pmm::Logger`'s ring → serial / `/api/log` / ui.py log window. The firmware writes no log file; no `.md` status doc is generated; no per-chip baseline JSON is committed. Yesterday's run is not preserved on disk. Each deferred test artefact (REST scenario runner, baseline diffing, devicelist orchestration, summarise.py, committed serial logs) has an explicit drift episode that unlocks it — see [Deferred](#sprint-8-deferred) below. v1 reached 20+ test-artefact files; v2 stays at zero until drift demands the first one.
+> **Minimalism stance, fixed by Sprint 1's Rule #1.** Events flow to `pmm::Logger`'s ring → serial / `/api/log` / moondeck.py log window. The firmware writes no log file; no `.md` status doc is generated; no per-chip baseline JSON is committed. Yesterday's run is not preserved on disk. Each deferred test artefact (REST scenario runner, baseline diffing, devicelist orchestration, summarise.py, committed serial logs) has an explicit drift episode that unlocks it — see [Deferred](#sprint-8-deferred) below. v1 reached 20+ test-artefact files; v2 stays at zero until drift demands the first one.
 
 ### Definition of Done
 
@@ -384,7 +384,7 @@ void PreviewModule::loop20ms() {
 
 #### Rail 2 — `[MemBoot]` / `[MemLive]` runtime events
 
-- [x] `src/modules/system/MemTracker.h` (75 LOC): `snapshot()`, `log_boot()`, `log_live()`, `tick_1s()`. All events flow through `pmm::Logger`'s ring → serial + `/api/log` + ui.py log window. **No file written by firmware. No `docs/status/*.md` generated.**
+- [x] `src/modules/system/MemTracker.h` (75 LOC): `snapshot()`, `log_boot()`, `log_live()`, `tick_1s()`. All events flow through `pmm::Logger`'s ring → serial + `/api/log` + moondeck.py log window. **No file written by firmware. No `docs/status/*.md` generated.**
 - [x] `MoonModule::runSetup` hooked: snapshot heap before `setup()`, emit `[MemBoot]` after `setup()` returns (setup-only cost), emit `[MemLive]` at end of `runSetup` (total cost including children + `onAllocateMemory`). Originally planned as "one second later"; landed as "end of `runSetup`" — same shape as v1, and the MemBoot→MemLive delta on PR (PSRAM) cleanly exposes `onAllocateMemory`'s per-module cost separately from `setup()`. Lazy post-setup allocations (e.g. WiFi internal buffers) surface in the periodic delta emission instead.
 - [x] `SystemStatusModule::loop1s` calls `memtracker::tick_1s()`. Emits `[MemLive] delta ±N.NKB = M.MKB (...)` lines only when heap moves > 1 KB; `[MemLive] periodic = M.MKB (...)` heartbeat every 10 s. Threshold + heartbeat cadence keep the log quiet when nothing happens, matching the "events only" stance.
 - [x] HIL verified on esp32s3 (`192.168.1.156`): per-module setup brackets visible with real heap + PSRAM deltas, e.g. `ripples-0` MemBoot→MemLive on PR exposes a 3.6 KB PSRAM consumption attributable to `onAllocateMemory`'s pixel buffer + tables + ring. `/api/log` carries the live delta/periodic events.
@@ -406,13 +406,40 @@ void PreviewModule::loop20ms() {
 
 Each deferred artefact lists the drift episode that would unlock its promotion:
 
-- [ ] **REST scenario runner** (`scripts/scenario.py` against a live device) — unlocks when a behavior bug appears on hardware that the in-process replay missed (likely first cause: WiFi / netif races, WS queue depth).
+- [x] ~~**REST scenario runner** (`scripts/scenario.py` against a live device)~~ — **PROMOTED 2026-05-13.** See [Artefact promotions](#artefact-promotions).
 - [ ] **Per-chip baseline JSON** (`deploy/test/scenario-baseline.json`) — unlocks when a slow numeric regression slips past because today's number looked normal relative to last week. Introduce baseline diff for the one metric that drifted, not all metrics.
 - [ ] **Devicelist + parallel orchestration** — unlocks when more than one device is tested *every PR*. Today: one s3 at 192.168.1.156, optionally an esp32dev at 192.168.1.234.
-- [ ] **Committed `deploy/run/*.log` serial-log artefacts** — unlocks when a diff episode requires last week's serial output to spot today's drift. Default: read the log live in ui.py; no commit.
+- [ ] **Committed `deploy/run/*.log` serial-log artefacts** — unlocks when a diff episode requires last week's serial output to spot today's drift. Default: read the log live in moondeck.py; no commit.
 - [ ] **Status-doc aggregator** (`summarise.py` → `docs/status/index.md`) — unlocks when more than one human reads test results regularly. Today: one human.
 - [ ] **`test_techdebt.cpp`-style encoded TODO tests** — do not promote. v1 drift candidate. Use ADRs with explicit closure dates instead.
 - [ ] **`test_health_checks.cpp` as the "verifier-of-the-verifier"** — already DROPPED in [Validated during Release 1](#validated-during-release-1).
+
+### Tools investigation — orchestration alternatives to `scripts/moondeck.py` {#sprint-8-tools-investigation}
+
+Post-Sprint-8 evaluation triggered by "are there alternatives to moondeck.py?". Recorded here so Sprint 9's deploy walk doesn't re-litigate the same options, and so the rejection rationale is preserved against future re-proposals.
+
+`scripts/moondeck.py`'s load-bearing role is the [§2 process-visibility rule](../architecture/process.md#2-guardrails-minimalism-enforced-mechanically): the developer-facing process surface is rendered as cards so adding or removing a script is visible work. Any alternative is measured against that, not just "does it run my build."
+
+| Candidate | What it is | Outcome |
+|---|---|---|
+| `pi.dev` | Terminal AI coding-agent harness (Claude Code / Codex class) | **Different category** — alternative to the agent host, not to moondeck.py |
+| VS Code `tasks.json` / JetBrains run configs | Editor-coupled command runners | **Complement, not substitute** — editor-specific, no editor-agnostic surface; hybrid pattern (tasks.json invokes `scripts/*.py`) keeps the single source of truth |
+| `pio home` / PlatformIO IDE extension | Bundled-with-PlatformIO dashboard | **Insufficient** — covers pio commands; doesn't render custom scripts (mkdocs serve, classify_tests, scenario runs) → drift risk for everything outside pio |
+| `just` / `Taskfile.dev` / `make` | CLI task runners with optional TUI pickers | **No surface visibility** — command palette out of sight by default; same v1 failure mode CLAUDE.md cites |
+| `mprocs` / `process-compose` / `overmind` | Multi-process supervisors with TUI | **Shape mismatch** — for long-running processes (build watcher + serial + docs), not one-shot tasks; useful *alongside* moondeck.py if scope grows |
+| Streamlit / Gradio / Marimo | Python → web UI frameworks | **Premature** — moondeck.py is small enough to stay hand-rolled; revisit when moondeck.py drift demands fewer LOC per card |
+| `tmux` + shell scripts | Most minimalist; persistent panes via SSH | **Viable alternative** — drops the GUI; pure unix; perfect process visibility (every pane is a tab). Land if moondeck.py outgrows what one screen can show |
+| WASM frontend (Yew / Leptos / Vugu) | Compile-to-WASM rendering of moondeck.py | **Overkill** — toolchain cost for a small UI; net negative under §1 |
+| Compile firmware to WASM via Emscripten | Run the v2 light pipeline in a browser tab | **Orthogonal, future-interesting** — enables shareable demo URLs (Wokwi-style); doesn't replace moondeck.py's deploy role. Land if "click here to see the effect" becomes a felt need |
+| WebSerial + `esptool-js` / **ESP Web Tools** | Browser flashes the device via the WebSerial API | **Future end-user path** — replaces the flash/monitor corner of moondeck.py for *external contributors*. Doesn't help the maintainer-side build/test loop. Land when v1→v2 cutover is public (Release 2) |
+| **ESPConnect** ([repo](https://github.com/thelastoutpostworkshop/ESPConnect), [live](https://thelastoutpostworkshop.github.io/ESPConnect/)) | Polished Vue 3 + Vuetify + `tasmota-webserial-esptool` browser app; flash, backup, LittleFS/SPIFFS/FatFS/NVS browser | **Concrete reference for the WebSerial path** — proves the pattern at scale (1.8 k★, MIT). WASM appears in its bundle only as the esptool chip-stub blobs, not as the UI rendering technology. The LittleFS-from-browser feature is independently interesting for inspecting v2's `/state-*.json` on a flashed device |
+
+**Decision:** **KEEP `scripts/moondeck.py`.** It's small, editor-agnostic, and the only candidate that renders the *project's own* custom scripts as a visible surface. Two artefacts are recorded for future activation:
+
+- **End-user flash path via WebSerial** — land when external contributors arrive. Default reference is ESP Web Tools (Espressif-blessed `<esp-web-install-button>` component); ESPConnect is the polished bespoke version if more than flash is needed.
+- **Firmware-in-WASM via Emscripten** — land when shareable effect-demo URLs become a felt need. Not Release 1 scope.
+
+Both unlock under the same drift-episode rule as Sprint 8's [Deferred](#sprint-8-deferred) list: no episode → no promotion.
 
 ---
 
@@ -421,7 +448,7 @@ Each deferred artefact lists the drift episode that would unlock its promotion:
 > **Scope:** Sprints 1–8 built the foundation; Sprint 9 *reviews* it. No new features. Three workstreams, one sprint:
 >
 > 1. **Per-file minimalism review** of `src/`, `test/`, and the guardrails in `scripts/`. Walk each file with §1 and §4 in hand; delete what doesn't pay for itself; tighten guardrails where Sprint 4–8 hindsight surfaces a real drift class.
-> 2. **Deploy process walk** via `scripts/ui.py`. Every card exercised end-to-end on a fresh clone. The Sprint 7 fatfs/PIO-Python collision is either fixed at the source or made the documented path — a new contributor on macOS with `brew install python` must run "Build esp32s3_n16r8" from `ui.py` without manual intervention.
+> 2. **Deploy process walk** via `scripts/moondeck.py`. Every card exercised end-to-end on a fresh clone. The Sprint 7 fatfs/PIO-Python collision is either fixed at the source or made the documented path — a new contributor on macOS with `brew install python` must run "Build esp32s3_n16r8" from `moondeck.py` without manual intervention.
 > 3. **Documentation read-through** of `docs/`. Trim what no longer pays for itself; fix anchor drift left by the Minimalism rename; reconcile `process.md` / `system.md` with what actually shipped.
 >
 > **Bias:** this sprint removes more than it adds. Net LOC ≤ 0 across `src/` + `docs/` combined (the test-surface growth in Sprint 8 is intentional and stays); per-surface budget *tightening* is preferred over loosening. A green guardrail run is necessary but not sufficient — the read test is whether a new reader can hold the foundation in their head after one pass through `docs/`.
@@ -445,9 +472,9 @@ Each deferred artefact lists the drift episode that would unlock its promotion:
 
 #### Deploy process walk
 
-- [ ] Every card in `scripts/ui.py` exercised end-to-end on a fresh clone. Each gets a one-line "verified ✓ on $DATE" or "failed → fixed by $X" entry in `docs/deploy.md`.
+- [ ] Every card in `scripts/moondeck.py` exercised end-to-end on a fresh clone. Each gets a one-line "verified ✓ on $DATE" or "failed → fixed by $X" entry in `docs/deploy.md`.
 - [ ] The fatfs / PlatformIO-Python collision is closed: either `scripts/_pio.py` resolves cleanly without manual `uv` invocation, or `docs/deploy.md` documents the `uv run --with platformio --with fatfs-ng ...` path prominently enough that a new contributor finds it on first build failure.
-- [ ] Any `scripts/*.py` file that no longer maps to a `ui.py` card or a CI step is deleted.
+- [ ] Any `scripts/*.py` file that no longer maps to a `moondeck.py` card or a CI step is deleted.
 
 #### Documentation read-through
 
@@ -489,4 +516,75 @@ The [process architecture](../architecture/process.md) states the contract in hi
 
 Each line records the promotion of a deferred test artefact from Sprint 8's [Deferred](#sprint-8-deferred) list. Format: `YYYY-MM-DD — promoted <artefact>. Drift episode: <one-line description of what slipped past the current rails>.` Without a drift-episode entry, no promotion lands. This is the [§3 anti-drift rule](../architecture/process.md#3-anti-drift-why-these-rules-survive) applied to test infrastructure itself.
 
-*(empty — no promotions yet; this is the desired state at Release 1 close.)*
+- **2026-05-13** — promoted **REST scenario runner** (`scripts/scenario.py`). Drift episode: after Sprint 8 Rail 3 landed in-process replay and the post-Sprint-8 work added a discovered-Devices list to `scripts/moondeck.py`'s Live tab, there was no card that *used* the device list — the "Run scenarios" card still only exercised the maintainer's PC via `pio test`. The gap was visible: a device list with no live runner to consume it. Promotion ships `scripts/scenario.py` (replays each scenario JSON against `--host <h>` or `--all-enabled` from `moondeck.json`) and a `live-scenarios-devices` card in moondeck.py.
+
+## Sprint 10 — MoonDeck: tabbed dev console + live device surface + REST scenarios + agent loop {#sprint-10}
+
+> **Scope:** The script-UI grew into a real tool and earned a name. Five themes land together:
+>
+> 1. **Tabbed rearchitecture** of `scripts/moondeck.py` — flat card list → four panes (PC / ESP32 / Live / Develop). Collapses ten per-env ESP32 cards into four tab-scoped ones.
+> 2. **Live tab Devices list** — persistent inventory of reachable projectMM v2 instances (PC binary + ESP32s on the LAN), with probe / discover / add / per-row enable.
+> 3. **REST scenario runner** (`scripts/scenario.py`, promoted from [Sprint 8 deferred](#sprint-8-deferred)) — replays `test/test_pc/scenarios/*.json` against enabled devices.
+> 4. **Agent loop** below the output panel — Analyze / Fix / Ask buttons + a Develop-tab task list (Reverse engineer sprint, Commit via agent). All four endpoints stream live via SSE.
+> 5. **Tool naming**: `ui.py` → `moondeck.py`, `ui.json` → `moondeck.json`, header rebranded "MoonDeck", logo + favicon. Sweep across docs/scripts. Lightweight reframing of `docs/deploy.md` so MoonDeck has top billing without obscuring the underlying scripts.
+>
+> **Minimalism stance.** `scripts/test.py` lost 39 LOC of buffered-alignment code (replaced by line-by-line streaming — the classification badge moved to `scripts/classify_tests.py` in Sprint 8 Rail 1). `scripts/moondeck.py` grew substantially (478 → 1464 LOC, +986 net), justified by collapsing six separate ESP32 cards into one env-scoped Build + one Flash + one Flash-fs + one Monitor (four cards replacing ten), adding the Devices list that the promoted scenario runner consumes, landing the Develop tab (release/sprint navigation + agent-driven sprint authoring + commit-via-agent), and switching every agent endpoint from blocking JSON to SSE streaming so the user sees the agent's narration + tool calls live. `scripts/scenario.py` is a net addition (~210 LOC) unlocked by the drift episode in [Artefact promotions](#artefact-promotions): a device list with no live runner to consume it.
+
+### Definition of Done
+
+#### `scripts/moondeck.py` — tab rearchitecture
+
+- [x] Four tabs: **PC** (build/test/run, six guardrail checks, gen-bundle, mkdocs), **ESP32** (tab-scoped env selector + port dropdown; Build, Flash firmware, Flash filesystem, Serial monitor), **Live** (Devices list + two scenario cards), **Develop** (release/sprint dropdowns + sprint-authoring agent task). Source: `scripts/moondeck.py`.
+- [x] ESP32 tab collapses the former per-env card duplication: one `Build` card reads `envSelect.value` (`esp32dev` / `esp32s3_n16r8`) via `needs_env: True`; similarly for Flash/Flash-fs/Monitor. Ten cards → four. Port picker scoped to the ESP32 tab (was a global header element).
+- [x] `?` help links on cards now open docs in the right-panel iframe (MkDocs serve required) instead of a new browser tab; middle-click/right-click still open a new tab via the preserved `href`. View-bar above the panel shows which content is loaded; **← Output** button returns to the live stdout stream.
+- [x] **Agent bar** below the output panel: **Analyze** sends the current log to `claude -p` (fixed prompt; replies `OK` or `ISSUE: …`), **Fix** appears on `ISSUE` (asks agent to edit files — no commits, no pushes, confirm-gated), **Ask** sends a free-form question + log. All three require `claude` CLI on PATH. Source: `_do_agent()` in `scripts/moondeck.py`.
+- [x] **Streaming agent invocations.** All four agent endpoints (`/analyze`, `/fix`, `/ask`, `/agent-task`) switched from blocking `subprocess.run(capture_output=True)` + JSON response to `subprocess.Popen` + SSE `line` events per stdout line. Frontend uses `fetch + ReadableStream` to parse the stream (POST + streaming — EventSource is GET-only). User sees claude's narration and tool calls live, same UX as a terminal run. Common helper: `_stream_claude_to_sse(prompt, timeout)`.
+- [x] **Static asset handler** (`GET /assets/<name>`) — sandboxed to `docs/assets/` (no `..` traversal via `Path(name).name`), MIME table for png/jpeg/svg/ico/gif/webp, 1 h browser cache. Earns its place by serving the new logo + favicon; reusable for any future asset.
+- [x] **Branding**: `docs/assets/moonlight-logo.png` (320×320 PNG, 23 KB) rendered top-left in the header (28×28), and used as favicon via `<link rel="icon">`. HTML title `MoonDeck — projectMM v2`, h1 `MoonDeck` with muted-grey `— projectMM v2` subtitle, startup banner `MoonDeck: http://127.0.0.1:8765/`.
+
+#### Live — Devices list
+
+- [x] Persistent device list with per-row enable/disable checkbox, name (clickable → loads device UI in the right-panel iframe), host:port, last-seen status, and remove button.
+- [x] **Refresh** probes each known device's `GET /api/system`; **Discover** sweeps a configurable subnet (default `192.168.1.0/24` port `80`, 32-thread pool via `concurrent.futures`); **Add** takes manual `host[:port]`. Scan hits filtered by `chip_model` field presence to reject non-projectMM HTTP servers.
+- [x] State persisted to `moondeck.json` at repo root (gitignored — dev-host-specific local-network IPs/MACs). Default entry: `PC (local Run card)` at `127.0.0.1:8080`. Server-side endpoints: `GET /ui-state`, `POST /ui-state`, `POST /probe`, `POST /scan`. Source: `load_ui_state()`, `save_ui_state()`, `probe_device()`, `scan_subnet()` in `scripts/moondeck.py`.
+- [x] `.gitignore` updated: `moondeck.json` entry with rationale comment.
+
+#### Develop tab
+
+- [x] Release + Sprint dropdowns auto-populated from `docs/development/release-*.md` headings (`scan_releases()` in `scripts/moondeck.py`). Per-release sprint memory via `localStorage`. **Documentation** button loads the selected sprint anchor in the right-panel iframe.
+- [x] **Reverse engineer sprint** card: sends a `claude -p` task (prompt in `DEV_TASKS` dict) that inspects `git status`/`diff`/`log`, reads the existing sprint format, and composes a ready-to-paste sprint section. Agent does NOT edit files or commit. Source: `DEV_TASKS["reverse-engineer-sprint"]` in `scripts/moondeck.py`.
+- [x] **Commit via agent** card: creates a git commit for pending changes following the project's commit style (lowercase prefix, em-dash separator, body bullets, `Co-Authored-By` footer). Hard constraints baked into the prompt: no `git push`, no `git commit --amend`, no `--no-verify`, never `git add -A` / `git add .`, explicit skip-list for secret files (`.env`, `credentials*.json`, `wifi.json`, `moondeck.json`). Respects the existing staged set if any (commits only what's staged); refuses with an explanation if the diff spans unrelated topics. Source: `DEV_TASKS["commit-via-agent"]` in `scripts/moondeck.py`.
+- [x] DEV_TASKS catalogue designed for extensibility: each entry exposes only `id` / `label` / `docs_anchor` to the frontend; full prompt stays server-side. Adding a task = one DEV_TASKS entry + one `### {label} {#anchor}` section in `docs/deploy.md`; the Develop tab renders one card per entry automatically.
+
+#### `scripts/scenario.py` — REST scenario runner (promoted)
+
+- [x] New file `scripts/scenario.py` (209 LOC). Replays `test/test_pc/scenarios/*.json` against a live device over REST: `POST /api/modules` for `add_module`, `POST /api/control` for `set_control`. `--host <h> --port <p>` for single target; `--all-enabled` iterates `moondeck.json` enabled devices.
+- [x] Cleanup before/after each scenario: `DELETE` every module whose type is not in `HEAD_TYPES` (`system`, `wifi-sta`, `http`, `ws`, `state-store`). Measure steps sample `/api/system` + `/api/modules` and assert `bounds.module_count.{min,max}`.
+- [x] `docs/development/release-01.md` Sprint 8 deferred entry marked `[x]` with `PROMOTED 2026-05-13`; [Artefact promotions](#artefact-promotions) entry added recording the drift episode.
+
+#### `scripts/test.py` — streaming simplification
+
+- [x] Removed 39 LOC of `_parse()` / `_align()` / `_TYPE` buffered-alignment code. Output now streams line-by-line as PIO produces it — the moondeck.py log window is no longer blank for the first 5 s of a test run. Classification badge available via `| uv run scripts/classify_tests.py` pipe.
+
+#### Naming: rename to MoonDeck
+
+- [x] `scripts/ui.py` → `scripts/moondeck.py` (git mv); `ui.json` → `moondeck.json` (local, gitignored). Sweep across 11 files: docs/scripts/.gitignore/pyproject.toml. Zero residual `ui.py` / `ui.json` strings.
+- [x] Tab labels finalised: `Live Tests` → `Live`, `Development` → `Develop`. `data-tab` attribute values (`live`, `dev`) and anchor IDs (`#live-devices`, `#live-scenarios-devices`) unchanged — no broken inbound links.
+- [x] `feat(ui):` commit-prefix example in the `commit-via-agent` prompt updated to `feat(moondeck):` so future agent-driven commits use the new component name.
+- [x] **Why the name.** Two readings of "deck": a *deck of cards* (the UI is literally cards) and a *flight deck* (control). Brand-consistent with MoonModules / MM / Minimalism family. See conversation log for the deliberation.
+
+#### `docs/deploy.md` — tab-aware rewrite + MoonDeck reframing
+
+- [x] Rewritten to match the four-tab layout: per-tab scope descriptions, new sections for [Devices](../deploy.md#live-devices), [Run scenarios (live)](../deploy.md#live-scenarios-devices), [Reverse engineer sprint](../deploy.md#reverse-engineer-sprint), [Commit via agent](../deploy.md#commit-via-agent), and the agent loop (Analyze / Fix / Ask paragraph in the MoonDeck section). ESP32 card docs updated from per-env headings to single-card + env-selector references. USB serial port picker docs scoped to the ESP32 tab.
+- [x] **Lightweight reframing for MoonDeck identity**: H2 `## Interactive: the script UI {#interactive}` → `## MoonDeck — interactive dev console {#moondeck}`. New intro paragraph names MoonDeck as the primary interactive surface while preserving the doc's broader scope (the same scripts run from the shell — what CI and pre-commit do). Inbound `#interactive` links in release-01.md updated to `#moondeck`.
+- [x] Stale screenshot link `assets/ScriptUI.png` → `assets/moondeck.png` (the renamed screenshot in `docs/assets/`).
+
+#### `docs/development/release-01.md` — post-Sprint-8 additions
+
+- [x] [Tools investigation](#sprint-8-tools-investigation) subsection added under Sprint 8: evaluation of 11 orchestration alternatives to `scripts/moondeck.py` with decision rationale. Outcome: **KEEP `scripts/moondeck.py`**; two future artefacts recorded (WebSerial end-user flash path, firmware-in-WASM).
+
+### Deferred
+
+- [ ] `scripts/scenario.py` bounds beyond `module_count` (e.g. `fps_min`, `heap_free_min`) — unlocks per the same drift-episode rule: when a numeric regression slips past the current `module_count`-only assertion.
+- [ ] Devicelist parallel orchestration — unlocks when more than one device is tested every PR.
+- [ ] `scan_releases()` file-watcher — currently re-scanned at process start only; restart moondeck.py to pick up new releases/sprints. Unlocks when the restart friction is felt.

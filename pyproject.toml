@@ -4,7 +4,7 @@ version = "0.0.0"
 description = "projectMM v2 — cross-platform runtime for modular, loop-driven processes"
 requires-python = ">=3.11,<3.13"
 dependencies = [
-  # pyserial: scripts/ui.py reads USB VID/PID via serial.tools.list_ports to
+  # pyserial: scripts/moondeck.py reads USB VID/PID via serial.tools.list_ports to
   # label each port with the connected ESP32 family (CP210x, CH340, USB-CDC).
   # Not needed by firmware or guardrails; trivial install cost.
   "pyserial>=3.5",

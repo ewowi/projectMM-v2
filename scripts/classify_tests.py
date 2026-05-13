@@ -14,7 +14,7 @@ and re-emits each one with a leading badge:
     [integration]— multi-module pipeline, cross-module wiring
 
 Keys ported from v1's deploy/unittest.py. Output goes to stdout; nothing is
-written to disk. Read live in ui.py's log window — that's the consumption
+written to disk. Read live in moondeck.py's log window — that's the consumption
 point. Run with: `pio test -e pc-test 2>&1 | scripts/classify_tests.py`.
 """
 import re

@@ -26,3 +26,8 @@ state/
 # are uploaded via `pio run -t uploadfs`. Only the .example template is
 # committed. See docs/deploy.md → "WiFi provisioning".
 data/wifi.json
+
+# scripts/moondeck.py persisted state: discovered devices + subnet for the Live
+# Tests tab. Contains local-network IPs/MACs that are dev-host-specific —
+# not portable across contributors. Auto-created on first launch.
+moondeck.json

@@ -15,7 +15,7 @@ v1 obtains `cpp-httplib` v0.18.5 via CMake's `FetchContent`. v2 uses PlatformIO 
 Alternatives considered:
 
 - **PlatformIO `lib_deps` with the upstream GitHub URL.** Avoids a new top-level path. But `cpp-httplib`'s repo ships demos, tests, and CMake-only build files that PlatformIO's library scanner attempts to compile; making PlatformIO use only `httplib.h` requires per-env `build_src_filter` tricks, and the dependency disappears from the source tree, becoming a build-time fetch that breaks offline / cache-cold CI.
-- **Revert to CMake for PC + PlatformIO for ESP32.** Matches v1 directly. Doubles the build-system surface area, contradicts Sprint 1's single-build-tool decision, and would force `scripts/build.py` and `scripts/ui.py` to know about both pipelines.
+- **Revert to CMake for PC + PlatformIO for ESP32.** Matches v1 directly. Doubles the build-system surface area, contradicts Sprint 1's single-build-tool decision, and would force `scripts/build.py` and `scripts/moondeck.py` to know about both pipelines.
 
 ## Decision
 

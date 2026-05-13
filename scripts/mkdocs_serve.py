@@ -2,11 +2,11 @@
 """scripts/mkdocs_serve.py — run mkdocs serve on 127.0.0.1:8000. Long-running.
 
 Kills any process already bound to :8000 before starting, so pressing Start
-twice (or restarting ui.py with a stale mkdocs) never fails with
+twice (or restarting moondeck.py with a stale mkdocs) never fails with
 "Address already in use".
 
 `os.execvp` then replaces this process with `uv run mkdocs serve`, keeping the
-chain short (one uv → mkdocs) so process-group shutdown from ui.py is clean.
+chain short (one uv → mkdocs) so process-group shutdown from moondeck.py is clean.
 """
 import os
 import signal

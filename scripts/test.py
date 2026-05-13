@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
-"""Run host unit + integration tests via doctest (env:pc-test)."""
-import re
+"""Run host unit + integration tests via doctest (env:pc-test).
+
+Streams `pio test` output line-by-line as the runner produces it — earlier
+versions collected every line first to compute aligned columns, which made
+the moondeck.py log window appear blank until the whole 5 s run finished. The
+classification badge that the previous alignment carried (unit / integration)
+moved to `scripts/classify_tests.py` in Sprint 8 Rail 1; pipe through it
+when you want the badge:
+
+    uv run scripts/test.py | uv run scripts/classify_tests.py
+"""
 import subprocess
 import sys
 from pathlib import Path
@@ -10,45 +19,6 @@ from _pio import pio_bin
 
 ROOT = Path(__file__).resolve().parent.parent
 
-_TAGS = ("[PASSED]", "[FAILED]", "[SKIPPED]")
-
-_TYPE = {
-    "test_module": "unit",
-    "test_hello":  "unit",
-    "test_http":   "integration",
-}
-
-
-def _parse(line):
-    """Return (file, description, type, status) for a result line, else None."""
-    if "\t" not in line or not any(t in line for t in _TAGS):
-        return None
-    left, status = line.split("\t", 1)
-    m = re.match(r"^(.+:\d+): (.+)$", left)
-    if not m:
-        return None
-    filepath = m.group(1)
-    stem = Path(filepath.split(":")[0]).stem
-    return filepath, m.group(2), _TYPE.get(stem, "?"), status
-
-
-def _align(lines):
-    rows = [_parse(l) for l in lines]
-    result_rows = [r for r in rows if r is not None]
-    if not result_rows:
-        return lines
-    wf = max(len(r[0]) for r in result_rows)
-    wd = max(len(r[1]) for r in result_rows)
-    wt = max(len(r[2]) for r in result_rows)
-    out = []
-    for line, row in zip(lines, rows):
-        if row is None:
-            out.append(line)
-        else:
-            f, d, t, s = row
-            out.append(f.ljust(wf + 2) + d.ljust(wd + 2) + t.ljust(wt + 2) + s)
-    return out
-
 
 def main(argv):
     proc = subprocess.Popen(
@@ -56,11 +26,9 @@ def main(argv):
         cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         text=True, bufsize=1,
     )
-    lines = [l.rstrip("\n") for l in proc.stdout]
-    rc = proc.wait()
-    for line in _align(lines):
-        print(line, flush=True)
-    return rc
+    for line in proc.stdout:
+        print(line.rstrip("\n"), flush=True)
+    return proc.wait()
 
 
 if __name__ == "__main__":

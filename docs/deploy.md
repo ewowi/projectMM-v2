@@ -2,17 +2,34 @@
 
 Build, flash, and test on PC (and ESP32 from Sprint 3). The deploy pipeline target is three scripts: `build`, `flash`, `test`. Anything beyond that requires a structural-additions justification under the guardrails — see [process architecture](architecture/process.md).
 
-## Interactive: the script UI {#interactive}
+The primary interactive surface is **MoonDeck** (`scripts/moondeck.py`) — a local browser console that renders every script below as a clickable card grouped into four tabs, with live output streaming, device discovery, in-process and live scenario runners, and an agent loop (Analyze / Fix / Ask). The same scripts can also be invoked directly from the shell, which is what CI and the pre-commit hook do.
+
+## MoonDeck — interactive dev console {#moondeck}
 
 ```bash
-uv run scripts/ui.py        # prints http://127.0.0.1:8765 — open it in your browser
+uv run scripts/moondeck.py        # prints http://127.0.0.1:8765 — open it in your browser
 ```
 
-![projectMM v2 script UI](assets/ScriptUI.png)
+![MoonDeck — projectMM v2 dev console](assets/moondeck.gif)
 
-A small local page lists every script grouped by purpose. Click **Run** to execute one; stdout and stderr stream live to the output panel; the card's status dot turns green on exit 0, red otherwise. "Run all checks" runs all six guardrail checks in sequence and stops at the first failure.
+Four tabs at the top split the surface:
+
+- **PC** — everything that runs locally: Build / Test / Run, all six guardrail checks, Regenerate frontend bundle, MkDocs serve. No env or port concerns.
+- **ESP32** — tab-scoped **Env** selector (`esp32dev` / `esp32s3_n16r8`) and **Port** dropdown at the top, then four dropdown-driven cards: Build, Flash firmware, Flash filesystem, Serial monitor. Env applies to all four; port applies to flash / flash-fs / monitor.
+- **Live** — discovered-Devices list (probe / discover / add) plus the two scenario cards (in-process, live-against-enabled-devices).
+- **Develop** — Release + Sprint dropdowns auto-populated from `docs/development/release-*.md`. The **Documentation** button loads the selected release file at the selected sprint anchor in the right panel. Defaults to the last selected pair via `localStorage`; first launch picks the latest release and its latest sprint. Restart `moondeck.py` to pick up new releases / sprints added to the doc tree.
+
+Within each tab, cards are grouped by purpose. Click **Run** to execute one; stdout and stderr stream live to the output panel; the card's status dot turns green on exit 0, red otherwise. "Run all checks" runs all six guardrail checks in sequence and stops at the first failure.
 
 Long-running scripts (currently: **MkDocs serve**) have **Start** / **Stop** instead of Run, plus a clickable link to their served URL while running. The UI reflects state across page reloads via `/status`, so reopening the tab shows what's already running and lets you stop it from any session. Children are killed via process group, so the full `uv run mkdocs serve` → mkdocs chain shuts down cleanly.
+
+**Agent analyze / fix / ask.** The bar below the output panel feeds the current log to a `claude -p` subprocess.
+
+- **Analyze (by agent)** sends a fixed prompt + log; the agent replies with either `OK` (one-line summary) or `ISSUE: <one-liner>` followed by analysis. If the first line is `ISSUE`, a **Fix** button appears.
+- **Fix** asks the agent to edit files locally to address the issue (`Read`/`Edit`/`Bash` tools), under explicit constraints: no commits, no pushes, no destructive operations. A confirm dialog gates the click.
+- **Ask** (free-form input + Enter) sends your question + the current log as context. Answer is free-form — does NOT enforce the OK/ISSUE format. Use it for questions like "what does this `MemLive` line mean?" or "why did fps drop on the last step?".
+
+All three require the `claude` CLI on PATH; if missing, the panel returns a clear error instead of failing silently. Source: `_do_agent()` in `scripts/moondeck.py`.
 
 The UI is the developer's window into the project's processes — what scripts exist, what they do, what they output. It is the only place where script results render side-by-side.
 
@@ -42,7 +59,7 @@ Every card in the UI has a `?` link that jumps to the matching section below.
 
 Runs PlatformIO against `env:pc`: `pio run -e pc`. Produces `.pio/build/pc/program`; no-op if the binary is up to date. Source: `scripts/build.py`.
 
-The same script accepts an env name as its first positional argument, which the **Build esp32dev** and **Build esp32s3_n16r8** cards pass to invoke `pio run -e esp32dev` / `pio run -e esp32s3_n16r8`. CI runs the same script three times via a matrix; pre-commit only builds PC.
+The same script accepts an env name as its first positional argument. The ESP32 tab's **Build** card forwards the tab-scoped env selector (`esp32dev` or `esp32s3_n16r8`) so a single card covers both targets — see [Build (ESP32)](#esp32-build). CI runs the same script three times via a matrix; pre-commit only builds PC.
 
 ### Test {#test}
 
@@ -64,21 +81,84 @@ $EDITOR data/wifi.json                              # set ssid + password
 uv run scripts/flash.py esp32dev --target uploadfs --port /dev/cu.usbserial-XXXX
 ```
 
-The same is available in the UI via the **Flash filesystem (esp32dev)** card.
+The same is available in the UI via the **ESP32 → Flash filesystem** card (set the tab's env selector to `esp32dev` first).
 
 `data/wifi.json` is gitignored. On boot, an empty/missing file leaves the module in `status="no credentials"` and HTTP/WS stay deferred (no netif). With valid credentials, `WifiStaModule` connects, logs `[wifi] connected …` to `/api/log`, and the HTTP + WS modules' `loop1s()` start their listeners on the next tick.
 
-### Flash esp32dev / Flash esp32s3_n16r8 {#flash-esp32dev}
+### Build (ESP32) {#esp32-build}
 
-Uploads the built firmware over USB via `pio run -e <env> --target upload --upload-port <port>`. Uses the port selected in the header port picker — disabled if none is selected. Source: `scripts/flash.py`. CI does not flash (no hardware in the runner).
+ESP32 tab's first card. Invokes `scripts/build.py` with the tab-scoped env selector value (`esp32dev` or `esp32s3_n16r8`), which expands to `pio run -e <env>`. No port involved — pure build.
 
-### Serial monitor (esp32dev / esp32s3_n16r8) {#monitor-esp32dev}
+### Flash firmware {#esp32-flash}
+
+Uploads the built firmware over USB via `pio run -e <env> --target upload --upload-port <port>`. Uses the tab's env selector and port dropdown. The Run button disables until a port is selected. Source: `scripts/flash.py`. CI does not flash (no hardware in the runner).
+
+### Flash filesystem {#esp32-flashfs}
+
+Same as Flash firmware but with `--target uploadfs`: writes `data/` to the LittleFS partition. Used for `data/wifi.json` (see [WiFi provisioning](#wifi-provisioning)).
+
+### Serial monitor {#esp32-monitor}
 
 Long-running. Wraps `pio device monitor -e <env> --port <port>`, which reads `monitor_speed` (115200) and `monitor_filters` (`esp32_exception_decoder` — decodes panic backtraces inline) from the env section in `platformio.ini`. Stop sends SIGTERM. The serial port is exclusive, so stop the monitor before flashing the same device. Source: `scripts/monitor.py`.
 
 ### USB serial port picker
 
-Header dropdown listing currently-attached devices (`/dev/cu.usb*` on macOS, `/dev/ttyUSB*` / `/dev/ttyACM*` on Linux). Each entry is annotated with the connected board family — `ESP32 (CP210x)`, `ESP32 (CH340)`, `ESP32-S2/S3 (USB-CDC)`, etc. — derived from the USB VID/PID via [`pyserial`](https://pythonhosted.org/pyserial/)'s `serial.tools.list_ports` (a project dep). Unrecognised devices fall back to their pyserial `product` string (e.g. `LG Monitor Controls` — useful for telling them apart from the ESP32s in the list). The **↻** button rescans; selection persists across page reloads via `localStorage`. The Flash and Serial monitor cards consume the current selection — their buttons disable when nothing is selected. Source: `scan_ports()` in `scripts/ui.py`.
+Dropdown on the ESP32 tab (above the cards), listing currently-attached devices (`/dev/cu.usb*` on macOS, `/dev/ttyUSB*` / `/dev/ttyACM*` on Linux). Each entry is annotated with the connected board family — `ESP32 (CP210x)`, `ESP32 (CH340)`, `ESP32-S2/S3 (USB-CDC)`, etc. — derived from the USB VID/PID via [`pyserial`](https://pythonhosted.org/pyserial/)'s `serial.tools.list_ports` (a project dep). Unrecognised devices fall back to their pyserial `product` string (e.g. `LG Monitor Controls` — useful for telling them apart from the ESP32s in the list). The **↻** button rescans; selection persists across page reloads via `localStorage`. The Flash and Serial monitor cards consume the current selection — their Run buttons disable when nothing is selected. Source: `scan_ports()` in `scripts/moondeck.py`.
+
+### Devices (Live tab) {#live-devices}
+
+Persistent list of projectMM v2 instances reachable over HTTP — the PC binary served by the Run card on `127.0.0.1:8080` and any flashed ESP32 reachable on the LAN. Per-row checkbox enables/disables a device for the live-test runner (the REST runner lands later — see [Sprint 8 deferred](development/release-01.md#sprint-8-deferred); the checked set is already persisted so the runner has its input ready).
+
+Three controls in the Devices group:
+
+- **Refresh** — probes each known device's `GET /api/system` and updates its last-seen status (`reachable` / `unreachable`), chip model, MAC, and env.
+- **Discover** — sweeps the subnet shown next to the button (default `192.168.1.0/24` port `80`). Hits are filtered by requiring a `chip_model` field in the response so router admin pages and other random HTTP servers are rejected. Newly-found devices are merged into the list; existing entries keep their `enabled` toggle.
+- **Add** — manual entry as `host` or `host:port`. Useful for hosts the scan can't reach (different VLAN, mDNS-only names, etc.).
+
+Per-row **×** removes a device. The full state is persisted to `moondeck.json` at the repo root on every change. The file is gitignored (it carries dev-host-specific local-network IPs and MACs).
+
+**Click a device name to open its UI in the right panel.** The script-output panel swaps to an iframe pointing at `http://<host>:<port>/` so the device's controls, preview canvas, and `/api/log` viewer render inline next to the script list — no need to tab away to a separate browser window. The view-bar above the panel shows which device is loaded plus an "open in new tab" link. Running any script (or clicking the **← Output** button) switches the panel back to the live stdout stream.
+
+`moondeck.json` schema:
+
+```json
+{
+  "version": 1,
+  "scan_subnet": "192.168.1.0/24",
+  "scan_port": 80,
+  "devices": [
+    { "name": "PC (local Run card)", "host": "127.0.0.1", "port": 8080, "enabled": true, "discovered": "default" },
+    { "name": "MM-70BC", "host": "192.168.1.156", "port": 80, "enabled": true,
+      "discovered": "scan", "chip": "ESP32-S3 Rev 2", "mac": "24:58:7C:DE:70:BC", "env": "esp32s3_n16r8" }
+  ]
+}
+```
+
+CORS note: ESP32 v2's HTTP server doesn't emit `Access-Control-Allow-Origin`, so the browser can't directly probe a device from the moondeck.py page (different origin). Probes and scans go through the moondeck.py Python server (`POST /probe`, `POST /scan`), which has no such restriction.
+
+### Reverse engineer sprint {#reverse-engineer-sprint}
+
+Develop tab → Sprint authoring. Sends a `claude -p` task with instructions to inspect the current git state (`git status --short`, `git diff HEAD`, `git log --oneline -10`), read the existing sprint format in the latest `docs/development/release-*.md`, and compose a NEW sprint section that retroactively documents the outstanding changes. The first output line must be the `## Sprint N — Title {#sprint-N}` heading; the rest follows the existing Scope-blurb + Definition-of-Done + Deferred shape.
+
+Output goes to the script-output panel. The agent does NOT edit any file or commit — the user reviews the generated markdown and pastes it into the release file manually. Use case: a session has produced several modified files but no sprint to frame them; this draft Definition of Done is grounded in the actual diff. Source: `DEV_TASKS["reverse-engineer-sprint"]` in `scripts/moondeck.py`.
+
+### Commit via agent {#commit-via-agent}
+
+Develop tab → Sprint authoring. Sends a `claude -p` task that creates a git commit for the pending changes. The agent reads `git status --short` / `git diff` / `git log -10` to understand both what's pending and the project's commit-message style, then either:
+
+- commits the existing staged set (if any) — respecting the user's curation, or
+- if nothing is staged and the diff looks coherent, stages relevant files individually (never `git add -A` / `git add .` — could pull in secrets) and commits, or
+- refuses with an explanation if the diff spans unrelated topics, suggesting how to split it.
+
+Commit message follows the project style: lowercase prefix (`sprint N:`, `docs:`, `feat(ui):`), em-dash separator, descriptive title ≤ 72 chars, body bullets, `Co-Authored-By: Claude …` footer. Hard constraints baked into the prompt: no `git push`, no `git commit --amend`, no `--no-verify` (pre-commit hooks run), and explicit skip-list for files that look like secrets (`.env`, `credentials*.json`, `wifi.json`, `moondeck.json`). After committing, the agent reports the new commit's hash and subject. Source: `DEV_TASKS["commit-via-agent"]` in `scripts/moondeck.py`.
+
+### Run scenarios (in-process) {#live-scenarios}
+
+Live tab. Replays every JSON under `test/test_pc/scenarios/` through `ModuleManager` in-process via `pio test -e pc-test`. Rail 2's `[MemBoot]` / `[MemLive]` events fire during replay; the output panel shows the same memory trail a real boot does. Source: `scripts/test.py`. Doesn't touch the Devices list — purely maintainer-side fast feedback.
+
+### Run scenarios (live, all enabled devices) {#live-scenarios-devices}
+
+Live tab. For each device in `moondeck.json` with `enabled: true`, probes `/api/system`, then replays every JSON under `test/test_pc/scenarios/` against the device via REST (`POST /api/modules` for add, `POST /api/control` for set_control, `DELETE /api/modules/<id>` for cleanup). After each `"measure": true` step, samples `/api/system` for `system_fps` + `heap_free_kb` + `psram_free_kb` and `/api/modules` for the module count; bounds in the JSON (currently `module_count.{min,max}`) are asserted. Cleanup deletes every non-head module before and after each scenario so the next run starts clean. Source: `scripts/scenario.py`. Promoted from Sprint 8 deferred — see [Artefact promotions](development/release-01.md#artefact-promotions).
 
 ### Run all checks {#all-checks}
 
