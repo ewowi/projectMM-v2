@@ -1014,7 +1014,7 @@
 <p>Alternatives considered:</p>
 <ul>
 <li><strong>PlatformIO <code>lib_deps</code> with the upstream GitHub URL.</strong> Avoids a new top-level path. But <code>cpp-httplib</code>'s repo ships demos, tests, and CMake-only build files that PlatformIO's library scanner attempts to compile; making PlatformIO use only <code>httplib.h</code> requires per-env <code>build_src_filter</code> tricks, and the dependency disappears from the source tree, becoming a build-time fetch that breaks offline / cache-cold CI.</li>
-<li><strong>Revert to CMake for PC + PlatformIO for ESP32.</strong> Matches v1 directly. Doubles the build-system surface area, contradicts Sprint 1's single-build-tool decision, and would force <code>scripts/build.py</code> and <code>scripts/ui.py</code> to know about both pipelines.</li>
+<li><strong>Revert to CMake for PC + PlatformIO for ESP32.</strong> Matches v1 directly. Doubles the build-system surface area, contradicts Sprint 1's single-build-tool decision, and would force <code>scripts/build.py</code> and <code>scripts/moondeck.py</code> to know about both pipelines.</li>
 </ul>
 <h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
 <p>Vendor <code>cpp-httplib</code> v0.18.5 as a single header at <code>lib/httplib/src/httplib.h</code>, alongside the upstream LICENSE at <code>lib/httplib/LICENSE</code>. PlatformIO's standard <code>lib/&lt;name&gt;/src/</code> convention adds the path to the include search automatically — no <code>platformio.ini</code> change needed beyond adding <code>lib</code> to the structural allowlist.</p>

@@ -2,42 +2,42 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/</loc>
-         <lastmod>2026-05-12</lastmod>
+         <lastmod>2026-05-13</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/deploy/</loc>
-         <lastmod>2026-05-12</lastmod>
+         <lastmod>2026-05-13</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/lights/</loc>
-         <lastmod>2026-05-12</lastmod>
+         <lastmod>2026-05-13</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/adr/0001-vendor-cpp-httplib/</loc>
-         <lastmod>2026-05-12</lastmod>
+         <lastmod>2026-05-13</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/adr/0002-arduinojson-lib-deps/</loc>
-         <lastmod>2026-05-12</lastmod>
+         <lastmod>2026-05-13</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/architecture/process/</loc>
-         <lastmod>2026-05-12</lastmod>
+         <lastmod>2026-05-13</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/architecture/system/</loc>
-         <lastmod>2026-05-12</lastmod>
+         <lastmod>2026-05-13</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/development/</loc>
-         <lastmod>2026-05-12</lastmod>
+         <lastmod>2026-05-13</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/development/release-01/</loc>
-         <lastmod>2026-05-12</lastmod>
+         <lastmod>2026-05-13</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/development/release-02/</loc>
-         <lastmod>2026-05-12</lastmod>
+         <lastmod>2026-05-13</lastmod>
     </url>
 </urlset>
