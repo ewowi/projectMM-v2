@@ -9,7 +9,7 @@ Scheduler                           — runs the DAG across cores
 Pal                                 — platform abstraction, nothing more
 ```
 
-This page is the constraint. Any pull request that does not fit the picture below is either rejected or carries a paired ADR file (`docs/adr/NNNN-*.md`) recording the architecture change explicitly. See [process architecture](process.md) for why.
+This page is the constraint. Any pull request that does not fit the picture below is either rejected or carries a paired ADR file (`docs/developer-guide/adr/NNNN-*.md`) recording the architecture change explicitly. See [process architecture](process.md) for why.
 
 ---
 
@@ -19,29 +19,35 @@ This page is the constraint. Any pull request that does not fit the picture belo
 class MoonModule {
 public:
   // Lifecycle (all optional, empty defaults)
-  virtual void setup()      {}     // allocate, configure, wire (call addControl here)
-  virtual void loop()       {}     // hot path: bounded time, no alloc, no block
-  virtual void loop20ms()   {}     // sub-hot responsiveness: periodic, lower urgency
-  virtual void loop1s()     {}     // monitoring, health
-  virtual void loop10s()    {}     // housekeeping, persistence
-  virtual void teardown()   {}     // free every setup() allocation
+  virtual void setup()             {}     // construct state, wire collaborators
+  virtual void loop()              {}     // hot path: bounded time, no alloc, no block
+  virtual void loop20ms()          {}     // sub-hot responsiveness: periodic, lower urgency
+  virtual void loop1s()            {}     // monitoring, health
+  virtual void loop10s()           {}     // housekeeping, persistence
+  virtual void teardown()          {}     // free every allocation made in setup / onAllocateMemory
+
+  // Hooks driven by the runtime around setup()
+  virtual void onBuildControls()   {}     // module's addControl() calls go here
+  virtual void onAllocateMemory()  {}     // dynamic buffers, sized from final control values
+  virtual void onUpdate(const char* key) {} // a control value changed (frontend edit, loadState, etc.)
 
   // Controls (lazy: a module that never calls addControl pays no overhead)
   void addControl(T& field, const char* name, const char* uiKind,
                   float min = 0, float max = 0);  // bind a field, expose in schema
-  void rebuildControls();                          // re-run setup's addControl pass
 };
 ```
 
-The contract is the entire module-facing API of the runtime. Six lifecycle virtuals (all optional, all empty by default) plus the control-system entry points. A module that overrides nothing is a no-op; a module with controls calls `addControl()` from `setup()`; in both cases, the module pays only for what it uses.
+The contract is the entire module-facing API of the runtime. Six lifecycle virtuals plus three hooks (`onBuildControls`, `onAllocateMemory`, `onUpdate`) plus the control-system entry point — all optional, all empty by default. A module that overrides nothing is a no-op; a module with controls overrides `onBuildControls()` (not `setup()`) to call `addControl()`; in both cases, the module pays only for what it uses.
+
+**Why three setup-time hooks?** The runtime drives them in a fixed order: `setup()` → `onBuildControls()` → (recurse into children) → `onChildrenReady()` → `onAllocateMemory()`. Putting `addControl()` calls in `onBuildControls` instead of `setup()` lets the runtime call it again standalone (hot-reload, schema rebuild after a type change). `onAllocateMemory` runs *after* controls have been seeded from persisted state, so a module sizing its buffer from a control value (`RipplesEffect` allocating `w·h·d` RGB) sees the right value on the first try. `onUpdate(key)` fires when a control's value changes at runtime; that's where reallocation triggers live (geometry change → re-run `onAllocateMemory`).
 
 **One class, not two.** v1 split `Module` and `StatefulModule` into separate types — v2 collapsed them because every real module in v2 ends up using controls (settable parameters, displayed metrics, schema for the WebSocket frontend). The "plain Module without controls" case was theoretical in v1 and absent in v2's plan; the cost of carrying the control system on every module is byte-level (an empty pointer, lazily filled on first `addControl`). The simplification removes an artificial concept boundary.
 
-**Hot path.** `loop()` is the load-bearing decision in the runtime: it must do as little as possible at the maximum frequency the platform allows. The guardrails enforce this mechanically — no allocations, no blocking calls, no logging in any `loop*()` body — see [process architecture](process.md). `addControl` and `rebuildControls` allocate and are called only from `setup()` (or rarely, on a configuration change); never from `loop*()`.
+**Hot path.** `loop()` is the load-bearing decision in the runtime: it must do as little as possible at the maximum frequency the platform allows. The guardrails enforce this mechanically — no allocations, no blocking calls, no logging in any `loop*()` body — see [process architecture](process.md). `addControl` and dynamic-buffer allocation belong in `onBuildControls` / `onAllocateMemory` (or in `onUpdate` on a real configuration change); never in `loop*()`.
 
 **Tiered cadences.** `loop20ms`, `loop1s`, and `loop10s` exist to drain less urgent work out of the hot path at progressively lower rates so `loop()` stays short. A module decides for itself which cadences it needs; the scheduler pays nothing for cadences a module does not override.
 
-**Control system.** `addControl(field, name, uiKind)` binds a backing field to a named, schema-described control. The `WebSocketModule` serialises the schema to clients on connect; incoming control updates from clients are dispatched back into the bound field. UI kinds drive frontend rendering (`"display"`, `"progress"`, `"toggle"`, `"number"`, etc.). `rebuildControls()` tears down and re-registers when a module's shape changes (e.g. a layout whose pixel count is known only at runtime).
+**Control system.** `addControl(field, name, uiKind)` binds a backing field to a named, schema-described control. The `WebSocketModule` serialises the schema to clients on connect; incoming control updates from clients are dispatched back into the bound field, then `onUpdate(key)` fires so the owning module can react (re-allocate, rebuild a derived table, persist). UI kinds drive frontend rendering (`"display"`, `"progress"`, `"toggle"`, `"slider"`, `"text"`, etc.). The full per-module control list lives in the [User Guide](../user-guide/index.md) — one page per module, end-user + developer reference per page.
 
 **Multi-core.** The runtime is built to exploit every core the platform offers. Several `loop()` instances run in parallel, connected as a DAG. The scheduler pins a separate task per core and arranges the topology declared at wire time.
 
@@ -98,22 +104,9 @@ The drift this rule guards against is twofold:
 - **v1's kitchen-sink Pal.h** — a single file that swelled because every new concern just got appended. v2 prevents this by mandating one pal *file* per concern, each with its own LOC budget. Adding a new concern adds a new file (subject to the structural-additions rule) plus a new entry in `scripts/check_loc.py`.
 - **v2's first-pass overcorrection** — banning system info, HTTP, etc. *from* Pal. That ban scattered `#ifdef ARDUINO` blocks across every module that touched the platform, which is the worst of both worlds. The right rule is to keep platform code consolidated in `pal/` *and* keep `pal/` partitioned by concern.
 
-The current and planned files (each with its own check_loc budget):
-
-```
-src/pal/Pal.h               — millis, micros, yield, sleep
-src/pal/PalGpio.h           — gpio_init, gpio_write, gpio_read
-src/pal/PalFs.h             — fs_read, fs_write, fs_exists, fs_*_kb
-src/pal/PalRtos.h           — task_pin, sem_create / take / give
-src/pal/PalHeap.h           — free_heap_bytes, max_alloc_bytes
-src/pal/PalHttp.h           — HTTP server (cpp-httplib on PC, ESPAsyncWebServer on ESP32)
-src/pal/PalWs.h             — WebSocket (POSIX sockets on PC, AsyncWebSocket on ESP32)
-src/pal/PalSystemInfo.h     — chip_model, mac_address, reset_reason_str, sketch_kb, build_info
-```
-
-The first five are platform primitives in the classical sense; the last three wrap larger platform libraries (cpp-httplib, AsyncWebSocket) or platform queries (SDK calls for chip info). Both are "platform conditionals consolidated in one place" — that is what `pal/` means in v2, not "small enough to fit in one header."
-
 **Test surface.** Each pal file is mockable for tests: the file declares the `pal::*` interface, and platform-conditional implementations behind `#ifdef ARDUINO` provide the bodies. A test build can stub the same interface with a fake. This is why pal files are the *only* place platform code lives: every other module gets the abstraction, not the conditional.
+
+The current per-file inventory (budgets + concerns), a module ↔ pal cross-reference, and the deferred-pal list live in [developer-guide/pal.md](../developer-guide/pal.md). That page churns release-by-release as new pals land; the rule on this page does not.
 
 ---
 

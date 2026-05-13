@@ -1,6 +1,6 @@
 # Deploy
 
-Build, flash, and test on PC (and ESP32 from Sprint 3). The deploy pipeline target is three scripts: `build`, `flash`, `test`. Anything beyond that requires a structural-additions justification under the guardrails — see [process architecture](architecture/process.md).
+Build, flash, and test on PC (and ESP32 from Sprint 3). The deploy pipeline target is three scripts: `build`, `flash`, `test`. Anything beyond that requires a structural-additions justification under the guardrails — see [process architecture](../architecture/process.md).
 
 The primary interactive surface is **MoonDeck** (`scripts/moondeck.py`) — a local browser console that renders every script below as a clickable card grouped into four tabs, with live output streaming, device discovery, in-process and live scenario runners, and an agent loop (Analyze / Fix / Ask). The same scripts can also be invoked directly from the shell, which is what CI and the pre-commit hook do.
 
@@ -10,7 +10,7 @@ The primary interactive surface is **MoonDeck** (`scripts/moondeck.py`) — a lo
 uv run scripts/moondeck.py        # prints http://127.0.0.1:8765 — open it in your browser
 ```
 
-![MoonDeck — projectMM v2 dev console](assets/moondeck.gif)
+![MoonDeck — projectMM v2 dev console](../assets/moondeck.gif)
 
 Four tabs at the top split the surface:
 
@@ -107,7 +107,7 @@ Dropdown on the ESP32 tab (above the cards), listing currently-attached devices 
 
 ### Devices (Live tab) {#live-devices}
 
-Persistent list of projectMM v2 instances reachable over HTTP — the PC binary served by the Run card on `127.0.0.1:8080` and any flashed ESP32 reachable on the LAN. Per-row checkbox enables/disables a device for the live-test runner (the REST runner lands later — see [Sprint 8 deferred](development/release-01.md#sprint-8-deferred); the checked set is already persisted so the runner has its input ready).
+Persistent list of projectMM v2 instances reachable over HTTP — the PC binary served by the Run card on `127.0.0.1:8080` and any flashed ESP32 reachable on the LAN. Per-row checkbox enables/disables a device for the live-test runner (the REST runner lands later — see [Sprint 8 deferred](../development/release-01.md#sprint-8); the checked set is already persisted so the runner has its input ready).
 
 Three controls in the Devices group:
 
@@ -158,7 +158,7 @@ Live tab. Replays every JSON under `test/test_pc/scenarios/` through `ModuleMana
 
 ### Run scenarios (live, all enabled devices) {#live-scenarios-devices}
 
-Live tab. For each device in `moondeck.json` with `enabled: true`, probes `/api/system`, then replays every JSON under `test/test_pc/scenarios/` against the device via REST (`POST /api/modules` for add, `POST /api/control` for set_control, `DELETE /api/modules/<id>` for cleanup). After each `"measure": true` step, samples `/api/system` for `system_fps` + `heap_free_kb` + `psram_free_kb` and `/api/modules` for the module count; bounds in the JSON (currently `module_count.{min,max}`) are asserted. Cleanup deletes every non-head module before and after each scenario so the next run starts clean. Source: `scripts/scenario.py`. Promoted from Sprint 8 deferred — see [Artefact promotions](development/release-01.md#artefact-promotions).
+Live tab. For each device in `moondeck.json` with `enabled: true`, probes `/api/system`, then replays every JSON under `test/test_pc/scenarios/` against the device via REST (`POST /api/modules` for add, `POST /api/control` for set_control, `DELETE /api/modules/<id>` for cleanup). After each `"measure": true` step, samples `/api/system` for `system_fps` + `heap_free_kb` + `psram_free_kb` and `/api/modules` for the module count; bounds in the JSON (currently `module_count.{min,max}`) are asserted. Cleanup deletes every non-head module before and after each scenario so the next run starts clean. Source: `scripts/scenario.py`. Promoted from Sprint 8 deferred — see [Artefact promotions](../development/release-01.md#artefact-promotions).
 
 ### Run all checks {#all-checks}
 
@@ -197,7 +197,7 @@ Scans `src/` for `void <Class>::loop[20ms|1s|10s]?() { ... }` method bodies and 
 - Allocations — `new` / `malloc` / `psram_malloc` / `JsonDocument`
 - Blocking calls — `delay` / `vTaskDelay` / `sleep` / `usleep` / `recv`
 
-Implements the hot-path rules from [process architecture](architecture/process.md): no allocations and no blocking calls inside any `loop*()` body. Allocate in `setup()` or on a control-update event instead. Source: `scripts/check_hot_path.py`.
+Implements the hot-path rules from [process architecture](../architecture/process.md): no allocations and no blocking calls inside any `loop*()` body. Allocate in `setup()` or on a control-update event instead. Source: `scripts/check_hot_path.py`.
 
 ### Raw-GPIO ban {#check-gpio}
 
@@ -205,11 +205,11 @@ Fails on any GPIO call with a literal integer pin: `pinMode(5, ...)`, `digitalWr
 
 ### Structure {#check-structure}
 
-Lists tracked top-level paths (`git ls-files`) and fails on anything not in the allowlist hard-coded in `scripts/check_structure.py`. Adding a new top-level path requires editing the allowlist with a paired ADR under `docs/adr/`.
+Lists tracked top-level paths (`git ls-files`) and fails on anything not in the allowlist hard-coded in `scripts/check_structure.py`. Adding a new top-level path requires editing the allowlist with a paired ADR under `docs/developer-guide/adr/`.
 
 ### Platform guards {#check-platform}
 
-Scans every `.h` / `.hpp` / `.cpp` / `.cc` file under `src/` **except** files in `src/pal/`, and fails on any platform-identity gate: `#ifdef ARDUINO`, `#ifdef ESP_PLATFORM`, `#ifdef ESP32`, `#ifdef ARDUINO_ARCH_*`, `#include <Arduino.h>`, `#include <esp_*.h>`, `#include <freertos/...>`. Platform-conditional code lives only in `src/pal/` files; modules consume it through the `pal::*` interface. See [system architecture — Pal](architecture/system.md#pal-the-only-place-platform-conditionals-appear). Source: `scripts/check_platform_guards.py`.
+Scans every `.h` / `.hpp` / `.cpp` / `.cc` file under `src/` **except** files in `src/pal/`, and fails on any platform-identity gate: `#ifdef ARDUINO`, `#ifdef ESP_PLATFORM`, `#ifdef ESP32`, `#ifdef ARDUINO_ARCH_*`, `#include <Arduino.h>`, `#include <esp_*.h>`, `#include <freertos/...>`. Platform-conditional code lives only in `src/pal/` files; modules consume it through the `pal::*` interface. See [system architecture — Pal](../architecture/system.md#pal-the-only-place-platform-conditionals-appear). Source: `scripts/check_platform_guards.py`.
 
 ### Frontend bundle drift {#check-bundle}
 

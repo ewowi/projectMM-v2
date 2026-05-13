@@ -1,15 +1,8 @@
 # Development
 
-projectMM v2 follows an Agile process adapted for AI-collaborative development. Releases are major milestones; sprints are scope-boxed work cycles within a release.
+What's shipped, what's next, what's deferred. The in-flight view of projectMM v2.
 
-## The contract
+- [Release 1 — Restart to Parity](release-01.md) — *What's been done?* Foundation: skeleton → light pipeline + persistence + scaling + test foundation + MoonDeck (ten sprints).
+- [Backlog](backlog.md) — *What's next + deferred?* Project-wide register: **Planned for next releases** (Release 2 scope + per-release deferreds, each with an unlock condition) + **Parking lot** (investigations done and dropped). Per-release sprint plans link here instead of carrying their own Deferred sections inline.
 
-[Process architecture](../architecture/process.md) is the contract under which every release executes — minimalism (the main driver), the guardrails that enforce it, and the anti-drift rules that keep the framework itself from eroding. It is not a release artefact but a constraint on every release that follows. Any pull request that bypasses or relaxes it carries a paired ADR file (`docs/adr/NNNN-*.md`).
-
-## Releases
-
-| Release | Theme | Status | Tag |
-|---|---|---|---|
-| [Release 1](release-01.md) | Restart to parity with v1 | Planned | — |
-
-Release 5 is the next recurring evaluation sprint per the [process architecture](../architecture/process.md) (every fifth release of v2). It is scheduled in Release 1 Sprint 1, not at the end of Release 4.
+How to build / flash / test, and the ADRs that record architecture decisions, live in [Developer Guide](../developer-guide/index.md). The contract under which every release executes is [Process architecture](../architecture/process.md).

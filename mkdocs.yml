@@ -34,18 +34,34 @@ theme:
 
 nav:
   - Home: index.md
+  - User Guide:
+    - Overview: user-guide/index.md
+    - System:
+      - SystemStatusModule: user-guide/system/system-status.md
+      - WifiStaModule:      user-guide/system/wifi-sta.md
+      - StateStoreModule:   user-guide/system/state-store.md
+    - Network:
+      - HttpServerModule:   user-guide/network/http-server.md
+      - WebSocketModule:    user-guide/network/web-socket.md
+    - Lights:
+      - RipplesEffect:      user-guide/lights/ripples-effect.md
+      - PreviewModule:      user-guide/lights/preview.md
+      - ArtnetOutModule:    user-guide/lights/artnet-out.md
   - Architecture:
+    - Overview: architecture/index.md
     - System: architecture/system.md
     - Process: architecture/process.md
-  - Lights: lights.md
-  - Deploy: deploy.md
+  - Developer Guide:
+    - Overview: developer-guide/index.md
+    - Deploy: developer-guide/deploy.md
+    - Pal inventory: developer-guide/pal.md
+    - ADRs:
+      - 0001 — Vendor cpp-httplib: developer-guide/adr/0001-vendor-cpp-httplib.md
+      - 0002 — ArduinoJson via lib_deps: developer-guide/adr/0002-arduinojson-lib-deps.md
   - Development:
     - Overview: development/index.md
     - Release 1 — Foundation: development/release-01.md
-    - Release 2 — v1 parity + cutover: development/release-02.md
-  - ADRs:
-    - 0001 — Vendor cpp-httplib: adr/0001-vendor-cpp-httplib.md
-    - 0002 — ArduinoJson via lib_deps: adr/0002-arduinojson-lib-deps.md
+    - Backlog: development/backlog.md
 
 markdown_extensions:
   - admonition

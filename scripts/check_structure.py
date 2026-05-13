@@ -12,7 +12,7 @@ ALLOWED = {
     "mkdocs.yml", "platformio.ini", "pyproject.toml", "uv.lock",
 }
 # Each entry is justified by either being a v1 carry-over or by a paired ADR.
-# "lib"        → docs/adr/0001-vendor-cpp-httplib.md (vendored third-party only).
+# "lib"        → docs/develop/adr/0001-vendor-cpp-httplib.md (vendored third-party only).
 # "partitions" → ESP32 board flash layouts (CSV); pioarduino requires a file
 #                path, no .ini equivalent. Carry-over from v1 (Sprint 4).
 # "data"       → source dir for the LittleFS image (`pio run -t uploadfs`).
@@ -27,7 +27,7 @@ def main(argv):
     for t in sorted(tops):
         if t not in ALLOWED:
             print(f"FAIL: top-level path not in allowlist: {t}")
-            print(f"      add to scripts/check_structure.py with an ADR under docs/adr/")
+            print(f"      add to scripts/check_structure.py with an ADR under docs/develop/adr/")
             failed = True
     return 1 if failed else 0
 

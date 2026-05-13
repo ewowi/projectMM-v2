@@ -116,7 +116,7 @@ def scan_ports():
 # Parses docs/development/release-*.md for the `## Sprint N — Title {#sprint-N}`
 # headings so the Develop tab's dropdowns reflect actual doc content
 # rather than a hardcoded list. Re-scanned at process start; restart moondeck.py
-# to pick up new releases or sprints. Frugal enough — no file watcher.
+# to pick up new releases or sprints. Minimal enough — no file watcher.
 
 import re as _re_releases
 
@@ -149,7 +149,7 @@ def scan_releases():
 # selectors. Clicking Run sends the task's prompt to `claude -p` from the
 # repo root; the agent uses Read/Bash/Edit to gather context (git state,
 # existing docs) and returns markdown or a plan. Add a new task → add a
-# `### {label} {#{anchor}}` section to docs/deploy.md so the `?` button
+# `### {label} {#{anchor}}` section to docs/developer-guide/deploy.md so the `?` button
 # resolves; the frontend renders one card per entry automatically.
 DEV_TASKS = [
     {
@@ -499,7 +499,7 @@ function populateReleases() {
   const stored = localStorage.getItem('release');
   const valid  = (s) => RELEASES.find(r => r.slug === s);
   // Default: last selected, else the latest release file (the highest-numbered
-  // one — release-02 etc.). Frugal: no need to track "current release" anywhere
+  // one once more land). Minimal: no need to track "current release" anywhere
   // else; sort order of the discovery is authoritative.
   releaseSelect.value =
     valid(stored) ? stored :
@@ -518,7 +518,7 @@ function populateSprints() {
     sprintSelect.appendChild(opt);
   }
   // Per-release sprint memory: switching releases doesn't pin the same sprint
-  // number, since "Sprint 8" means different things in release-01 vs release-02.
+  // number, since "Sprint 8" means different things across releases.
   const stored = localStorage.getItem(`sprint-${r.slug}`);
   const valid  = (id) => r.sprints.find(s => s.id === id);
   sprintSelect.value =
@@ -556,11 +556,11 @@ for (const t of DEV_TASKS) {
   const lbl = document.createElement('span'); lbl.className = 'label'; lbl.textContent = t.label;
   const help = document.createElement('a');
   help.className = 'help'; help.textContent = '?';
-  help.href = `${DOCS_BASE}/deploy/#${t.docs_anchor}`;
+  help.href = `${DOCS_BASE}/developer-guide/deploy/#${t.docs_anchor}`;
   help.title = `Open docs in the right panel`;
   help.addEventListener('click', (ev) => {
     ev.preventDefault();
-    showDocsUrl(`${DOCS_BASE}/deploy/#${t.docs_anchor}`, t.label);
+    showDocsUrl(`${DOCS_BASE}/developer-guide/deploy/#${t.docs_anchor}`, t.label);
   });
   const btn = document.createElement('button'); btn.textContent = 'Run';
   btn.addEventListener('click', () => runDevTask(t));
@@ -657,7 +657,7 @@ for (const [tabName, groups] of Object.entries(groupsByTab)) {
       const urlSpan = document.createElement('span'); urlSpan.className = 'url';
       const help = document.createElement('a');
       help.className = 'help'; help.textContent = '?';
-      help.href = `${DOCS_BASE}/deploy/#${s.id}`;
+      help.href = `${DOCS_BASE}/developer-guide/deploy/#${s.id}`;
       help.title = `Open docs in the right panel (middle-click → new tab)`;
       // Left-click loads docs in the iframe; preserving the href means
       // middle-click and right-click → new tab still work for power users.
@@ -850,7 +850,7 @@ function showDocsUrl(url, label) {
 }
 function showDocs(s) {
   // Card `?` click adapter.
-  showDocsUrl(`${DOCS_BASE}/deploy/#${s.id}`, s.label);
+  showDocsUrl(`${DOCS_BASE}/developer-guide/deploy/#${s.id}`, s.label);
 }
 viewBack.addEventListener('click', showOutput);
 

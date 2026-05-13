@@ -2,7 +2,7 @@
 
 **Status:** Accepted, 2026-05-12.
 **Supersedes:** none.
-**Related:** [process architecture §4 — port-and-minimize](../architecture/process.md#4-port-and-minimize-where-substantive-modules-come-from); [Release 1, Sprint 2](../development/release-01.md#sprint-2).
+**Related:** [process architecture §4 — port-and-minimize](../../architecture/process.md#4-port-and-minimize-where-substantive-modules-come-from); [Release 1, Sprint 2](../../development/release-01.md#sprint-2).
 
 ## Context
 

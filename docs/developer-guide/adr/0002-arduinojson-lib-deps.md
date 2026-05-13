@@ -2,7 +2,7 @@
 
 **Status:** Accepted, 2026-05-12.
 **Supersedes:** none. **Refines:** [ADR 0001](0001-vendor-cpp-httplib.md) by codifying the rule it implicitly applied.
-**Related:** [Release 1, Sprint 3](../development/release-01.md#sprint-3) — `StatefulModule` port needs JSON.
+**Related:** [Release 1, Sprint 3](../../development/release-01.md#sprint-3) — `StatefulModule` port needs JSON.
 
 ## Context
 

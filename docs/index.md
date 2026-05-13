@@ -12,9 +12,9 @@ The entry domain is **light control**: LEDs over GPIO or network. Effects, layer
 
 ## Where to go next
 
-- [System architecture](architecture/system.md) — the core in one page.
-- [Process architecture](architecture/process.md) — minimalism, guardrails, anti-drift.
-- [Lights](lights.md) — the first domain (filled in during Release 1 Sprint 4).
-- [Deploy](deploy.md) — build, flash, test (filled in during Release 1 Sprint 1).
-- [Release 1 plan](development/release-01.md) — foundation: skeleton → light pipeline + persistence + scaling (seven sprints).
-- [Release 2 plan](development/release-02.md) — ArtNet in, NTP, OTA, v1 → v2 cutover.
+Four top-level sections; each has an Overview page that lists what's under it.
+
+- **[User Guide](user-guide/index.md)** — per-module reference (controls + lifecycle overrides), grouped by category (system / network / lights).
+- **[Architecture](architecture/index.md)** — the two contracts: [System](architecture/system.md) (the four core pieces) and [Process](architecture/process.md) (minimalism, guardrails, anti-drift, port-and-minimize).
+- **[Developer Guide](developer-guide/index.md)** — how to build, flash, and test ([Deploy](developer-guide/deploy.md)), plus the [ADRs](developer-guide/adr/0001-vendor-cpp-httplib.md) that constrain it.
+- **[Development](development/index.md)** — what's shipped ([Release 1](development/release-01.md)), what's next + deferred ([Backlog](development/backlog.md)).

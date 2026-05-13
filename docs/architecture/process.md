@@ -1,6 +1,6 @@
 # Process Architecture
 
-How projectMM v2 is built and changed. This page is a constraint on every release. A pull request that violates it either is rejected or carries a paired ADR file (`docs/adr/NNNN-*.md`) recording the change explicitly.
+How projectMM v2 is built and changed. This page is a constraint on every release. A pull request that violates it either is rejected or carries a paired ADR file (`docs/developer-guide/adr/NNNN-*.md`) recording the change explicitly.
 
 The [system architecture](system.md) constrains the artifact. This page constrains how the artifact changes.
 

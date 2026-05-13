@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """scripts/scenario.py — replay test/test_pc/scenarios/*.json against a live device.
 
-Promoted from Sprint 8 deferred on 2026-05-13 (see docs/development/release-01.md
+Promoted from Sprint 8 deferred on 2026-05-13 (see docs/develop/release-01.md
 → Artefact promotions). Same JSON fixtures the in-process test_scenarios.cpp
 runs, driven over REST against a running projectMM v2 instance — PC binary
 or flashed ESP32.
