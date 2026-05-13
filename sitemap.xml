@@ -5,19 +5,7 @@
          <lastmod>2026-05-13</lastmod>
     </url>
     <url>
-         <loc>https://ewowi.github.io/projectMM-v2/deploy/</loc>
-         <lastmod>2026-05-13</lastmod>
-    </url>
-    <url>
-         <loc>https://ewowi.github.io/projectMM-v2/lights/</loc>
-         <lastmod>2026-05-13</lastmod>
-    </url>
-    <url>
-         <loc>https://ewowi.github.io/projectMM-v2/adr/0001-vendor-cpp-httplib/</loc>
-         <lastmod>2026-05-13</lastmod>
-    </url>
-    <url>
-         <loc>https://ewowi.github.io/projectMM-v2/adr/0002-arduinojson-lib-deps/</loc>
+         <loc>https://ewowi.github.io/projectMM-v2/architecture/</loc>
          <lastmod>2026-05-13</lastmod>
     </url>
     <url>
@@ -29,7 +17,31 @@
          <lastmod>2026-05-13</lastmod>
     </url>
     <url>
+         <loc>https://ewowi.github.io/projectMM-v2/developer-guide/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/developer-guide/deploy/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/developer-guide/pal/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/developer-guide/adr/0001-vendor-cpp-httplib/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/developer-guide/adr/0002-arduinojson-lib-deps/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
          <loc>https://ewowi.github.io/projectMM-v2/development/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/development/backlog/</loc>
          <lastmod>2026-05-13</lastmod>
     </url>
     <url>
@@ -37,7 +49,39 @@
          <lastmod>2026-05-13</lastmod>
     </url>
     <url>
-         <loc>https://ewowi.github.io/projectMM-v2/development/release-02/</loc>
+         <loc>https://ewowi.github.io/projectMM-v2/user-guide/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/user-guide/lights/artnet-out/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/user-guide/lights/preview/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/user-guide/lights/ripples-effect/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/user-guide/network/http-server/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/user-guide/network/web-socket/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/user-guide/system/state-store/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/user-guide/system/system-status/</loc>
+         <lastmod>2026-05-13</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/user-guide/system/wifi-sta/</loc>
          <lastmod>2026-05-13</lastmod>
     </url>
 </urlset>

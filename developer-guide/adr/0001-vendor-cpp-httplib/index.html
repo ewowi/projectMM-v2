@@ -12,31 +12,31 @@
         <meta name="author" content="MoonModules">
       
       
-        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/development/">
+        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/developer-guide/adr/0001-vendor-cpp-httplib/">
       
       
-        <link rel="prev" href="../developer-guide/adr/0002-arduinojson-lib-deps/">
+        <link rel="prev" href="../../pal/">
       
       
-        <link rel="next" href="release-01/">
+        <link rel="next" href="../0002-arduinojson-lib-deps/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Overview - projectMM v2</title>
+        <title>0001 — Vendor cpp-httplib - projectMM v2</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,7 +55,7 @@
       
     
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#development" class="md-skip">
+        <a href="#adr-0001-vendor-cpp-httplib-in-libhttplib" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="projectMM v2" class="md-header__button md-logo" aria-label="projectMM v2" data-md-component="logo">
+    <a href="../../.." title="projectMM v2" class="md-header__button md-logo" aria-label="projectMM v2" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Overview
+              0001 — Vendor cpp-httplib
             
           </span>
         </div>
@@ -227,7 +227,7 @@
   
   
     <li class="md-tabs__item">
-      <a href=".." class="md-tabs__link">
+      <a href="../../.." class="md-tabs__link">
         
   
   
@@ -248,7 +248,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../user-guide/" class="md-tabs__link">
+        <a href="../../../user-guide/" class="md-tabs__link">
           
   
   
@@ -268,31 +268,11 @@
     
     
       <li class="md-tabs__item">
-        <a href="../architecture/" class="md-tabs__link">
+        <a href="../../../architecture/" class="md-tabs__link">
           
   
   
   Architecture
-
-        </a>
-      </li>
-    
-  
-
-      
-        
-  
-  
-  
-  
-    
-    
-      <li class="md-tabs__item">
-        <a href="../developer-guide/" class="md-tabs__link">
-          
-  
-  
-  Developer Guide
 
         </a>
       </li>
@@ -310,7 +290,27 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../../" class="md-tabs__link">
+          
+  
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../development/" class="md-tabs__link">
           
   
   
@@ -344,7 +344,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="projectMM v2" class="md-nav__button md-logo" aria-label="projectMM v2" data-md-component="logo">
+    <a href="../../.." title="projectMM v2" class="md-nav__button md-logo" aria-label="projectMM v2" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -374,7 +374,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -453,7 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-guide/" class="md-nav__link">
+      <a href="../../../user-guide/" class="md-nav__link">
         
   
   
@@ -533,7 +533,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-guide/system/system-status/" class="md-nav__link">
+      <a href="../../../user-guide/system/system-status/" class="md-nav__link">
         
   
   
@@ -561,7 +561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-guide/system/wifi-sta/" class="md-nav__link">
+      <a href="../../../user-guide/system/wifi-sta/" class="md-nav__link">
         
   
   
@@ -589,7 +589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-guide/system/state-store/" class="md-nav__link">
+      <a href="../../../user-guide/system/state-store/" class="md-nav__link">
         
   
   
@@ -677,7 +677,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-guide/network/http-server/" class="md-nav__link">
+      <a href="../../../user-guide/network/http-server/" class="md-nav__link">
         
   
   
@@ -705,7 +705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-guide/network/web-socket/" class="md-nav__link">
+      <a href="../../../user-guide/network/web-socket/" class="md-nav__link">
         
   
   
@@ -793,7 +793,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-guide/lights/ripples-effect/" class="md-nav__link">
+      <a href="../../../user-guide/lights/ripples-effect/" class="md-nav__link">
         
   
   
@@ -821,7 +821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-guide/lights/preview/" class="md-nav__link">
+      <a href="../../../user-guide/lights/preview/" class="md-nav__link">
         
   
   
@@ -849,7 +849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../user-guide/lights/artnet-out/" class="md-nav__link">
+      <a href="../../../user-guide/lights/artnet-out/" class="md-nav__link">
         
   
   
@@ -944,7 +944,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../../architecture/" class="md-nav__link">
         
   
   
@@ -972,7 +972,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/system/" class="md-nav__link">
+      <a href="../../../architecture/system/" class="md-nav__link">
         
   
   
@@ -1000,7 +1000,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/process/" class="md-nav__link">
+      <a href="../../../architecture/process/" class="md-nav__link">
         
   
   
@@ -1032,26 +1032,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -1069,7 +1074,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1087,7 +1092,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../developer-guide/" class="md-nav__link">
+      <a href="../../" class="md-nav__link">
         
   
   
@@ -1115,7 +1120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../developer-guide/deploy/" class="md-nav__link">
+      <a href="../../deploy/" class="md-nav__link">
         
   
   
@@ -1143,7 +1148,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../developer-guide/pal/" class="md-nav__link">
+      <a href="../../pal/" class="md-nav__link">
         
   
   
@@ -1168,26 +1173,31 @@
                 
   
   
+    
   
   
+  
     
     
     
     
       
       
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
         
           
-          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="">
             
   
   
@@ -1205,7 +1215,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1220,10 +1230,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../developer-guide/adr/0001-vendor-cpp-httplib/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0001 — Vendor cpp-httplib
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1239,6 +1276,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1251,7 +1341,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../developer-guide/adr/0002-arduinojson-lib-deps/" class="md-nav__link">
+      <a href="../0002-arduinojson-lib-deps/" class="md-nav__link">
         
   
   
@@ -1291,31 +1381,26 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
             
   
   
@@ -1333,7 +1418,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1348,19 +1433,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../development/" class="md-nav__link">
         
   
   
@@ -1376,7 +1452,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -1389,7 +1464,7 @@
   
   
     <li class="md-nav__item">
-      <a href="release-01/" class="md-nav__link">
+      <a href="../../../development/release-01/" class="md-nav__link">
         
   
   
@@ -1417,7 +1492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="backlog/" class="md-nav__link">
+      <a href="../../../development/backlog/" class="md-nav__link">
         
   
   
@@ -1465,6 +1540,47 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1483,13 +1599,35 @@
   
 
 
-<h1 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h1>
-<p>What's shipped, what's next, what's deferred. The in-flight view of projectMM v2.</p>
+<h1 id="adr-0001-vendor-cpp-httplib-in-libhttplib">ADR 0001 — Vendor <code>cpp-httplib</code> in <code>lib/httplib/</code><a class="headerlink" href="#adr-0001-vendor-cpp-httplib-in-libhttplib" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Accepted, 2026-05-12.
+<strong>Supersedes:</strong> none.
+<strong>Related:</strong> <a href="../../../architecture/process/#4-port-and-minimize-where-substantive-modules-come-from">process architecture §4 — port-and-minimize</a>; <a href="../../../development/release-01/#sprint-2">Release 1, Sprint 2</a>.</p>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>Sprint 2 of Release 1 ports v1's <code>src/core/HttpServer.h</code> into v2. That file is a thin wrapper over <code>cpp-httplib</code> on PC and over <code>ESPAsyncWebServer</code> on ESP32 — it does not hand-roll HTTP itself. The PC build therefore needs <code>httplib.h</code>.</p>
+<p>The first attempt at Sprint 2 hand-rolled an HTTP server in <code>src/modules/network/HttpServerModule.cpp</code> and re-discovered classes of bugs <code>cpp-httplib</code> had already debugged (TCP fragmentation, body parsing, concurrent connection handling). The minimalism principle was being applied to a blank page; it should have been applied to v1's working code. That attempt was deleted; this ADR records how Sprint 2 (redone) sources the dependency.</p>
+<p>v1 obtains <code>cpp-httplib</code> v0.18.5 via CMake's <code>FetchContent</code>. v2 uses PlatformIO exclusively (per Sprint 1's "one build tool" decision) and <code>cpp-httplib</code> is not in PlatformIO's registry, so a registry-based <code>lib_deps</code> install is not available.</p>
+<p>Alternatives considered:</p>
 <ul>
-<li><a href="release-01/">Release 1 — Restart to Parity</a> — <em>What's been done?</em> Foundation: skeleton → light pipeline + persistence + scaling + test foundation + MoonDeck (ten sprints).</li>
-<li><a href="backlog/">Backlog</a> — <em>What's next + deferred?</em> Project-wide register: <strong>Planned for next releases</strong> (Release 2 scope + per-release deferreds, each with an unlock condition) + <strong>Parking lot</strong> (investigations done and dropped). Per-release sprint plans link here instead of carrying their own Deferred sections inline.</li>
+<li><strong>PlatformIO <code>lib_deps</code> with the upstream GitHub URL.</strong> Avoids a new top-level path. But <code>cpp-httplib</code>'s repo ships demos, tests, and CMake-only build files that PlatformIO's library scanner attempts to compile; making PlatformIO use only <code>httplib.h</code> requires per-env <code>build_src_filter</code> tricks, and the dependency disappears from the source tree, becoming a build-time fetch that breaks offline / cache-cold CI.</li>
+<li><strong>Revert to CMake for PC + PlatformIO for ESP32.</strong> Matches v1 directly. Doubles the build-system surface area, contradicts Sprint 1's single-build-tool decision, and would force <code>scripts/build.py</code> and <code>scripts/moondeck.py</code> to know about both pipelines.</li>
 </ul>
-<p>How to build / flash / test, and the ADRs that record architecture decisions, live in <a href="../developer-guide/">Developer Guide</a>. The contract under which every release executes is <a href="../architecture/process/">Process architecture</a>.</p>
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p>Vendor <code>cpp-httplib</code> v0.18.5 as a single header at <code>lib/httplib/src/httplib.h</code>, alongside the upstream LICENSE at <code>lib/httplib/LICENSE</code>. PlatformIO's standard <code>lib/&lt;name&gt;/src/</code> convention adds the path to the include search automatically — no <code>platformio.ini</code> change needed beyond adding <code>lib</code> to the structural allowlist.</p>
+<p><code>lib</code> is added to <code>scripts/check_structure.py</code>'s allowlist with this ADR as its justification. The directory is reserved for vendored third-party dependencies — not for v2-authored code, which lives in <code>src/</code>.</p>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<p><strong>Cost.</strong>
+- ~9k LOC of vendored code lives in the repo. It is not counted by <code>scripts/check_loc.py</code> (which inspects only <code>src/</code>) and is not maintained by us; updates to <code>cpp-httplib</code> require re-vendoring the new release with a follow-up ADR if anything material changes about the dependency.
+- A new top-level path (<code>lib/</code>).</p>
+<p><strong>Benefit.</strong>
+- Build is reproducible and offline-capable: no network at build time.
+- The dependency is visible in the tree — readers see what we depend on without consulting build files.
+- Matches PlatformIO's standard convention; no platformio.ini extension required.
+- Same library, same version as v1 — so behaviour parity is automatic.</p>
+<p><strong>What is <em>not</em> allowed under this ADR.</strong>
+- Editing the vendored header. Any patch to <code>cpp-httplib</code> requires either a new ADR (justifying the fork) or, preferably, an upstream PR and a version bump. v2-side patches to vendored code are exactly the drift this project exists to avoid.
+- Adding more files under <code>lib/httplib/</code>. The directory holds <code>src/httplib.h</code>, <code>LICENSE</code>, and nothing else.
+- Using <code>lib/</code> for v2-authored code. v2 source lives in <code>src/</code>; <code>lib/</code> is reserved for third-party.</p>
 
 
 
@@ -1545,10 +1683,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

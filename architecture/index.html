@@ -12,13 +12,13 @@
         <meta name="author" content="MoonModules">
       
       
-        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/development/">
+        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/architecture/">
       
       
-        <link rel="prev" href="../developer-guide/adr/0002-arduinojson-lib-deps/">
+        <link rel="prev" href="../user-guide/lights/artnet-out/">
       
       
-        <link rel="next" href="release-01/">
+        <link rel="next" href="system/">
       
       
         
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#development" class="md-skip">
+        <a href="#architecture" class="md-skip">
           Skip to content
         </a>
       
@@ -264,11 +264,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../architecture/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
           
   
   
@@ -304,13 +306,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../development/" class="md-tabs__link">
           
   
   
@@ -889,26 +889,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -926,7 +931,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -941,10 +946,19 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -960,6 +974,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -972,7 +987,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/system/" class="md-nav__link">
+      <a href="system/" class="md-nav__link">
         
   
   
@@ -1000,7 +1015,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/process/" class="md-nav__link">
+      <a href="process/" class="md-nav__link">
         
   
   
@@ -1291,31 +1306,26 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
             
   
   
@@ -1333,7 +1343,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1348,19 +1358,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
         
   
   
@@ -1376,7 +1377,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -1389,7 +1389,7 @@
   
   
     <li class="md-nav__item">
-      <a href="release-01/" class="md-nav__link">
+      <a href="../development/release-01/" class="md-nav__link">
         
   
   
@@ -1417,7 +1417,7 @@
   
   
     <li class="md-nav__item">
-      <a href="backlog/" class="md-nav__link">
+      <a href="../development/backlog/" class="md-nav__link">
         
   
   
@@ -1483,13 +1483,13 @@
   
 
 
-<h1 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h1>
-<p>What's shipped, what's next, what's deferred. The in-flight view of projectMM v2.</p>
+<h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
+<p>Two contracts under which projectMM v2 is built and changed. Every pull request must fit both; anything that doesn't carries a paired <a href="../developer-guide/adr/0001-vendor-cpp-httplib/">ADR</a>. Architecture changes only via ADR — never silently.</p>
 <ul>
-<li><a href="release-01/">Release 1 — Restart to Parity</a> — <em>What's been done?</em> Foundation: skeleton → light pipeline + persistence + scaling + test foundation + MoonDeck (ten sprints).</li>
-<li><a href="backlog/">Backlog</a> — <em>What's next + deferred?</em> Project-wide register: <strong>Planned for next releases</strong> (Release 2 scope + per-release deferreds, each with an unlock condition) + <strong>Parking lot</strong> (investigations done and dropped). Per-release sprint plans link here instead of carrying their own Deferred sections inline.</li>
+<li><a href="system/">System architecture</a> — the four core pieces (<code>MoonModule</code>, <code>ModuleManager</code>, <code>Scheduler</code>, <code>Pal</code>) in one page. What lives in core and what doesn't (networking, lighting, persistence are all modules, not core). The MoonModule contract — lifecycle + setup-time hooks (<code>onBuildControls</code>, <code>onAllocateMemory</code>, <code>onUpdate</code>) + control system — read by anyone writing or extending a module.</li>
+<li><a href="process/">Process architecture</a> — the four rules under which the project evolves: <strong>Minimalism</strong> (the main driver), <strong>Guardrails</strong> (enforced mechanically by <code>scripts/check_*.py</code> + pre-commit + CI), <strong>Anti-drift</strong> (the framework itself does not erode), and <strong>Port-and-minimize</strong> (where substantive modules come from). Read this when proposing structural changes or new files.</li>
 </ul>
-<p>How to build / flash / test, and the ADRs that record architecture decisions, live in <a href="../developer-guide/">Developer Guide</a>. The contract under which every release executes is <a href="../architecture/process/">Process architecture</a>.</p>
+<p>Per-module specifics — controls, lifecycle overrides — live in the <a href="../user-guide/">User Guide</a>, not here. This section is the contract; the User Guide is the catalogue.</p>
 
 
 

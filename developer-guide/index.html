@@ -12,31 +12,31 @@
         <meta name="author" content="MoonModules">
       
       
-        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/development/release-02/">
+        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/developer-guide/">
       
       
-        <link rel="prev" href="../release-01/">
+        <link rel="prev" href="../architecture/process/">
       
       
-        <link rel="next" href="../../adr/0001-vendor-cpp-httplib/">
+        <link rel="next" href="deploy/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Release 2 — v1 parity + cutover - projectMM v2</title>
+        <title>Overview - projectMM v2</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,7 +55,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#release-2-v1-parity-cutover" class="md-skip">
+        <a href="#developer-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="projectMM v2" class="md-header__button md-logo" aria-label="projectMM v2" data-md-component="logo">
+    <a href=".." title="projectMM v2" class="md-header__button md-logo" aria-label="projectMM v2" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Release 2 — v1 parity + cutover
+              Overview
             
           </span>
         </div>
@@ -227,7 +227,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../.." class="md-tabs__link">
+      <a href=".." class="md-tabs__link">
         
   
   
@@ -248,71 +248,11 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../architecture/system/" class="md-tabs__link">
+        <a href="../user-guide/" class="md-tabs__link">
           
   
   
-  Architecture
-
-        </a>
-      </li>
-    
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../../lights/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Lights
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../../deploy/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Deploy
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-    
-  
-  
-    
-    
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../" class="md-tabs__link">
-          
-  
-  
-  Development
+  User Guide
 
         </a>
       </li>
@@ -328,11 +268,53 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../adr/0001-vendor-cpp-httplib/" class="md-tabs__link">
+        <a href="../architecture/" class="md-tabs__link">
           
   
   
-  ADRs
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../development/" class="md-tabs__link">
+          
+  
+  
+  Development
 
         </a>
       </li>
@@ -362,7 +344,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="projectMM v2" class="md-nav__button md-logo" aria-label="projectMM v2" data-md-component="logo">
+    <a href=".." title="projectMM v2" class="md-nav__button md-logo" aria-label="projectMM v2" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -392,7 +374,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -442,7 +424,7 @@
   <span class="md-ellipsis">
     
   
-    Architecture
+    User Guide
   
 
     
@@ -458,7 +440,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Architecture
+    User Guide
   
 
           </label>
@@ -471,181 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../architecture/system/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    System
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../architecture/process/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Process
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../lights/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Lights
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../deploy/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Deploy
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-    
-  
-  
-  
-    
-    
-    
-    
-      
-        
-        
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Development
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_5">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Development
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../user-guide/" class="md-nav__link">
         
   
   
@@ -672,15 +480,67 @@
   
   
   
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    System
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
-      <a href="../release-01/" class="md-nav__link">
+      <a href="../user-guide/system/system-status/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Release 1 — Foundation
+    SystemStatusModule
   
 
     
@@ -698,44 +558,17 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Release 2 — v1 parity + cutover
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../user-guide/system/wifi-sta/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Release 2 — v1 parity + cutover
+    WifiStaModule
   
 
     
@@ -744,153 +577,301 @@
   
 
       </a>
-      
-        
+    </li>
+  
 
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/system/state-store/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    StateStoreModule
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
   
   
   
     
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+    
+    
+    
       
-        <li class="md-nav__item">
-  <a href="#sprints" class="md-nav__link">
-    <span class="md-ellipsis">
       
-        Sprints
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sprint-8" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sprint 8 — ArtNet in + NTP
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Sprint 8 — ArtNet in + NTP">
-      <ul class="md-nav__list">
         
-          <li class="md-nav__item">
-  <a href="#definition-of-done" class="md-nav__link">
-    <span class="md-ellipsis">
       
-        Definition of Done
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
       
-    </span>
-  </a>
-  
-</li>
         
-          <li class="md-nav__item">
-  <a href="#deferred" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deferred
-      
-    </span>
-  </a>
-  
-</li>
         
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sprint-9" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sprint 9 — OTA firmware update
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Sprint 9 — OTA firmware update">
-      <ul class="md-nav__list">
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
         
-          <li class="md-nav__item">
-  <a href="#definition-of-done_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Definition of Done
-      
-    </span>
-  </a>
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
   
-</li>
+  
+  <span class="md-ellipsis">
+    
+  
+    Network
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
         
-          <li class="md-nav__item">
-  <a href="#deferred_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deferred
-      
-    </span>
-  </a>
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            
   
-</li>
+    Network
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/network/http-server/" class="md-nav__link">
         
-      </ul>
-    </nav>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sprint-10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sprint 10 — v1 parity + cutover
-      
-    </span>
-  </a>
   
-    <nav class="md-nav" aria-label="Sprint 10 — v1 parity + cutover">
-      <ul class="md-nav__list">
+  <span class="md-ellipsis">
+    
+  
+    HttpServerModule
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/network/web-socket/" class="md-nav__link">
         
-          <li class="md-nav__item">
-  <a href="#definition-of-done_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Definition of Done
-      
-    </span>
-  </a>
   
-</li>
+  
+  <span class="md-ellipsis">
+    
+  
+    WebSocketModule
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
         
-      </ul>
-    </nav>
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+            
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#open-questions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Open questions
-      
-    </span>
-  </a>
   
-</li>
-      
-    </ul>
+  <span class="md-ellipsis">
+    
   
-</nav>
+    Lights
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Lights
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/lights/ripples-effect/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RipplesEffect
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/lights/preview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PreviewModule
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../user-guide/lights/artnet-out/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ArtnetOutModule
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -924,10 +905,355 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/process/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Process
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-contract-above-this-section" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The contract above this section
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="deploy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="pal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pal inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="">
             
   
   
@@ -945,8 +1271,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -963,7 +1289,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/0001-vendor-cpp-httplib/" class="md-nav__link">
+      <a href="adr/0001-vendor-cpp-httplib/" class="md-nav__link">
         
   
   
@@ -991,7 +1317,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/0002-arduinojson-lib-deps/" class="md-nav__link">
+      <a href="adr/0002-arduinojson-lib-deps/" class="md-nav__link">
         
   
   
@@ -999,6 +1325,157 @@
     
   
     0002 — ArduinoJson via lib_deps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/release-01/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 1 — Foundation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backlog
   
 
     
@@ -1046,127 +1523,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#sprints" class="md-nav__link">
+  <a href="#the-contract-above-this-section" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sprints
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sprint-8" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sprint 8 — ArtNet in + NTP
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Sprint 8 — ArtNet in + NTP">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#definition-of-done" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Definition of Done
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#deferred" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deferred
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sprint-9" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sprint 9 — OTA firmware update
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Sprint 9 — OTA firmware update">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#definition-of-done_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Definition of Done
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#deferred_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deferred
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sprint-10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sprint 10 — v1 parity + cutover
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Sprint 10 — v1 parity + cutover">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#definition-of-done_2" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Definition of Done
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#open-questions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Open questions
+        The contract above this section
       
     </span>
   </a>
@@ -1193,85 +1553,20 @@
   
 
 
-<h1 id="release-2-v1-parity-cutover">Release 2 — v1 parity + cutover<a class="headerlink" href="#release-2-v1-parity-cutover" title="Permanent link">&para;</a></h1>
-<p>Release 2 closes the v1 → v2 transition. Release 1 shipped a working device with the light domain (RipplesEffect + Preview + Art-Net out), LittleFS state persistence, and a stress-tested two-core / PSRAM scaling path. Release 2 fills in the v1 features that didn't make Release 1 and culminates in renaming this repository from <code>projectMM-v2</code> to <code>projectMM</code> with the first stable <code>v2.0.0</code> tag.</p>
-<h2 id="sprints">Sprints<a class="headerlink" href="#sprints" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Sprint</th>
-<th>Goal</th>
-<th>Minimalism target</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Sprint 8</td>
-<td>ArtNet <strong>in</strong> + NTP wall-clock — first network-consumer light module + first time service</td>
-<td>per-module ≤ 300 LOC</td>
-</tr>
-<tr>
-<td>Sprint 9</td>
-<td>OTA firmware update + GitHub-release flash path</td>
-<td>per-module ≤ 300 LOC</td>
-</tr>
-<tr>
-<td>Sprint 10</td>
-<td>v1 parity check + cutover: visual + metrics parity on hardware, v1 tagged <code>v1.8.x-legacy</code>, repo renamed, v2 tagged <code>v2.0.0</code></td>
-<td>—</td>
-</tr>
-</tbody>
-</table>
-<p>The order is deliberate: ArtNet-in lets the device be driven from real DMX consoles before OTA changes how firmware gets onto it. NTP comes free with the WiFi-stack already running. OTA needs filesystem persistence (Sprint 6) + WiFi (Sprint 5) — both ready.</p>
-<hr />
-<h2 id="sprint-8">Sprint 8 — ArtNet in + NTP<a class="headerlink" href="#sprint-8" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p><strong>Scope:</strong> First <strong>inbound</strong> Art-Net path, complementing Sprint 6's outbound module. <code>ArtNetInModule</code> listens on UDP 6454 and exposes received DMX as a <code>PixelSource</code> (so Preview and any downstream effect can consume it just like a local effect). <code>NtpModule</code> syncs time via the Sprint 5 WiFi stack and exposes <code>local_time</code> to <code>SystemStatusModule</code>.</p>
-</blockquote>
-<h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
+<h1 id="developer-guide">Developer Guide<a class="headerlink" href="#developer-guide" title="Permanent link">&para;</a></h1>
+<p>How to work in this repo: the build / flash / test path, and the immutable decisions that constrain it.</p>
 <ul>
-<li>[ ] <code>pal::Udp</code> gains <code>receive</code> support (Sprint 6 was send-only — first caller landed it that minimal way per Rule #1; the second caller, ArtNet-in, justifies adding receive).</li>
-<li>[ ] <code>modules/lights/ArtnetInModule.h</code> extends <code>MoonModule</code> + <code>PixelSource</code>. Controls: <code>universe</code> (0..15, default 0), <code>width</code> / <code>height</code> / <code>depth</code> (1..128). Owns its own RGB buffer; received DMX bytes copied in chunks indexed by incoming universe number. <code>revision_++</code> on any incoming packet sequence advance.</li>
-<li>[ ] <code>modules/system/NtpModule.h</code> syncs via SNTP (arduino-esp32 has <code>configTime</code>; PC uses <code>chrono::system_clock</code>). Exposes <code>synced</code> / <code>last_sync_ts</code> controls. <code>pal::PalSystemInfo::local_time_str</code> already reads <code>std::time</code> — once <code>configTime</code> runs, that now reports real wall-clock time.</li>
-<li>[ ] HIL: drive ArtNet-in from a host running QLC+ → see live RGB on the device's Preview. SystemStatusModule's <code>local_time</code> shows correct local time after a few seconds.</li>
+<li><a href="deploy/">Deploy</a> — <em>How do I build, flash, test?</em> MoonDeck (the interactive dev console with PC / ESP32 / Live / Develop tabs), the per-script reference (build / test / flash / monitor / scenarios / agent tasks), and the direct-shell + pre-commit invocation path that CI uses.</li>
+<li><a href="pal/">Pal inventory</a> — <em>Which pal files exist and which module uses which?</em> Per-file LOC budgets, module ↔ pal cross-reference, deferred pal files. The Pal <em>rule</em> is contract-level and lives in <a href="../architecture/system/#pal-the-only-place-platform-conditionals-appear">system.md</a>; this page is the inventory.</li>
+<li>ADRs — <em>Why was X decided?</em> Immutable architecture-decision records. A new top-level path or structural change requires one.<ul>
+<li><a href="adr/0001-vendor-cpp-httplib/">0001 — Vendor cpp-httplib</a></li>
+<li><a href="adr/0002-arduinojson-lib-deps/">0002 — ArduinoJson via lib_deps</a></li>
 </ul>
-<h3 id="deferred">Deferred<a class="headerlink" href="#deferred" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[ ] Multi-universe ArtNet-in (currently one universe per ArtNetInModule instance — to span more pixels, add more instances).</li>
-<li>[ ] mDNS service advertisement for the Art-Net device.</li>
+</li>
 </ul>
-<hr />
-<h2 id="sprint-9">Sprint 9 — OTA firmware update<a class="headerlink" href="#sprint-9" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p><strong>Scope:</strong> Replace the USB-flash path with over-the-air firmware updates. <code>FirmwareUpdateModule</code> accepts a <code>.bin</code> upload from the frontend (already has the UI per Sprint 3 step 4's verbatim port) and writes it to the inactive OTA partition. Also: a GitHub-release flash path that downloads + verifies the latest release asset matching the board.</p>
-</blockquote>
-<h3 id="definition-of-done_1">Definition of Done<a class="headerlink" href="#definition-of-done_1" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[ ] <code>modules/system/FirmwareUpdateModule.h</code> accepts <code>POST /api/firmware</code> (binary upload) via the existing <code>PalHttp::onPostBinary</code> (already in place since Sprint 2). Streams chunks to <code>esp_ota_*</code> APIs; verifies on completion; sets boot partition; reboots.</li>
-<li>[ ] GitHub-release flow: control <code>release_url</code> → downloads asset → same OTA flow.</li>
-<li>[ ] HIL: build a new firmware locally → upload via UI → device reboots into the new image → <code>SystemStatusModule.sketch_kb</code> shows the new size. Repeat from a GitHub-release tag.</li>
-</ul>
-<h3 id="deferred_1">Deferred<a class="headerlink" href="#deferred_1" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[ ] Code-signing / rollback on failed boot — needs anti-bricking thought.</li>
-</ul>
-<hr />
-<h2 id="sprint-10">Sprint 10 — v1 parity + cutover<a class="headerlink" href="#sprint-10" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p><strong>Scope:</strong> Visual + metrics parity check between v2 (this repo) and v1 (the legacy repo) on the same hardware. After the check passes, the v1→v2 cutover happens.</p>
-</blockquote>
-<h3 id="definition-of-done_2">Definition of Done<a class="headerlink" href="#definition-of-done_2" title="Permanent link">&para;</a></h3>
-<ul>
-<li>[ ] On the same <code>esp32dev</code>, boot v1 + record a 30 s capture (preview screenshot + Art-Net packet dump + <code>/api/system</code> heap/fps timeline). Repeat on v2. Diff: visual frames look the same (within rendering noise), Art-Net wire bytes match for the same effect at the same settings, heap usage is in the same ballpark (within 20 %), fps within 10 %. Anything outside that range is a parity bug to fix or to document as an intentional v2 change.</li>
-<li>[ ] v1 (<code>projectMM</code>) repo: final feature freeze, tag <code>v1.8.x-legacy</code>, README points to v2.</li>
-<li>[ ] This repo: renamed from <code>projectMM-v2</code> to <code>projectMM</code> (or merged into the legacy repo as the main branch — TBD), tagged <code>v2.0.0</code>.</li>
-</ul>
-<hr />
-<h2 id="open-questions">Open questions<a class="headerlink" href="#open-questions" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Where does the cutover land — rename <code>projectMM-v2</code> to <code>projectMM</code> (preserving v1 history under a <code>legacy/v1</code> branch in the new repo) or merge into the existing <code>projectMM</code> repo as <code>main</code> (preserving the rewrite history)? Decide before Sprint 10.</li>
-<li>Should Release 3 exist? If yes: candidates are layering / scenes / MIDI / DDP — none currently scoped.</li>
-</ul>
+<p>What's been done, what's next, and what's deferred lives one level over in <a href="../development/">Development</a>.</p>
+<h2 id="the-contract-above-this-section">The contract above this section<a class="headerlink" href="#the-contract-above-this-section" title="Permanent link">&para;</a></h2>
+<p><a href="../architecture/process/">Process architecture</a> is the contract under which every release executes — minimalism (the main driver), the guardrails that enforce it, and the anti-drift rules that keep the framework itself from eroding. It is not a release artefact but a constraint on every release that follows. Any pull request that bypasses or relaxes it carries a paired ADR file.</p>
 
 
 
@@ -1327,10 +1622,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
