@@ -304,6 +304,52 @@ _ALLOC_PATTERNS = [
     ("reserve",     re.compile(r"\.reserve\(([^)]+)\)")),
 ]
 
+# Panel scenarios: per-class allocation formulas evaluated at concrete sizes.
+# Each entry maps a class name to a callable (w, h, d) → list of (label, bytes).
+# RGB = 3B, uint16_t = 2B.  Formulas mirror the actual allocate_() / loop20ms code.
+def _ripples_alloc(w: int, h: int, d: int) -> list[tuple[str, int]]:
+    pixels = w * h * d
+    plane  = w * h
+    pixel_bytes = pixels * 3          # RGB
+    phase_bytes = plane  * 2          # uint16_t
+    color_bytes = plane  * 3          # RGB
+    ring_bytes  = 2 * pixel_bytes     # FrameRing: two slots
+    total = pixel_bytes + phase_bytes + color_bytes + ring_bytes
+    return [
+        (f"pixels {w}×{h}×{d}",       pixel_bytes),
+        (f"phase_offset {w}×{h}",      phase_bytes),
+        (f"base_color {w}×{h}",        color_bytes),
+        (f"ring 2×{w}×{h}×{d}",        ring_bytes),
+        ("total",                       total),
+    ]
+
+def _preview_alloc(w: int, h: int, d: int) -> list[tuple[str, int]]:
+    total = 7 + w * h * d * 3        # wire format: 7B header + RGB pixels
+    return [("frame_buf", total)]
+
+def _artnet_alloc(w: int, h: int, d: int) -> list[tuple[str, int]]:
+    # ArtnetOutModule reads from the PixelSource ring — no pixel buffer of its own.
+    # One UDP packet buffer per universe; 170 RGB pixels = 510 dmx channels = 512B packet.
+    pixels     = w * h * d
+    universes  = (pixels + 169) // 170
+    pkt_bytes  = universes * 512
+    # Use negative sentinel to signal "count not bytes" for display
+    return [
+        (f"{universes} universes", -1),   # count, not bytes — displayed separately
+        ("udp packet buffers",      pkt_bytes),
+    ]
+
+PANEL_SCENARIOS: dict[str, callable] = {
+    "RipplesEffect":   _ripples_alloc,
+    "PreviewModule":   _preview_alloc,
+    "ArtnetOutModule": _artnet_alloc,
+}
+
+PANEL_SIZES: list[tuple[int, int, int]] = [
+    (16,  16,  1),
+    (128, 128, 1),
+]
+
 
 def _heap_lines(path: Path) -> tuple[list[str], list[str]]:
     """Return (heap_member_notes, dynamic_alloc_exprs) for a header file.
@@ -413,6 +459,17 @@ def main(_argv):
             print(f"{indent}heap:  {', '.join(heap_notes)}")
         if alloc_exprs:
             print(f"{indent}alloc: {', '.join(alloc_exprs)}")
+
+        scenario_fn = PANEL_SCENARIOS.get(class_name)
+        if scenario_fn:
+            for w, h, d in PANEL_SIZES:
+                items = scenario_fn(w, h, d)
+                parts = "  ".join(
+                    lbl if v < 0 else          # count label, no units
+                    f"{lbl}={v//1024}KB" if v >= 1024 else f"{lbl}={v}B"
+                    for lbl, v in items
+                )
+                print(f"{indent}@ {w}×{h}×{d}:  {parts}")
 
         if verbose:
             for name, type_str, size in own_fields:

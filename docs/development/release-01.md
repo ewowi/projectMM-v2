@@ -30,6 +30,7 @@ Sprint 2 and Sprint 3 were initially attempted as greenfield rewrites of v1's HT
 | [10](#sprint-10) | MoonDeck — tabbed dev console + live device surface + REST scenarios + agent loop | [Deploy → MoonDeck](../developer-guide/deploy.md#moondeck) |
 | [11](#sprint-11) | Docs restructure: four top-level sections (User Guide / Architecture / Developer Guide / Development), agent-memory framing in CLAUDE.md, MoonModule contract update, Pal inventory page | [docs](../index.md), [CLAUDE.md](https://github.com/ewowi/projectMM-v2/blob/main/CLAUDE.md) |
 | [12](#sprint-12) | Minimalism pass: MoonModule field reorder (136B→96B), `type_` as `const char*`, typed `addControl` overloads, PSRAM-backed PreviewModule, RingBuffer heap accounting, class-size checker, `max_alloc_kb` in status bar | `src/core/`, `src/modules/`, `scripts/check_class_sizes.py` |
+| [13](#sprint-13) | Shared data ring: `DataRing<T>` + `DataRegistry` in core; zero-copy producer/consumer pixel pipeline; removes `FrameRing`, `PixelRegistry`, and `PreviewModule` staging buffer; depth 1 on esp32dev, 2 on S3 | `src/core/DataRing.h`, `src/core/DataRegistry.h`, `src/modules/lights/` |
 
 The v1 → v2 cutover (rename + final stable tag) closes [Release 2](backlog.md#release-2-v1-parity-cutover), which adds ArtNet **in**, OTA, NTP, and any remaining v1 parity bits.
 
@@ -182,6 +183,88 @@ Conflict-resolution rule baked in: longer-lived layer wins. If `development/` co
 ### Deferred
 
 - Progress-bar overwrite in MoonDeck Flash output (esptool `\r` lines) — attempted; esptool ANSI detection logic under a pipe proved fragile across environments. Reverted cleanly; deferred to a later sprint if the annoyance outweighs the fix cost.
+
+---
+
+## Sprint 13 — Shared data ring: zero-copy producer/consumer buffer infrastructure {#sprint-13}
+
+> Scope: replace per-module pixel buffer ownership with a shared, registry-backed ring buffer. One allocation for the pixel data, consumed zero-copy by all downstream modules. Ring depth is runtime-configurable: 1 on esp32dev (no PSRAM, no cross-core), 2+ on ESP32-S3 (PSRAM, two cores). This is options B+C combined: shared ownership (C) with variable-depth ring (B).
+
+### Motivation
+
+Sprint 12's class-size checker exposed the allocation reality at 128×128:
+
+| Module | Buffer | Size |
+|---|---|---|
+| RipplesEffect | `pixels_` (working copy) | 48 KB |
+| RipplesEffect | `phase_offset_` | 32 KB |
+| RipplesEffect | `base_color_` | 48 KB |
+| RipplesEffect | `ring_` (2 slots) | 96 KB |
+| PreviewModule | `frame_buf_` | 48 KB |
+| ArtnetOutModule | UDP staging | 48 KB |
+| **Total** | | **320 KB** |
+
+On esp32dev (~180 KB internal heap, no PSRAM) a 128×128 panel is impossible. Even a 75×13 panel consumes ~40 KB of regular heap just for the ring. The root cause: every module independently allocates a full copy of the pixel data.
+
+### Design
+
+**`DataRing<T>`** (`src/core/DataRing.h`) — a depth-configurable SPSC ring of typed slots. Not lights-specific: any producer/consumer pair can use it. Replaces `FrameRing` which is deleted.
+
+- `allocate(count, depth)` — allocates `depth × count × sizeof(T)` bytes via `pal::psram_alloc`. Depth 1 = single slot, no copy overhead; depth 2 = double-buffer for cross-core pipelining.
+- `acquire_write_slot()` / `publish()` — producer side (same semantics as `FrameRing`).
+- `try_acquire_read()` / `release_read()` — consumer side. At depth 1, returns pointer to the single slot with acquire ordering; a concurrent write is detected via revision check and the frame is skipped (acceptable at 50 fps).
+- Depth 1 torn-frame contract: producer bumps revision before write (relaxed), consumer reads revision before and after (acquire/acquire); if they differ, skips the frame.
+
+**`DataRegistry`** (`src/core/DataRegistry.h`) — replaces `PixelRegistry`. Maps string id → `DataRing<RGB>*` + geometry metadata (width, height, depth). Lives in core (the geometry is T-agnostic metadata; RGB is only in the leaf modules that use it).
+
+- `declare(id, count, ring_depth)` — called by the producer in `onAllocateMemory`. Creates or reallocates the ring. Ring depth sourced from `pal::psram_size() > 0 ? 2 : 1` by default, overridable via control.
+- `resolve(id)` → `DataRing<RGB>*` — called by consumers in `setup()`. Returns null if not yet declared (tolerate late producers, same pattern as today).
+- `undeclare(id)` — called by producer in `teardown()`. Frees the ring; consumers get null on next `try_acquire_read`.
+
+**`PixelSource` / `PixelBufferRef`** (`src/modules/lights/Pixelable.h`) — kept as the lights-domain consumer interface but backed by `DataRing<RGB>` instead of `FrameRing`. `pixelBuffer()` returns a `PixelBufferRef` wrapping a `DataRing` slot pointer + geometry.
+
+**RipplesEffect** — removes `FrameRing ring_` (32 B struct, 96 KB heap at 128×128). Calls `DataRegistry::declare` in `onAllocateMemory`; writes directly into the ring slot in `loop20ms`. `pixels_` working buffer kept (48 KB) — the effect still needs to accumulate the frame before publishing.
+
+**PreviewModule** — removes `frame_buf_` entirely (48 KB at 128×128). Reads the ring slot directly via `DataRegistry::resolve` and packs the wire format on-the-fly into `ws_->broadcastBinary` without a staging buffer. Net: zero allocation in PreviewModule.
+
+**ArtnetOutModule** — reads ring slot directly; UDP staging buffer unchanged (needed for protocol framing).
+
+### Memory at 128×128 after Sprint 13
+
+| Module | Buffer | Size |
+|---|---|---|
+| RipplesEffect | `pixels_` (working copy) | 48 KB |
+| RipplesEffect | `phase_offset_` | 32 KB |
+| RipplesEffect | `base_color_` | 48 KB |
+| DataRegistry | ring slot(s) — depth 1 (esp32dev) | 48 KB |
+| DataRegistry | ring slot(s) — depth 2 (esp32s3) | 96 KB |
+| PreviewModule | *(none)* | 0 KB |
+| ArtnetOutModule | UDP staging | 48 KB |
+| **Total esp32dev** | | **176 KB** (-144 KB) |
+| **Total esp32s3** | | **224 KB** (-96 KB) |
+
+### Definition of Done
+
+- [ ] **`DataRing<T>`** (`src/core/DataRing.h`) — templated depth-configurable SPSC ring; replaces `FrameRing`. Depth-1 torn-frame detection via before/after revision compare. `allocate(count, depth)` uses `pal::psram_alloc`. Passes unit tests in `test/test_pc/`.
+- [ ] **`DataRegistry`** (`src/core/DataRegistry.h`) — string-keyed registry of `DataRing<RGB>*` + geometry. `declare` / `resolve` / `undeclare`. Singleton (same pattern as `PixelRegistry`).
+- [ ] **`FrameRing` deleted** (`src/modules/lights/FrameRing.h` removed) — replaced entirely by `DataRing`. No lights-domain type in core.
+- [ ] **`PixelRegistry` deleted** (`src/modules/lights/PixelRegistry.h` removed) — replaced by `DataRegistry` in core.
+- [ ] **`RipplesEffect` updated** — removes `FrameRing ring_` field; calls `DataRegistry::declare` in `onAllocateMemory`; writes ring slot in `loop20ms`. `moduleAllocBytes_` reports working buffers only (ring owned by registry).
+- [ ] **`PreviewModule` updated** — removes `frame_buf_` / `frame_cap_`; resolves `DataRing<RGB>` from `DataRegistry`; packs wire format directly from ring slot pointer in `loop20ms`. Zero allocation.
+- [ ] **`ArtnetOutModule` updated** — resolves `DataRing<RGB>` from `DataRegistry` instead of `PixelSource`.
+- [ ] **`check_class_sizes.py` scenarios updated** — `RipplesEffect` scenario removes ring from per-module count; adds a `DataRegistry` line showing ring cost at each panel size and depth.
+- [ ] **Build green** on `pc`, `esp32dev`, `esp32s3_n16r8`.
+
+### Removed
+
+- `src/modules/lights/FrameRing.h` — lights-domain SPSC ring; replaced by generic `DataRing<T>` in core
+- `src/modules/lights/PixelRegistry.h` — lights-domain registry; replaced by `DataRegistry` in core
+- `frame_buf_` / `frame_cap_` in `PreviewModule` — zero-copy read from shared ring eliminates staging buffer
+- `ring_` field in `RipplesEffect` — ring now owned by `DataRegistry`, not the effect module
+
+### ADR required
+
+`DataRing` and `DataRegistry` move into `src/core/` — this crosses the core boundary as defined in [architecture/system.md](../architecture/system.md) (core currently contains only `Module`, `ModuleManager`, `Scheduler`, `Pal`). The justification: `DataRing` is a concurrency primitive (SPSC ring with acquire/release semantics), not a domain type — it belongs alongside `Scheduler` as core infrastructure. `DataRegistry` is a typed singleton store, analogous to `ModuleManager`. An ADR will be filed before implementation.
 
 ---
 

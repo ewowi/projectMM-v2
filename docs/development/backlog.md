@@ -32,7 +32,7 @@ Release 2 closes the v1 → v2 transition: the v1 features that didn't make Rele
 ### Light domain
 
 - **Parent modules + child trees (`addChild`).** From [Sprint 6 deferred](release-01.md#sprint-6). Unlocks when effect-on-effect composition arrives (Effect layering depends on this).
-- **Generic Producer / Consumer base classes.** From [Sprint 6](release-01.md#sprint-6) + [Sprint 7](release-01.md#sprint-7) deferreds. Sprint 7 ships one hand-rolled `FrameRing` in `modules/lights/`; promote to a generic interface only when a second producer/consumer pair appears.
+- **DataRingModule — ring as a named system entity.** From [Sprint 13](release-01.md#sprint-13). Today the producer module (e.g. RipplesEffect) owns its DataRing: ring lifecycle is tied to effect lifecycle, which is the right default. A dedicated `DataRingModule` would own the ring independently — enabling multiple effects writing to the same ring (layering) and resizing ring geometry without touching the effect. Unlocks when effect layering is on the roadmap; DataRegistry is already the indirection layer needed to make it clean.
 - **Per-module core affinity via UI control.** From [Sprint 7 deferred](release-01.md#sprint-7). `core_` is hardcoded per module class; making it a settable schema control lands when there's user demand for runtime remapping.
 - **FastLED / WS2812 GPIO driver** (and `PalGpio.h` + typed board-config codegen). From Sprint 6 + 7 deferreds. Lands when a board with a strip is on the bench.
 - **Effect layering / blending.** From [Sprint 6 deferred](release-01.md#sprint-6). Comes with parent modules.

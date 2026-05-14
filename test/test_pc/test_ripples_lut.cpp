@@ -14,9 +14,9 @@
 
 #include <doctest/doctest.h>
 
+#include "core/DataRegistry.h"
 #include "core/ModuleManager.h"
 #include "modules/lights/Pixelable.h"
-#include "modules/lights/PixelRegistry.h"
 #include "modules/lights/RipplesEffect.h"
 
 using namespace pmm;
@@ -122,11 +122,13 @@ TEST_CASE("RipplesEffect: hue_base change recolours the output") {
   CHECK(differ > (ref1.count() * 9 / 10));
 }
 
-TEST_CASE("RipplesEffect: registry publishes the source for consumers to find") {
+TEST_CASE("RipplesEffect: DataRegistry declares ring for consumers to find") {
   ModuleManager mm;
   RipplesEffect* r = add_ripples_(mm, "r-published");
   REQUIRE(r != nullptr);
-  PixelSource* via_registry = PixelRegistry::instance().find("r-published");
-  CHECK(via_registry != nullptr);
-  CHECK(via_registry == static_cast<PixelSource*>(r));
+  const DataRingEntry* e = DataRegistry::instance().resolve("r-published");
+  CHECK(e != nullptr);
+  CHECK(e->ring_ptr != nullptr);
+  CHECK(e->dim[0] == 16);   // default width
+  CHECK(e->dim[1] == 16);   // default height
 }
