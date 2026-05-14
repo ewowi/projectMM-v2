@@ -1649,6 +1649,89 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sprint-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 13 — Shared data ring: zero-copy producer/consumer buffer infrastructure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 13 — Shared data ring: zero-copy producer/consumer buffer infrastructure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Motivation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-at-128128-after-sprint-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory at 128×128 after Sprint 13
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR required
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#artefact-promotions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1951,6 +2034,89 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sprint-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 13 — Shared data ring: zero-copy producer/consumer buffer infrastructure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 13 — Shared data ring: zero-copy producer/consumer buffer infrastructure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#motivation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Motivation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-at-128128-after-sprint-13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Memory at 128×128 after Sprint 13
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adr-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ADR required
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#artefact-promotions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2070,6 +2236,11 @@
 <td>Minimalism pass: MoonModule field reorder (136B→96B), <code>type_</code> as <code>const char*</code>, typed <code>addControl</code> overloads, PSRAM-backed PreviewModule, RingBuffer heap accounting, class-size checker, <code>max_alloc_kb</code> in status bar</td>
 <td><code>src/core/</code>, <code>src/modules/</code>, <code>scripts/check_class_sizes.py</code></td>
 </tr>
+<tr>
+<td><a href="#sprint-13">13</a></td>
+<td>Shared data ring: <code>DataRing&lt;T&gt;</code> + <code>DataRegistry</code> in core; zero-copy producer/consumer pixel pipeline; removes <code>FrameRing</code>, <code>PixelRegistry</code>, and <code>PreviewModule</code> staging buffer; depth 1 on esp32dev, 2 on S3</td>
+<td><code>src/core/DataRing.h</code>, <code>src/core/DataRegistry.h</code>, <code>src/modules/lights/</code></td>
+</tr>
 </tbody>
 </table>
 <p>The v1 → v2 cutover (rename + final stable tag) closes <a href="../backlog/#release-2-v1-parity-cutover">Release 2</a>, which adds ArtNet <strong>in</strong>, OTA, NTP, and any remaining v1 parity bits.</p>
@@ -2179,6 +2350,156 @@
 <ul>
 <li>Progress-bar overwrite in MoonDeck Flash output (esptool <code>\r</code> lines) — attempted; esptool ANSI detection logic under a pipe proved fragile across environments. Reverted cleanly; deferred to a later sprint if the annoyance outweighs the fix cost.</li>
 </ul>
+<hr />
+<h2 id="sprint-13">Sprint 13 — Shared data ring: zero-copy producer/consumer buffer infrastructure<a class="headerlink" href="#sprint-13" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Scope: replace per-module pixel buffer ownership with a shared, registry-backed ring buffer. One allocation for the pixel data, consumed zero-copy by all downstream modules. Ring depth is runtime-configurable: 1 on esp32dev (no PSRAM, no cross-core), 2+ on ESP32-S3 (PSRAM, two cores). This is options B+C combined: shared ownership (C) with variable-depth ring (B).</p>
+</blockquote>
+<h3 id="motivation">Motivation<a class="headerlink" href="#motivation" title="Permanent link">&para;</a></h3>
+<p>Sprint 12's class-size checker exposed the allocation reality at 128×128:</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Buffer</th>
+<th>Size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RipplesEffect</td>
+<td><code>pixels_</code> (working copy)</td>
+<td>48 KB</td>
+</tr>
+<tr>
+<td>RipplesEffect</td>
+<td><code>phase_offset_</code></td>
+<td>32 KB</td>
+</tr>
+<tr>
+<td>RipplesEffect</td>
+<td><code>base_color_</code></td>
+<td>48 KB</td>
+</tr>
+<tr>
+<td>RipplesEffect</td>
+<td><code>ring_</code> (2 slots)</td>
+<td>96 KB</td>
+</tr>
+<tr>
+<td>PreviewModule</td>
+<td><code>frame_buf_</code></td>
+<td>48 KB</td>
+</tr>
+<tr>
+<td>ArtnetOutModule</td>
+<td>UDP staging</td>
+<td>48 KB</td>
+</tr>
+<tr>
+<td><strong>Total</strong></td>
+<td></td>
+<td><strong>320 KB</strong></td>
+</tr>
+</tbody>
+</table>
+<p>On esp32dev (~180 KB internal heap, no PSRAM) a 128×128 panel is impossible. Even a 75×13 panel consumes ~40 KB of regular heap just for the ring. The root cause: every module independently allocates a full copy of the pixel data.</p>
+<h3 id="design">Design<a class="headerlink" href="#design" title="Permanent link">&para;</a></h3>
+<p><strong><code>DataRing&lt;T&gt;</code></strong> (<code>src/core/DataRing.h</code>) — a depth-configurable SPSC ring of typed slots. Not lights-specific: any producer/consumer pair can use it. Replaces <code>FrameRing</code> which is deleted.</p>
+<ul>
+<li><code>allocate(count, depth)</code> — allocates <code>depth × count × sizeof(T)</code> bytes via <code>pal::psram_alloc</code>. Depth 1 = single slot, no copy overhead; depth 2 = double-buffer for cross-core pipelining.</li>
+<li><code>acquire_write_slot()</code> / <code>publish()</code> — producer side (same semantics as <code>FrameRing</code>).</li>
+<li><code>try_acquire_read()</code> / <code>release_read()</code> — consumer side. At depth 1, returns pointer to the single slot with acquire ordering; a concurrent write is detected via revision check and the frame is skipped (acceptable at 50 fps).</li>
+<li>Depth 1 torn-frame contract: producer bumps revision before write (relaxed), consumer reads revision before and after (acquire/acquire); if they differ, skips the frame.</li>
+</ul>
+<p><strong><code>DataRegistry</code></strong> (<code>src/core/DataRegistry.h</code>) — replaces <code>PixelRegistry</code>. Maps string id → <code>DataRing&lt;RGB&gt;*</code> + geometry metadata (width, height, depth). Lives in core (the geometry is T-agnostic metadata; RGB is only in the leaf modules that use it).</p>
+<ul>
+<li><code>declare(id, count, ring_depth)</code> — called by the producer in <code>onAllocateMemory</code>. Creates or reallocates the ring. Ring depth sourced from <code>pal::psram_size() &gt; 0 ? 2 : 1</code> by default, overridable via control.</li>
+<li><code>resolve(id)</code> → <code>DataRing&lt;RGB&gt;*</code> — called by consumers in <code>setup()</code>. Returns null if not yet declared (tolerate late producers, same pattern as today).</li>
+<li><code>undeclare(id)</code> — called by producer in <code>teardown()</code>. Frees the ring; consumers get null on next <code>try_acquire_read</code>.</li>
+</ul>
+<p><strong><code>PixelSource</code> / <code>PixelBufferRef</code></strong> (<code>src/modules/lights/Pixelable.h</code>) — kept as the lights-domain consumer interface but backed by <code>DataRing&lt;RGB&gt;</code> instead of <code>FrameRing</code>. <code>pixelBuffer()</code> returns a <code>PixelBufferRef</code> wrapping a <code>DataRing</code> slot pointer + geometry.</p>
+<p><strong>RipplesEffect</strong> — removes <code>FrameRing ring_</code> (32 B struct, 96 KB heap at 128×128). Calls <code>DataRegistry::declare</code> in <code>onAllocateMemory</code>; writes directly into the ring slot in <code>loop20ms</code>. <code>pixels_</code> working buffer kept (48 KB) — the effect still needs to accumulate the frame before publishing.</p>
+<p><strong>PreviewModule</strong> — removes <code>frame_buf_</code> entirely (48 KB at 128×128). Reads the ring slot directly via <code>DataRegistry::resolve</code> and packs the wire format on-the-fly into <code>ws_-&gt;broadcastBinary</code> without a staging buffer. Net: zero allocation in PreviewModule.</p>
+<p><strong>ArtnetOutModule</strong> — reads ring slot directly; UDP staging buffer unchanged (needed for protocol framing).</p>
+<h3 id="memory-at-128128-after-sprint-13">Memory at 128×128 after Sprint 13<a class="headerlink" href="#memory-at-128128-after-sprint-13" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Buffer</th>
+<th>Size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RipplesEffect</td>
+<td><code>pixels_</code> (working copy)</td>
+<td>48 KB</td>
+</tr>
+<tr>
+<td>RipplesEffect</td>
+<td><code>phase_offset_</code></td>
+<td>32 KB</td>
+</tr>
+<tr>
+<td>RipplesEffect</td>
+<td><code>base_color_</code></td>
+<td>48 KB</td>
+</tr>
+<tr>
+<td>DataRegistry</td>
+<td>ring slot(s) — depth 1 (esp32dev)</td>
+<td>48 KB</td>
+</tr>
+<tr>
+<td>DataRegistry</td>
+<td>ring slot(s) — depth 2 (esp32s3)</td>
+<td>96 KB</td>
+</tr>
+<tr>
+<td>PreviewModule</td>
+<td><em>(none)</em></td>
+<td>0 KB</td>
+</tr>
+<tr>
+<td>ArtnetOutModule</td>
+<td>UDP staging</td>
+<td>48 KB</td>
+</tr>
+<tr>
+<td><strong>Total esp32dev</strong></td>
+<td></td>
+<td><strong>176 KB</strong> (-144 KB)</td>
+</tr>
+<tr>
+<td><strong>Total esp32s3</strong></td>
+<td></td>
+<td><strong>224 KB</strong> (-96 KB)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="definition-of-done_1">Definition of Done<a class="headerlink" href="#definition-of-done_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <strong><code>DataRing&lt;T&gt;</code></strong> (<code>src/core/DataRing.h</code>) — templated depth-configurable SPSC ring; replaces <code>FrameRing</code>. Depth-1 torn-frame detection via before/after revision compare. <code>allocate(count, depth)</code> uses <code>pal::psram_alloc</code>. Passes unit tests in <code>test/test_pc/</code>.</li>
+<li>[ ] <strong><code>DataRegistry</code></strong> (<code>src/core/DataRegistry.h</code>) — string-keyed registry of <code>DataRing&lt;RGB&gt;*</code> + geometry. <code>declare</code> / <code>resolve</code> / <code>undeclare</code>. Singleton (same pattern as <code>PixelRegistry</code>).</li>
+<li>[ ] <strong><code>FrameRing</code> deleted</strong> (<code>src/modules/lights/FrameRing.h</code> removed) — replaced entirely by <code>DataRing</code>. No lights-domain type in core.</li>
+<li>[ ] <strong><code>PixelRegistry</code> deleted</strong> (<code>src/modules/lights/PixelRegistry.h</code> removed) — replaced by <code>DataRegistry</code> in core.</li>
+<li>[ ] <strong><code>RipplesEffect</code> updated</strong> — removes <code>FrameRing ring_</code> field; calls <code>DataRegistry::declare</code> in <code>onAllocateMemory</code>; writes ring slot in <code>loop20ms</code>. <code>moduleAllocBytes_</code> reports working buffers only (ring owned by registry).</li>
+<li>[ ] <strong><code>PreviewModule</code> updated</strong> — removes <code>frame_buf_</code> / <code>frame_cap_</code>; resolves <code>DataRing&lt;RGB&gt;</code> from <code>DataRegistry</code>; packs wire format directly from ring slot pointer in <code>loop20ms</code>. Zero allocation.</li>
+<li>[ ] <strong><code>ArtnetOutModule</code> updated</strong> — resolves <code>DataRing&lt;RGB&gt;</code> from <code>DataRegistry</code> instead of <code>PixelSource</code>.</li>
+<li>[ ] <strong><code>check_class_sizes.py</code> scenarios updated</strong> — <code>RipplesEffect</code> scenario removes ring from per-module count; adds a <code>DataRegistry</code> line showing ring cost at each panel size and depth.</li>
+<li>[ ] <strong>Build green</strong> on <code>pc</code>, <code>esp32dev</code>, <code>esp32s3_n16r8</code>.</li>
+</ul>
+<h3 id="removed_1">Removed<a class="headerlink" href="#removed_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>src/modules/lights/FrameRing.h</code> — lights-domain SPSC ring; replaced by generic <code>DataRing&lt;T&gt;</code> in core</li>
+<li><code>src/modules/lights/PixelRegistry.h</code> — lights-domain registry; replaced by <code>DataRegistry</code> in core</li>
+<li><code>frame_buf_</code> / <code>frame_cap_</code> in <code>PreviewModule</code> — zero-copy read from shared ring eliminates staging buffer</li>
+<li><code>ring_</code> field in <code>RipplesEffect</code> — ring now owned by <code>DataRegistry</code>, not the effect module</li>
+</ul>
+<h3 id="adr-required">ADR required<a class="headerlink" href="#adr-required" title="Permanent link">&para;</a></h3>
+<p><code>DataRing</code> and <code>DataRegistry</code> move into <code>src/core/</code> — this crosses the core boundary as defined in <a href="../../architecture/system/">architecture/system.md</a> (core currently contains only <code>Module</code>, <code>ModuleManager</code>, <code>Scheduler</code>, <code>Pal</code>). The justification: <code>DataRing</code> is a concurrency primitive (SPSC ring with acquire/release semantics), not a domain type — it belongs alongside <code>Scheduler</code> as core infrastructure. <code>DataRegistry</code> is a typed singleton store, analogous to <code>ModuleManager</code>. An ADR will be filed before implementation.</p>
 <hr />
 <h2 id="artefact-promotions">Artefact promotions<a class="headerlink" href="#artefact-promotions" title="Permanent link">&para;</a></h2>
 <p>Each line records the promotion of a deferred test or tooling artefact back into an active sprint. Format: <code>YYYY-MM-DD — promoted &lt;artefact&gt;. Drift episode: &lt;one-line description&gt;.</code> Without a drift-episode entry, no promotion lands. This is the <a href="../../architecture/process/#3-anti-drift-why-these-rules-survive">§3 anti-drift rule</a> applied to test infrastructure itself.</p>
