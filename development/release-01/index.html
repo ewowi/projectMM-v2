@@ -1599,6 +1599,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sprint-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 12 — Minimalism pass: class footprint + typed controls + accurate heap accounting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 12 — Minimalism pass: class footprint + typed controls + accurate heap accounting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deferred" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deferred
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#artefact-promotions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1851,6 +1901,56 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sprint-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sprint 12 — Minimalism pass: class footprint + typed controls + accurate heap accounting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Sprint 12 — Minimalism pass: class footprint + typed controls + accurate heap accounting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#definition-of-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Definition of Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deferred" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deferred
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#artefact-promotions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1965,6 +2065,11 @@
 <td>Docs restructure: four top-level sections (User Guide / Architecture / Developer Guide / Development), agent-memory framing in CLAUDE.md, MoonModule contract update, Pal inventory page</td>
 <td><a href="../../">docs</a>, <a href="https://github.com/ewowi/projectMM-v2/blob/main/CLAUDE.md">CLAUDE.md</a></td>
 </tr>
+<tr>
+<td><a href="#sprint-12">12</a></td>
+<td>Minimalism pass: MoonModule field reorder (136B→96B), <code>type_</code> as <code>const char*</code>, typed <code>addControl</code> overloads, PSRAM-backed PreviewModule, RingBuffer heap accounting, class-size checker, <code>max_alloc_kb</code> in status bar</td>
+<td><code>src/core/</code>, <code>src/modules/</code>, <code>scripts/check_class_sizes.py</code></td>
+</tr>
 </tbody>
 </table>
 <p>The v1 → v2 cutover (rename + final stable tag) closes <a href="../backlog/#release-2-v1-parity-cutover">Release 2</a>, which adds ArtNet <strong>in</strong>, OTA, NTP, and any remaining v1 parity bits.</p>
@@ -2042,6 +2147,38 @@
 <p><strong>Minimalism stance.</strong> Net LOC across <code>docs/</code> is <em>negative</em> — release-01.md alone shed 405 lines; release-02.md (66 LOC) and lights.md (5 LOC) deleted. New additions: 4× index.md (≤ 15 lines each), 8× user-guide module pages (~25 lines each), pal.md (50 lines), backlog.md grew by ~30 lines for Release 2 entries. The Sprint 9 "removes more than it adds" bias applied to docs.</p>
 <p><strong>Source code: unchanged.</strong> No <code>src/</code> edits. This is a docs-and-tooling sprint; the runtime ships exactly what Sprint 10 closed with.</p>
 <p><strong>Why this isn't part of Sprint 9.</strong> Sprint 9 is the <em>closing review</em> pass (per-file source/test minimalism + deploy walk + docs read-through) that produces the <code>v1.0.0-foundation</code> tag. This sprint is a docs <em>restructure</em> that emerged from doing the Sprint 9 read-through and finding the four-section model in the process. Sprint 9 still has to run end-to-end against the new structure before the tag lands.</p>
+<hr />
+<h2 id="sprint-12">Sprint 12 — Minimalism pass: class footprint + typed controls + accurate heap accounting<a class="headerlink" href="#sprint-12" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Scope: reduce <code>MoonModule</code> base size, eliminate float casts in control registration, accurately track dynamic memory, and add a static class-size checker to MoonDeck.</p>
+</blockquote>
+<h3 id="definition-of-done">Definition of Done<a class="headerlink" href="#definition-of-done" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[x] <strong><code>MoonModule</code> field reorder</strong> (<code>src/core/MoonModule.h</code>) — fields sorted 8B→4B→2B→1B, eliminating 24 B of alignment padding. Base size 136 B → 96 B. <code>moduleAllocBytes_</code> demoted from <code>size_t</code> (8 B) to <code>uint32_t</code> (4 B); <code>classSize_</code> and <code>usPerTick_</code> demoted to <code>uint16_t</code> (2 B each). <code>msPerTick_</code> (float) replaced by <code>usPerTick_</code> (uint16_t) — same information, integer µs, no float in the base.</li>
+<li>[x] <strong><code>type_</code> as <code>const char*</code></strong> (<code>src/core/MoonModule.h</code>, <code>src/core/ModuleManager.cpp</code>) — <code>std::string type_</code> (24 B) replaced by <code>const char* type_</code> (8 B) pointing into the stable factory-map key. Zero heap cost; <code>type()</code> accessor no longer calls <code>.c_str()</code>. <code>ModuleManager::add()</code> stores <code>it-&gt;first.c_str()</code> (stable for the lifetime of <code>factories_</code>) or the literal <code>"unknown"</code>.</li>
+<li>[x] <strong><code>JsonDocument pendingProps_</code> → pointer</strong> (<code>src/core/MoonModule.h</code>) — inlined 128 B slab moved to heap-allocated <code>JsonDocument* pendingProps_</code> (8 B in struct), allocated only when <code>setProps()</code>/<code>loadState()</code> is called and freed after <code>runSetup()</code> drains it. Saves 128 B per module on the common no-pending-props path.</li>
+<li>[x] <strong>Typed <code>addControl</code> overloads</strong> (<code>src/core/MoonModule.h</code>, <code>src/core/MoonModule.cpp</code>) — <code>uint8_t</code>/<code>uint32_t</code> lvalue overloads take typed <code>lo</code>/<code>hi</code> (no float cast at call sites). Four new rvalue-display overloads (<code>int8_t&amp;&amp;</code>, <code>uint8_t&amp;&amp;</code>, <code>uint16_t&amp;&amp;</code>, <code>uint32_t&amp;&amp;</code>) replace the single <code>float&amp;&amp;</code> catch-all. Removed one hidden footprint: <code>addControl(uint8_t&amp;, …, float, float)</code> was silently widening integer slider ranges.</li>
+<li>[x] <strong><code>pal::chip_model_str()</code> / <code>pal::mac_address_str()</code></strong> (<code>src/pal/PalSystemInfo.h</code>) — function-static <code>const char*</code> variants; fill a static buffer on first call, return a stable pointer. <code>SystemStatusModule</code> removes <code>char chipModel_[32]</code> and <code>char macAddress_[18]</code> (50 B saved); <code>fillSystemJson()</code> uses the pal pointers directly.</li>
+<li>[x] <strong>Pal heap functions return <code>uint32_t</code></strong> (<code>src/pal/PalSystemInfo.h</code>) — <code>total_heap_kb()</code>, <code>free_heap_kb()</code>, <code>max_alloc_kb()</code> changed from <code>float</code> to <code>uint32_t</code>. Heap sizes are always integer KB; float was a needless precision fiction.</li>
+<li>[x] <strong><code>PreviewModule</code> PSRAM buffer</strong> (<code>src/modules/lights/PreviewModule.h</code>) — <code>std::vector&lt;uint8_t&gt; frame_</code> (24 B struct + heap alloc on regular heap) replaced by <code>pal::psram_alloc</code>-backed <code>uint8_t* frame_buf_</code> / <code>size_t frame_cap_</code>. Grows once on first frame, reused. <code>moduleAllocBytes_</code> now correctly reports the allocation. On ESP32-S3 the frame goes to PSRAM; on esp32dev it falls back to DRAM via the same code path. <code>teardown()</code> frees and zeroes.</li>
+<li>[x] <strong><code>RipplesEffect</code> ring allocation counted</strong> (<code>src/modules/lights/RipplesEffect.h</code>) — <code>moduleAllocBytes_</code> previously omitted the <code>FrameRing</code> (2 × pixel_bytes). Added <code>+= 2 * pixel_bytes</code> after successful <code>ring_.allocate()</code>. At 75×13 this raises the reported heap from 7.9 KB to ~13.6 KB — accurate.</li>
+<li>[x] <strong><code>check_class_sizes.py</code></strong> (<code>scripts/check_class_sizes.py</code>) — new MoonDeck check: scans <code>src/</code> for <code>MoonModule</code> subclasses, parses fields via regex + inline-body stripping, simulates alignment, reports estimated static size per class with a per-type breakdown (pointer, std::string, float, uint32_t, …) and heap/alloc annotations. Added to MoonDeck <code>all-checks</code> card and as a standalone <code>check-class-sizes</code> card.</li>
+<li>[x] <strong><code>max_alloc_kb</code> in status bar</strong> (<code>src/frontend/app.js</code>, <code>src/frontend/frontend_bundle.h</code>) — status bar now shows <code>136K free / 104K max heap</code> instead of just <code>136K free heap</code>. The max-alloc number surfaces fragmentation pressure that free-heap alone hides.</li>
+<li>[x] <strong>RipplesEffect controls 0–255</strong> (<code>src/modules/lights/RipplesEffect.h</code>) — <code>speed</code> and <code>hue_base</code> controls converted to 0–255 integer range for future DMX compatibility. Internal float conversion unchanged.</li>
+<li>[x] <strong>Frontend µs timing</strong> (<code>src/frontend/app.js</code>) — <code>ms_per_tick</code> → <code>us_per_tick</code> in the timing cache and display; <code>fmtMs()</code> → <code>fmtUs()</code> renders <code>&lt;1000 µs</code> as integer µs, else as decimal ms. Integer controls no longer display fractional progress values.</li>
+</ul>
+<h3 id="removed">Removed<a class="headerlink" href="#removed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>std::string type_</code> — 24 B per module, replaced by 8 B <code>const char*</code></li>
+<li><code>float msPerTick_</code> — replaced by <code>uint16_t usPerTick_</code>; same information, 6 B saved in base</li>
+<li><code>size_t classSize_</code>, <code>size_t moduleAllocBytes_</code> — replaced by <code>uint16_t</code> / <code>uint32_t</code>; 10 B saved</li>
+<li><code>char chipModel_[32]</code>, <code>char macAddress_[18]</code> in <code>SystemStatusModule</code> — 50 B saved; pointers into pal static buffers used instead</li>
+<li><code>std::vector&lt;uint8_t&gt; frame_</code> in <code>PreviewModule</code> — replaced by PSRAM-backed raw pointer</li>
+</ul>
+<h3 id="deferred">Deferred<a class="headerlink" href="#deferred" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Progress-bar overwrite in MoonDeck Flash output (esptool <code>\r</code> lines) — attempted; esptool ANSI detection logic under a pipe proved fragile across environments. Reverted cleanly; deferred to a later sprint if the annoyance outweighs the fix cost.</li>
+</ul>
 <hr />
 <h2 id="artefact-promotions">Artefact promotions<a class="headerlink" href="#artefact-promotions" title="Permanent link">&para;</a></h2>
 <p>Each line records the promotion of a deferred test or tooling artefact back into an active sprint. Format: <code>YYYY-MM-DD — promoted &lt;artefact&gt;. Drift episode: &lt;one-line description&gt;.</code> Without a drift-episode entry, no promotion lands. This is the <a href="../../architecture/process/#3-anti-drift-why-these-rules-survive">§3 anti-drift rule</a> applied to test infrastructure itself.</p>

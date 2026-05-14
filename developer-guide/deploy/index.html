@@ -1456,6 +1456,39 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#check-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code analysis (lizard)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-cppcheck" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C++ static analysis (cppcheck)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-ruff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python lint (ruff)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#gen-bundle" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2091,6 +2124,39 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#check-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code analysis (lizard)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-cppcheck" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C++ static analysis (cppcheck)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check-ruff" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Python lint (ruff)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#gen-bundle" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2326,6 +2392,29 @@ uv<span class="w"> </span>run<span class="w"> </span>scripts/flash.py<span class
 <p>Scans every <code>.h</code> / <code>.hpp</code> / <code>.cpp</code> / <code>.cc</code> file under <code>src/</code> <strong>except</strong> files in <code>src/pal/</code>, and fails on any platform-identity gate: <code>#ifdef ARDUINO</code>, <code>#ifdef ESP_PLATFORM</code>, <code>#ifdef ESP32</code>, <code>#ifdef ARDUINO_ARCH_*</code>, <code>#include &lt;Arduino.h&gt;</code>, <code>#include &lt;esp_*.h&gt;</code>, <code>#include &lt;freertos/...&gt;</code>. Platform-conditional code lives only in <code>src/pal/</code> files; modules consume it through the <code>pal::*</code> interface. See <a href="../../architecture/system/#pal-the-only-place-platform-conditionals-appear">system architecture — Pal</a>. Source: <code>scripts/check_platform_guards.py</code>.</p>
 <h3 id="check-bundle">Frontend bundle drift<a class="headerlink" href="#check-bundle" title="Permanent link">&para;</a></h3>
 <p>Re-generates <code>src/frontend/frontend_bundle.h</code> in-memory from the sources (<code>index.html</code> + <code>style.css</code> + <code>app.js</code>) and fails if the committed bundle differs byte-for-byte. The generator (<code>scripts/gen_frontend_bundle.py</code>) is deterministic — <code>gzip</code> is invoked with <code>mtime=0</code> so identical sources always produce identical bundles. Fix drift by running <code>uv run scripts/gen_frontend_bundle.py</code> and committing the regenerated bundle. Source: <code>scripts/check_bundle.py</code>.</p>
+<h3 id="check-analysis">Code analysis (lizard)<a class="headerlink" href="#check-analysis" title="Permanent link">&para;</a></h3>
+<p>Runs <a href="https://github.com/terryyin/lizard">lizard</a> over <code>src/</code> (C++ files only, <code>src/frontend/</code> excluded) and prints a per-file summary of NLOC, average cyclomatic complexity (AvgCCN), token count, and function count. Any function with CC &gt; 15 or length &gt; 1000 lines appears in a <strong>Warnings</strong> block at the bottom.</p>
+<div class="highlight"><pre><span></span><code>  NLOC  AvgNLOC  AvgCCN  Avg.token  Fns   File
+   351     10.1     4.1      113.2    34   src/core/MoonModule.cpp
+   253     10.3     2.5       98.0    19   src/pal/PalHttp.h
+   ...
+!!!! Warnings (cyclomatic_complexity &gt; 15 …) !!!!
+   113       32   1231      0   153  pmm::HttpServerModule::setup@33-185@…
+</code></pre></div>
+<p>Lizard is fetched on demand via <code>uv run --with lizard</code> — no permanent project dependency. Source: <code>scripts/check_analysis.py</code>.</p>
+<h3 id="check-cppcheck">C++ static analysis (cppcheck)<a class="headerlink" href="#check-cppcheck" title="Permanent link">&para;</a></h3>
+<p>Runs <a href="https://cppcheck.sourceforge.io/">cppcheck</a> over <code>src/</code> with <code>warning</code>, <code>style</code>, <code>performance</code>, and <code>portability</code> checks enabled. Suppressed categories:</p>
+<ul>
+<li><code>missingInclude*</code> — PlatformIO lib_deps are not on the include path outside a PlatformIO build.</li>
+<li><code>returnDanglingLifetime</code> in <code>ModuleManager.cpp</code> — false positive: raw pointer is captured before the <code>unique_ptr</code> moves into the vector; pointer remains valid.</li>
+<li><code>knownConditionTrueFalse</code> — PC stubs return constant 0; on ESP32 these are live runtime values.</li>
+<li><code>useStlAlgorithm</code>, <code>uselessOverride</code>, <code>cstyleCast</code>, <code>constVariable*</code>, <code>functionStatic</code> — intentional style choices in pal files; no-op PC stubs can't be static because they implement a virtual interface on ESP32.</li>
+</ul>
+<p>Anything that survives the suppressions is worth investigating. First run found a real bug: <code>SystemStatusModule::tickCount_</code> shadowing <code>MoonModule::tickCount_</code>, causing <code>msPerTick</code> to never advance for that module — fixed by renaming to <code>fpsTick_</code>.</p>
+<p>Cppcheck is fetched on demand via <code>uv run --with cppcheck</code> — no permanent project dependency. Source: <code>scripts/check_cppcheck.py</code>.</p>
+<h3 id="check-ruff">Python lint (ruff)<a class="headerlink" href="#check-ruff" title="Permanent link">&para;</a></h3>
+<p>Runs <a href="https://docs.astral.sh/ruff/">ruff</a> over <code>scripts/</code> and reports any findings. E402 (module-level import not at top of file) and E701/E702 (intentional compact one-liners in <code>moondeck.py</code>) are suppressed — everything else is live. On a clean codebase prints <code>All checks passed!</code>.</p>
+<p>Ruff is fetched on demand via <code>uv run --with ruff</code> — no permanent project dependency. Source: <code>scripts/check_ruff.py</code>.</p>
 <h3 id="gen-bundle">Regenerate frontend bundle<a class="headerlink" href="#gen-bundle" title="Permanent link">&para;</a></h3>
 <p>Inlines <code>style.css</code> and <code>app.js</code> into <code>index.html</code>, gzip-compresses the result, and writes <code>src/frontend/frontend_bundle.h</code> as a <code>uint8_t</code> array. <code>HttpServerModule</code> serves this on <code>GET /</code> with <code>Content-Encoding: gzip</code>. Source: <code>scripts/gen_frontend_bundle.py</code>.</p>
 <h3 id="mkdocs">MkDocs serve<a class="headerlink" href="#mkdocs" title="Permanent link">&para;</a></h3>
