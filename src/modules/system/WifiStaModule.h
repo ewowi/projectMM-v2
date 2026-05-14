@@ -46,12 +46,16 @@ class WifiStaModule : public MoonModule {
   }
 
   void onBuildControls() override {
-    addControl(ssid_,       sizeof(ssid_),     "ssid",       "text");
-    addControl(password_,   sizeof(password_), "password",   "password");
-    addControl(status_,                        "status",     "display");
-    addControl(ip_address_,                    "ip",         "display");
-    addControl(rssi_,                          "rssi_dbm",   "display", -127.0f, 0.0f);
-    addControl(tx_power_dbm_,                  "tx_power_dbm", "display", 0.0f, 21.0f);
+    addControl(ssid_,            sizeof(ssid_),     "ssid",       "text");
+    addControl(password_,        sizeof(password_), "password",   "password");
+    addControl(status_,                             "status",     "display");
+    addControl(ip_address_,                         "ip",         "display");
+    addControl((int8_t)rssi_,                       "rssi_dbm",   "display", (int8_t)-127, (int8_t)0);
+    addControl(tx_power_dbm_,                       "tx_power_dbm", "display", 0.0f, 21.0f);  // float: quarter-dBm steps
+    // tx_power_pref_dbm: user-settable override. 0 = "auto" (default staircase
+    // kicks in only on connect timeout). Any non-zero value forces this level
+    // on every connect. Persisted in /wifi.json so it survives reboots.
+    addControl(tx_power_pref_dbm_,                  "tx_power_pref_dbm", "slider", 0.0f, 21.0f);
   }
 
   void loop1s() override {
@@ -68,13 +72,13 @@ class WifiStaModule : public MoonModule {
     if (connecting_) {
       if (pal::wifi_is_connected()) {
         pal::wifi_local_ip(ip_address_, sizeof(ip_address_));
-        rssi_         = (float)pal::wifi_rssi();
+        rssi_         = (int8_t)pal::wifi_rssi();
         tx_power_dbm_ = pal::wifi_tx_power_dbm();
         std::strncpy(status_, "connected", sizeof(status_) - 1);
         connecting_ = false;
         if (reduced_tx_power_dbm_() > 0.0f) next_probe_ms_ = pal::millis() + kPromoteIntervalMs;
-        log("[wifi] connected ssid=%s ip=%s rssi=%.0f tx=%.1fdBm\n",
-            ssid_, ip_address_, rssi_, tx_power_dbm_);
+        log("[wifi] connected ssid=%s ip=%s rssi=%ddBm tx=%.1fdBm\n",
+            ssid_, ip_address_, (int)rssi_, tx_power_dbm_);
       } else if (pal::millis() - connect_start_ms_ > CONNECT_TIMEOUT_MS) {
         // Connect timed out. Step down one rung on the TX-power staircase
         // and retry immediately — *don't* wait RETRY_INTERVAL_MS, the user
@@ -88,7 +92,7 @@ class WifiStaModule : public MoonModule {
         } else {
           std::strncpy(status_, "failed", sizeof(status_) - 1);
           ip_address_[0] = '\0';
-          rssi_ = -127.0f;
+          rssi_ = -127;
           connecting_ = false;
           log("[wifi] connect timeout ssid=%s (low TX did not help)\n", ssid_);
         }
@@ -124,6 +128,23 @@ class WifiStaModule : public MoonModule {
     if (std::strcmp(key, "ssid") == 0 || std::strcmp(key, "password") == 0) {
       save_creds_();
       if (enabled_) start_connect_();
+      return;
+    }
+    if (std::strcmp(key, "tx_power_pref_dbm") == 0) {
+      // Clamp + persist. 0 = back to auto. Apply live if connected — no
+      // need to re-associate; arduino-esp32 accepts setTxPower while up.
+      // Also clear the staircase + cancel any pending promotion probe so
+      // the auto path stops fighting the user's choice.
+      if (tx_power_pref_dbm_ < 0.0f || tx_power_pref_dbm_ > 21.0f) tx_power_pref_dbm_ = 0.0f;
+      save_creds_();
+      tx_step_idx_      = -1;
+      next_probe_ms_    = 0;
+      probe_started_ms_ = 0;
+      if (pal::wifi_is_connected() && tx_power_pref_dbm_ > 0.0f) {
+        pal::wifi_set_tx_power(tx_power_pref_dbm_);
+        tx_power_dbm_ = pal::wifi_tx_power_dbm();
+        log("[wifi] TX pref applied %.1f dBm (live)\n", tx_power_pref_dbm_);
+      }
     }
   }
 
@@ -132,8 +153,12 @@ class WifiStaModule : public MoonModule {
   char    password_[65]    = {};
   char    status_[24]      = "boot";
   char    ip_address_[16]  = {};
-  float   rssi_            = -127.0f;
+  int8_t  rssi_            = -127;
   float   tx_power_dbm_    = 0.0f;
+  // User override loaded from /wifi.json. 0 = auto (use the staircase only on
+  // connect timeout); >0 = force this level on every connect, ignore the
+  // staircase. Edited via the slider; persisted by save_creds_().
+  float   tx_power_pref_dbm_ = 0.0f;
   bool    connecting_      = false;
   // Index into kTxSteps for the active reduced level, or -1 while we're
   // still at full default power. Each connect timeout advances by 1; once
@@ -184,12 +209,17 @@ class WifiStaModule : public MoonModule {
     const char* pass = doc["password"] | "";
     std::strncpy(ssid_,     ssid, sizeof(ssid_)     - 1);
     std::strncpy(password_, pass, sizeof(password_) - 1);
+    // Optional. Absent / 0 = auto-staircase; clamp to a sane range so a
+    // typo can't shut the radio off entirely.
+    const float pref = doc["tx_power_dbm"] | 0.0f;
+    tx_power_pref_dbm_ = (pref < 0.0f || pref > 21.0f) ? 0.0f : pref;
   }
 
   void save_creds_() {
     JsonDocument doc;
     doc["ssid"]     = ssid_;
     doc["password"] = password_;
+    if (tx_power_pref_dbm_ > 0.0f) doc["tx_power_dbm"] = tx_power_pref_dbm_;
     std::string body;
     serializeJson(doc, body);
     if (!pal::fs_write_text(kCredsPath, body)) {
@@ -234,12 +264,17 @@ class WifiStaModule : public MoonModule {
     }
     ip_address_[0] = '\0';
     rssi_ = -127.0f;
+    // Pick the TX level to apply this attempt: user pref wins, else the
+    // staircase rung (0 = default = no override).
+    const float forced = tx_power_pref_dbm_ > 0.0f
+                         ? tx_power_pref_dbm_
+                         : reduced_tx_power_dbm_();
     log("[wifi] connecting ssid=%s%s\n", ssid_,
-        reduced_tx_power_dbm_() > 0.0f ? " (reduced TX power)" : "");
+        forced > 0.0f ? (tx_power_pref_dbm_ > 0.0f ? " (TX pref)" : " (reduced TX power)") : "");
     pal::wifi_begin(ssid_, password_);
-    // Re-apply the cap after every begin() — arduino-esp32 resets the TX
-    // power setting on each WiFi.begin(), so we'd lose it on a retry.
-    if (reduced_tx_power_dbm_() > 0.0f) pal::wifi_set_tx_power(reduced_tx_power_dbm_());
+    // arduino-esp32 resets TX power on every WiFi.begin(), so re-apply
+    // after begin() — not before.
+    if (forced > 0.0f) pal::wifi_set_tx_power(forced);
     connecting_ = true;
     connect_start_ms_ = pal::millis();
     last_retry_ms_    = connect_start_ms_;

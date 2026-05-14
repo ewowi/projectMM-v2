@@ -77,4 +77,14 @@ inline void on_interrupt(void (*fn)(int)) {
 #endif
 }
 
+// Reboot the device. ESP32: esp_restart(). PC: raises SIGINT so the
+// normal shutdown path runs (processes cleaned up, no hard exit).
+inline void reboot() {
+#ifdef ARDUINO
+  esp_restart();
+#else
+  std::raise(SIGINT);
+#endif
+}
+
 }  // namespace pal

@@ -359,7 +359,7 @@ function handleStateUpdate(state) {
                 if (prog) {
                     prog.value = Number(value);
                     const ptxt = prog.nextElementSibling;
-                    if (ptxt) ptxt.textContent = fmtProgress(Number(value), Number(prog.max));
+                    if (ptxt) ptxt.textContent = fmtProgress(Number(value), Number(prog.max), prog.dataset.integer);
                 }
 
                 const sel = document.querySelector(
@@ -389,23 +389,23 @@ const dragTs = {};
 const TIMING_MODE_KEY = 'pmm_timing_mode';
 let timingMode = localStorage.getItem(TIMING_MODE_KEY) || 'fps';
 const TIMING_MODES = ['fps', 'ms'];
-const timingCache = {};  // id → {ms_per_tick, self_ms_per_tick}
+const timingCache = {};  // id → {us_per_tick, self_us_per_tick}
 
-function fmtMs(ms) {
-    return ms < 1 ? (ms * 1000).toFixed(1) + 'µs' : ms.toFixed(2) + 'ms';
+function fmtUs(us) {
+    return us < 1000 ? us.toFixed(0) + 'µs' : (us / 1000).toFixed(2) + 'ms';
 }
 
 function displayTiming(id, t) {
     const el = document.getElementById('fps-' + id);
     if (!el) return;
-    const ms = t.ms_per_tick;
-    if (!ms) { el.textContent = '—'; return; }
+    const us = t.us_per_tick;
+    if (!us) { el.textContent = '—'; return; }
     if (timingMode === 'fps') {
-        const fps = 1000 / ms;
+        const fps = 1000000 / us;
         el.textContent = fps >= 1e3 ? (fps / 1e3).toFixed(1) + 'K fps'
                        : fps.toFixed(0) + ' fps';
     } else {
-        el.textContent = fmtMs(ms);
+        el.textContent = fmtUs(us);
     }
 }
 
@@ -1040,7 +1040,7 @@ function buildControl(moduleId, ctrl) {
                 : fmt(input.value);
             clearTimeout(timer);
             timer = setTimeout(
-                () => postControl(moduleId, ctrl.key, parseFloat(input.value)), 150);
+                () => postControl(moduleId, ctrl.key, ctrl.integer ? parseInt(input.value) : parseFloat(input.value)), 150);
         });
 
         row.appendChild(input);
@@ -1066,11 +1066,12 @@ function buildControl(moduleId, ctrl) {
         bar.value = ctrl.value != null ? ctrl.value : 0;
         bar.dataset.mid = moduleId;
         bar.dataset.key = ctrl.key;
+        if (ctrl.integer) bar.dataset.integer = '1';
         row.appendChild(bar);
 
         const txt = document.createElement('span');
         txt.className = 'progress-text';
-        txt.textContent = fmtProgress(Number(ctrl.value), Number(bar.max));
+        txt.textContent = fmtProgress(Number(ctrl.value), Number(bar.max), ctrl.integer);
         row.appendChild(txt);
 
     } else if (ctrl.type === 'button') {
@@ -1192,10 +1193,10 @@ function fmtDisplay(v, type) {
     return Number.isInteger(n) ? String(n) : n.toFixed(1);
 }
 
-function fmtProgress(value, max) {
+function fmtProgress(value, max, integer) {
     const v = Number(value), m = Number(max);
     if (isNaN(v) || isNaN(m) || m === 0) return '—';
-    return v.toFixed(1) + ' / ' + m.toFixed(1);
+    return integer ? Math.round(v) + ' / ' + Math.round(m) : v.toFixed(1) + ' / ' + m.toFixed(1);
 }
 
 function esc(s) {
@@ -1498,7 +1499,10 @@ async function loadSystemStatus() {
         if (!el) return;
         const parts = [];
         if (d.uptime_s != null) parts.push(fmtTime(d.uptime_s));
-        if (d.heap_free_kb > 0) parts.push(d.heap_free_kb.toFixed(0) + 'K heap');
+        if (d.heap_free_kb > 0) {
+          const maxPart = d.max_alloc_kb > 0 ? ' / ' + d.max_alloc_kb.toFixed(0) + 'K max' : '';
+          parts.push(d.heap_free_kb.toFixed(0) + 'K free' + maxPart + ' heap');
+        }
         if (d.core_temp != null && d.core_temp > 0) parts.push(d.core_temp.toFixed(1) + '°C');
         el.textContent = parts.join(' · ');
         document.getElementById('reboot-btn')

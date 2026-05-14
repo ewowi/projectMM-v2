@@ -72,6 +72,22 @@ inline void mac_address(char* buf, size_t len) {
 #endif
 }
 
+// Cached const char* variants — fill a function-static buffer on first call
+// and return a pointer to it. Safe: both values are fixed at boot time and
+// never change. Callers that need a stable pointer (addControl, fillSystemJson)
+// use these instead of the buf+len form.
+inline const char* chip_model_str() {
+  static char buf[32] = {};
+  if (!buf[0]) chip_model(buf, sizeof(buf));
+  return buf;
+}
+inline const char* mac_address_str() {
+  static char buf[18] = {};
+  static bool done = false;
+  if (!done) { mac_address(buf, sizeof(buf)); done = true; }
+  return buf;
+}
+
 // -- Reset reason -----------------------------------------------------------
 inline const char* reset_reason_str() {
 #ifdef ARDUINO
@@ -103,48 +119,48 @@ inline bool is_crash_reset() {
 }
 
 // -- Heap -------------------------------------------------------------------
-inline float total_heap_kb() {
+inline uint32_t total_heap_kb() {
 #ifdef ARDUINO
-  return heap_caps_get_total_size(MALLOC_CAP_INTERNAL) / 1024.0f;
+  return heap_caps_get_total_size(MALLOC_CAP_INTERNAL) / 1024;
 #else
-  return 0.0f;
+  return 0;
 #endif
 }
-inline float free_heap_kb() {
+inline uint32_t free_heap_kb() {
 #ifdef ARDUINO
-  return heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024.0f;
+  return heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024;
 #else
-  return 0.0f;
+  return 0;
 #endif
 }
-inline float max_alloc_kb() {
+inline uint32_t max_alloc_kb() {
 #ifdef ARDUINO
-  return heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL) / 1024.0f;
+  return heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL) / 1024;
 #else
-  return 0.0f;
+  return 0;
 #endif
 }
-inline float heap_min_kb() {
+inline uint32_t heap_min_kb() {
 #ifdef ARDUINO
-  return heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL) / 1024.0f;
+  return heap_caps_get_minimum_free_size(MALLOC_CAP_INTERNAL) / 1024;
 #else
-  return 0.0f;
+  return 0;
 #endif
 }
 
 // -- PSRAM ------------------------------------------------------------------
-inline float total_psram_kb() {
+inline uint32_t total_psram_kb() {
 #ifdef ARDUINO
-  return heap_caps_get_total_size(MALLOC_CAP_SPIRAM) / 1024.0f;
+  return heap_caps_get_total_size(MALLOC_CAP_SPIRAM) / 1024;
 #else
-  return 0.0f;
+  return 0;
 #endif
 }
-inline float free_psram_kb() {
+inline uint32_t free_psram_kb() {
 #ifdef ARDUINO
-  return heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024.0f;
+  return heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024;
 #else
-  return 0.0f;
+  return 0;
 #endif
 }
 inline const char* psram_mode() {
@@ -157,57 +173,56 @@ inline const char* psram_mode() {
 
 // -- Filesystem -------------------------------------------------------------
 // Both branches return zero. LittleFS access lands in Sprint 5 with PalFs.h.
-inline float fs_total_kb() { return 0.0f; }
-inline float fs_used_kb()  { return 0.0f; }
+inline uint32_t fs_total_kb() { return 0; }
+inline uint32_t fs_used_kb()  { return 0; }
 
 // -- Sketch / firmware size -------------------------------------------------
-inline float sketch_kb() {
+inline uint32_t sketch_kb() {
 #ifdef ARDUINO
   uint32_t sz = ESP.getSketchSize();
-  if (sz > 0) return sz / 1024.0f;
+  if (sz > 0) return sz / 1024;
   const esp_partition_t* p = esp_ota_get_running_partition();
-  if (!p) return 0.0f;
+  if (!p) return 0;
   esp_image_metadata_t meta = {};
   const esp_partition_pos_t pos = {p->address, p->size};
   return (esp_image_verify(ESP_IMAGE_VERIFY_SILENT, &pos, &meta) == ESP_OK)
-             ? meta.image_len / 1024.0f
-             : 0.0f;
+             ? meta.image_len / 1024
+             : 0;
 #else
-  return 0.0f;
+  return 0;
 #endif
 }
-inline float sketch_partition_kb() {
+inline uint32_t sketch_partition_kb() {
 #ifdef ARDUINO
   const esp_partition_t* p = esp_ota_get_running_partition();
-  return p ? p->size / 1024.0f : 0.0f;
+  return p ? p->size / 1024 : 0;
 #else
-  return 0.0f;
+  return 0;
 #endif
 }
 
 // -- CPU --------------------------------------------------------------------
-inline float cpu_freq_mhz() {
+inline uint8_t cpu_freq_mhz() {
 #ifdef ARDUINO
-  return (float)ESP.getCpuFreqMHz();
+  return (uint8_t)ESP.getCpuFreqMHz();
 #else
-  return 0.0f;
+  return 0;
 #endif
 }
-inline float cpu_cores() {
+inline uint8_t cpu_cores() {
 #ifdef ARDUINO
-  return (float)portNUM_PROCESSORS;
+  return (uint8_t)portNUM_PROCESSORS;
 #else
-  unsigned n = std::thread::hardware_concurrency();
-  return n > 0 ? (float)n : 1.0f;
+  return (uint8_t)std::thread::hardware_concurrency();
 #endif
 }
 
 // -- Temperature ------------------------------------------------------------
-inline float core_temp() {
+inline int8_t core_temp() {
 #ifdef ARDUINO
-  return temperatureRead();
+  return (int8_t)temperatureRead();
 #else
-  return 0.0f;
+  return 0;
 #endif
 }
 
@@ -231,18 +246,18 @@ inline const char* sdk_version() {
 }
 
 // -- Flash chip details -----------------------------------------------------
-inline float flash_size_mb() {
+inline uint32_t flash_size_kb() {
 #ifdef ARDUINO
-  return ESP.getFlashChipSize() / (1024.0f * 1024.0f);
+  return ESP.getFlashChipSize() / 1024;
 #else
-  return 0.0f;
+  return 0;
 #endif
 }
-inline float flash_speed_mhz() {
+inline uint8_t flash_speed_mhz() {
 #ifdef ARDUINO
-  return ESP.getFlashChipSpeed() / 1000000.0f;
+  return (uint8_t)(ESP.getFlashChipSpeed() / 1000000);
 #else
-  return 0.0f;
+  return 0;
 #endif
 }
 inline const char* flash_chip_mode() {

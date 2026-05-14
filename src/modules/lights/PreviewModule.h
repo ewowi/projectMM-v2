@@ -20,10 +20,10 @@
 #include <cstdint>
 #include <cstring>
 #include <string>
-#include <vector>
 
 #include "../../core/MoonModule.h"
 #include "../../core/ModuleManager.h"
+#include "../../pal/PalHeap.h"
 #include "../network/WebSocketModule.h"
 #include "../system/Logger.h"
 #include "Pixelable.h"
@@ -58,10 +58,16 @@ class PreviewModule : public MoonModule {
     const PixelBufferRef ref = source_->pixelBuffer();
     if (!ref.valid()) return;
 
-    const size_t frame_bytes = required_frame_bytes(ref);
-    if (frame_.size() < frame_bytes) frame_.resize(frame_bytes);
-    pack_frame(frame_.data(), ref);
-    ws_->broadcastBinary(frame_.data(), frame_bytes);
+    const size_t need = required_frame_bytes(ref);
+    if (need > frame_cap_) {
+      pal::psram_free(frame_buf_);
+      frame_buf_ = (uint8_t*)pal::psram_alloc(need);
+      if (!frame_buf_) { frame_cap_ = 0; moduleAllocBytes_ = 0; return; }
+      frame_cap_ = need;
+      moduleAllocBytes_ = need;
+    }
+    pack_frame(frame_buf_, ref);
+    ws_->broadcastBinary(frame_buf_, need);
   }
 
   // Wire-format packer, exposed static so tests can assert the bytes without
@@ -80,15 +86,20 @@ class PreviewModule : public MoonModule {
   }
 
   void teardown() override {
+    pal::psram_free(frame_buf_);
+    frame_buf_ = nullptr;
+    frame_cap_ = 0;
+    moduleAllocBytes_ = 0;
     source_ = nullptr;
     ws_     = nullptr;
   }
 
  private:
-  char              source_buf_[24] = "ripples-0";
-  PixelSource*      source_ = nullptr;
-  WebSocketModule*  ws_     = nullptr;
-  std::vector<uint8_t> frame_;  // grown once on first frame; reused thereafter
+  char             source_buf_[24] = "ripples-0";
+  PixelSource*     source_   = nullptr;
+  WebSocketModule* ws_       = nullptr;
+  uint8_t*         frame_buf_ = nullptr;  // PSRAM-backed; grown once, reused
+  size_t           frame_cap_ = 0;
 
   void resolve_source_() {
     source_ = PixelRegistry::instance().find(source_buf_);
@@ -98,11 +109,9 @@ class PreviewModule : public MoonModule {
     if (!manager_) return;
     MoonModule* m = manager_->find("ws-0");
     if (!m) return;
-    // Static cast is safe because the type() string identifies the concrete
-    // class. arduino-esp32 builds with -fno-rtti so dynamic_cast is unavailable.
-    if (std::strcmp(m->type(), "ws") == 0) {
-      ws_ = static_cast<WebSocketModule*>(m);
-    }
+    // find("ws-0") guarantees this is the WebSocketModule instance.
+    // Static cast is safe; -fno-rtti on ESP32 makes dynamic_cast unavailable.
+    ws_ = static_cast<WebSocketModule*>(m);
   }
 
   static void write_u16_le_(uint8_t* dst, uint16_t v) {

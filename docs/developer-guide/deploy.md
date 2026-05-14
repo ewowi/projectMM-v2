@@ -215,6 +215,40 @@ Scans every `.h` / `.hpp` / `.cpp` / `.cc` file under `src/` **except** files in
 
 Re-generates `src/frontend/frontend_bundle.h` in-memory from the sources (`index.html` + `style.css` + `app.js`) and fails if the committed bundle differs byte-for-byte. The generator (`scripts/gen_frontend_bundle.py`) is deterministic — `gzip` is invoked with `mtime=0` so identical sources always produce identical bundles. Fix drift by running `uv run scripts/gen_frontend_bundle.py` and committing the regenerated bundle. Source: `scripts/check_bundle.py`.
 
+### Code analysis (lizard) {#check-analysis}
+
+Runs [lizard](https://github.com/terryyin/lizard) over `src/` (C++ files only, `src/frontend/` excluded) and prints a per-file summary of NLOC, average cyclomatic complexity (AvgCCN), token count, and function count. Any function with CC > 15 or length > 1000 lines appears in a **Warnings** block at the bottom.
+
+```
+  NLOC  AvgNLOC  AvgCCN  Avg.token  Fns   File
+   351     10.1     4.1      113.2    34   src/core/MoonModule.cpp
+   253     10.3     2.5       98.0    19   src/pal/PalHttp.h
+   ...
+!!!! Warnings (cyclomatic_complexity > 15 …) !!!!
+   113       32   1231      0   153  pmm::HttpServerModule::setup@33-185@…
+```
+
+Lizard is fetched on demand via `uv run --with lizard` — no permanent project dependency. Source: `scripts/check_analysis.py`.
+
+### C++ static analysis (cppcheck) {#check-cppcheck}
+
+Runs [cppcheck](https://cppcheck.sourceforge.io/) over `src/` with `warning`, `style`, `performance`, and `portability` checks enabled. Suppressed categories:
+
+- `missingInclude*` — PlatformIO lib_deps are not on the include path outside a PlatformIO build.
+- `returnDanglingLifetime` in `ModuleManager.cpp` — false positive: raw pointer is captured before the `unique_ptr` moves into the vector; pointer remains valid.
+- `knownConditionTrueFalse` — PC stubs return constant 0; on ESP32 these are live runtime values.
+- `useStlAlgorithm`, `uselessOverride`, `cstyleCast`, `constVariable*`, `functionStatic` — intentional style choices in pal files; no-op PC stubs can't be static because they implement a virtual interface on ESP32.
+
+Anything that survives the suppressions is worth investigating. First run found a real bug: `SystemStatusModule::tickCount_` shadowing `MoonModule::tickCount_`, causing `msPerTick` to never advance for that module — fixed by renaming to `fpsTick_`.
+
+Cppcheck is fetched on demand via `uv run --with cppcheck` — no permanent project dependency. Source: `scripts/check_cppcheck.py`.
+
+### Python lint (ruff) {#check-ruff}
+
+Runs [ruff](https://docs.astral.sh/ruff/) over `scripts/` and reports any findings. E402 (module-level import not at top of file) and E701/E702 (intentional compact one-liners in `moondeck.py`) are suppressed — everything else is live. On a clean codebase prints `All checks passed!`.
+
+Ruff is fetched on demand via `uv run --with ruff` — no permanent project dependency. Source: `scripts/check_ruff.py`.
+
 ### Regenerate frontend bundle {#gen-bundle}
 
 Inlines `style.css` and `app.js` into `index.html`, gzip-compresses the result, and writes `src/frontend/frontend_bundle.h` as a `uint8_t` array. `HttpServerModule` serves this on `GET /` with `Content-Encoding: gzip`. Source: `scripts/gen_frontend_bundle.py`.

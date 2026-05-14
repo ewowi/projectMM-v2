@@ -10,10 +10,11 @@ MoonModule* ModuleManager::add(const char* type, const char* id) {
   auto it = factories_.find(type);
   if (it != factories_.end()) {
     m = it->second();
+    m->type_ = it->first.c_str();  // stable: points into the factory map key
   } else {
     m = std::make_unique<MoonModule>();
+    m->type_ = "unknown";
   }
-  m->type_ = type;
   m->id_ = id;
   m->manager_ = this;
   m->runSetup();   // dispatch wrapper: setup() + onBuildControls() + register enabled_

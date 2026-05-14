@@ -85,8 +85,8 @@ void WebSocketModule::broadcast_state_() {
       // self_ms_per_tick will diverge from ms_per_tick once Sprint 6 adds
       // child-recursion accounting; for now they're the same value.
       JsonObject t = entry["timing"].to<JsonObject>();
-      t["ms_per_tick"]      = m->msPerTick();
-      t["self_ms_per_tick"] = m->msPerTick();
+      t["us_per_tick"]      = m->usPerTick();
+      t["self_us_per_tick"] = m->usPerTick();
       m->getControlValues(entry["controls"].to<JsonObject>());
     }
   }

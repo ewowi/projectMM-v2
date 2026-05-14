@@ -32,9 +32,9 @@
 namespace pmm::memtracker {
 
 struct Snapshot {
-  float free_heap_kb;
-  float largest_kb;
-  float free_psram_kb;
+  uint32_t free_heap_kb;
+  uint32_t largest_kb;
+  uint32_t free_psram_kb;
 };
 
 inline Snapshot snapshot() {
@@ -42,21 +42,21 @@ inline Snapshot snapshot() {
 }
 
 inline unsigned frag_pct_(const Snapshot& s) {
-  if (s.free_heap_kb <= 0.0f) return 0u;
-  const float frag = 1.0f - (s.largest_kb / s.free_heap_kb);
+  if (s.free_heap_kb == 0) return 0u;
+  const float frag = 1.0f - ((float)s.largest_kb / (float)s.free_heap_kb);
   return frag > 0.0f ? (unsigned)(frag * 100.0f) : 0u;
 }
 
 inline void log_pair_(const char* tag, const char* id, const Snapshot& before) {
   const Snapshot now  = snapshot();
-  const float    dkb  = now.free_heap_kb - before.free_heap_kb;
-  if (now.free_psram_kb > 0.0f || before.free_psram_kb > 0.0f) {
-    const float pr_dkb = now.free_psram_kb - before.free_psram_kb;
-    pmm::log("%s %-20s setup %+5.1fKB = %6.1fKB (frag=%u%%, largest=%.1fKB) PR: %+.1fKB = %.1fKB\n",
+  const int32_t  dkb  = (int32_t)now.free_heap_kb - (int32_t)before.free_heap_kb;
+  if (now.free_psram_kb > 0 || before.free_psram_kb > 0) {
+    const int32_t pr_dkb = (int32_t)now.free_psram_kb - (int32_t)before.free_psram_kb;
+    pmm::log("%s %-20s setup %+5dKB = %6uKB (frag=%u%%, largest=%uKB) PR: %+dKB = %uKB\n",
              tag, id, dkb, now.free_heap_kb, frag_pct_(now), now.largest_kb,
              pr_dkb, now.free_psram_kb);
   } else {
-    pmm::log("%s %-20s setup %+5.1fKB = %6.1fKB (frag=%u%%, largest=%.1fKB)\n",
+    pmm::log("%s %-20s setup %+5dKB = %6uKB (frag=%u%%, largest=%uKB)\n",
              tag, id, dkb, now.free_heap_kb, frag_pct_(now), now.largest_kb);
   }
 }
@@ -75,7 +75,7 @@ inline void log_live(const char* id, const Snapshot& before) { log_pair_("[MemLi
 // Threshold keeps the log quiet when nothing is happening — per the user's
 // "serial output should only show events" stance in the Sprint 8 plan.
 inline void tick_1s() {
-  static float    last_kb = 0.0f;
+  static uint32_t last_kb = 0;
   static uint32_t tick    = 0;
   static bool     seeded  = false;
 
@@ -87,15 +87,15 @@ inline void tick_1s() {
     return;
   }
 
-  constexpr float kThresholdKb = 1.0f;
-  const float delta = now.free_heap_kb - last_kb;
+  constexpr uint32_t kThresholdKb = 1;
+  const int32_t delta = (int32_t)now.free_heap_kb - (int32_t)last_kb;
 
-  if (delta > kThresholdKb || delta < -kThresholdKb) {
-    pmm::log("[MemLive] delta %+.1fKB = %.1fKB (frag=%u%%, largest=%.1fKB)\n",
+  if (delta > (int32_t)kThresholdKb || delta < -(int32_t)kThresholdKb) {
+    pmm::log("[MemLive] delta %+dKB = %uKB (frag=%u%%, largest=%uKB)\n",
              delta, now.free_heap_kb, frag_pct_(now), now.largest_kb);
     last_kb = now.free_heap_kb;
   } else if (tick % 10 == 0) {
-    pmm::log("[MemLive] periodic = %.1fKB (frag=%u%%, largest=%.1fKB)\n",
+    pmm::log("[MemLive] periodic = %uKB (frag=%u%%, largest=%uKB)\n",
              now.free_heap_kb, frag_pct_(now), now.largest_kb);
   }
   ++tick;

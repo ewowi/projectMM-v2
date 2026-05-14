@@ -5,12 +5,12 @@
 // publishes itself to PixelRegistry so PreviewModule and ArtnetOutModule
 // can pick up the frame.
 //
-// Controls:
+// Controls (all 0–255 for DMX compatibility):
 //   width, height: 1..128 (default 16) — buffer geometry
 //   depth: 1..16 (default 1) — repeats the 2D pattern per slice (placeholder
 //          for true 3D ripple propagation, which is a future sprint)
-//   speed: float, default 1.0 — radians/sec the wave advances
-//   hue_base: float 0..1, default 0.6 — base hue (rotates with distance)
+//   speed: 0–255 → 0.0–10.0 rad/s (default 26 ≈ 1.0 rad/s)
+//   hue_base: 0–255 → 0.0–1.0 hue (default 153 ≈ 0.6)
 //
 // Allocation: `pixels_ = new RGB[w*h*d]` in onAllocateMemory. On any
 // dimension change, onUpdate reallocates and bumps revision_++. Buffer
@@ -53,11 +53,11 @@ class RipplesEffect : public MoonModule, public PixelSource {
   }
 
   void onBuildControls() override {
-    addControl(width_,    "width",    "slider",  1.0f, 128.0f);
-    addControl(height_,   "height",   "slider",  1.0f, 128.0f);
-    addControl(depth_,    "depth",    "slider",  1.0f, 16.0f);
-    addControl(speed_,    "speed",    "slider",  0.1f, 10.0f);
-    addControl(hue_base_, "hue_base", "slider",  0.0f, 1.0f);
+    addControl(width_,    "width",    "slider", (uint8_t)1, (uint8_t)128);
+    addControl(height_,   "height",   "slider", (uint8_t)1, (uint8_t)128);
+    addControl(depth_,    "depth",    "slider", (uint8_t)1, (uint8_t)16);
+    addControl(speed_,    "speed",    "slider", (uint8_t)0, (uint8_t)255);
+    addControl(hue_base_, "hue_base", "slider", (uint8_t)0, (uint8_t)255);
   }
 
   void onAllocateMemory() override {
@@ -88,7 +88,7 @@ class RipplesEffect : public MoonModule, public PixelSource {
     // Per-frame phase scalar: `t * speed * 2` rad, wrapped to Q16. fmod
     // before the cast keeps the float in range as uptime grows. One float
     // op per frame — negligible vs the per-pixel loop.
-    const float arg = (float)pal::millis() * 0.001f * speed_ * 2.0f;
+    const float arg = (float)pal::millis() * 0.001f * (speed_ * (10.0f / 255.0f)) * 2.0f;
     const float wrapped = std::fmod(arg, 2.0f * 3.14159265358979f);
     const uint16_t t_q = (uint16_t)(int32_t)(wrapped * (65536.0f / (2.0f * 3.14159265358979f)));
 
@@ -131,11 +131,11 @@ class RipplesEffect : public MoonModule, public PixelSource {
   }
 
  private:
-  uint32_t width_    = 16;
-  uint32_t height_   = 16;
-  uint32_t depth_    = 1;
-  float    speed_    = 1.0f;
-  float    hue_base_ = 0.6f;
+  uint8_t width_    = 16;
+  uint8_t height_   = 16;
+  uint8_t depth_    = 1;
+  uint8_t speed_    = 26;   // 26/255 * 10 ≈ 1.0 rad/s
+  uint8_t hue_base_ = 153;  // 153/255 ≈ 0.6
 
   RGB*      pixels_   = nullptr;
   uint32_t  revision_ = 0;
@@ -208,6 +208,8 @@ class RipplesEffect : public MoonModule, public PixelSource {
     if (!ring_.allocate(pixel_bytes)) {
       log("[ripples] ring alloc failed at %ux%ux%u — Art-Net out won't have a feed\n",
           (unsigned)width_, (unsigned)height_, (unsigned)depth_);
+    } else {
+      moduleAllocBytes_ += 2 * pixel_bytes;  // FrameRing holds two slots
     }
     ++revision_;
     log("[ripples] allocated %ux%ux%u = %u bytes (+ tables %u B + ring 2x%u B)\n",
@@ -253,7 +255,7 @@ class RipplesEffect : public MoonModule, public PixelSource {
       for (uint16_t x = 0; x < w; ++x) {
         const float dx = (float)x - cx;
         const float dist = std::sqrt(dx * dx + dy2);
-        row[x] = RGB::fromHsv(hue_base_ + dist * 0.05f, 1.0f, 1.0f);
+        row[x] = RGB::fromHsv(hue_base_ * (1.0f / 255.0f) + dist * 0.05f, 1.0f, 1.0f);
       }
     }
   }

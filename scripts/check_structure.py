@@ -27,8 +27,10 @@ def main(argv):
     for t in sorted(tops):
         if t not in ALLOWED:
             print(f"FAIL: top-level path not in allowlist: {t}")
-            print(f"      add to scripts/check_structure.py with an ADR under docs/develop/adr/")
+            print("      add to scripts/check_structure.py with an ADR under docs/develop/adr/")
             failed = True
+    if not failed:
+        print(f"OK   {len(tops)} top-level paths — all in allowlist ({', '.join(sorted(tops))})")
     return 1 if failed else 0
 
 

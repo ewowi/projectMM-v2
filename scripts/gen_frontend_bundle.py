@@ -12,7 +12,6 @@ Usage:
     uv run scripts/gen_frontend_bundle.py
 """
 import gzip
-import os
 import sys
 from pathlib import Path
 

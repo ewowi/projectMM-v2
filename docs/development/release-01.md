@@ -29,6 +29,7 @@ Sprint 2 and Sprint 3 were initially attempted as greenfield rewrites of v1's HT
 | [9](#sprint-9) | Release 1 polish: per-file minimalism review, deploy walk, docs read-through; tag `v1.0.0-foundation` | net LOC ≤ 0 |
 | [10](#sprint-10) | MoonDeck — tabbed dev console + live device surface + REST scenarios + agent loop | [Deploy → MoonDeck](../developer-guide/deploy.md#moondeck) |
 | [11](#sprint-11) | Docs restructure: four top-level sections (User Guide / Architecture / Developer Guide / Development), agent-memory framing in CLAUDE.md, MoonModule contract update, Pal inventory page | [docs](../index.md), [CLAUDE.md](https://github.com/ewowi/projectMM-v2/blob/main/CLAUDE.md) |
+| [12](#sprint-12) | Minimalism pass: MoonModule field reorder (136B→96B), `type_` as `const char*`, typed `addControl` overloads, PSRAM-backed PreviewModule, RingBuffer heap accounting, class-size checker, `max_alloc_kb` in status bar | `src/core/`, `src/modules/`, `scripts/check_class_sizes.py` |
 
 The v1 → v2 cutover (rename + final stable tag) closes [Release 2](backlog.md#release-2-v1-parity-cutover), which adds ArtNet **in**, OTA, NTP, and any remaining v1 parity bits.
 
@@ -148,6 +149,39 @@ Conflict-resolution rule baked in: longer-lived layer wins. If `development/` co
 **Source code: unchanged.** No `src/` edits. This is a docs-and-tooling sprint; the runtime ships exactly what Sprint 10 closed with.
 
 **Why this isn't part of Sprint 9.** Sprint 9 is the *closing review* pass (per-file source/test minimalism + deploy walk + docs read-through) that produces the `v1.0.0-foundation` tag. This sprint is a docs *restructure* that emerged from doing the Sprint 9 read-through and finding the four-section model in the process. Sprint 9 still has to run end-to-end against the new structure before the tag lands.
+
+---
+
+## Sprint 12 — Minimalism pass: class footprint + typed controls + accurate heap accounting {#sprint-12}
+
+> Scope: reduce `MoonModule` base size, eliminate float casts in control registration, accurately track dynamic memory, and add a static class-size checker to MoonDeck.
+
+### Definition of Done
+
+- [x] **`MoonModule` field reorder** (`src/core/MoonModule.h`) — fields sorted 8B→4B→2B→1B, eliminating 24 B of alignment padding. Base size 136 B → 96 B. `moduleAllocBytes_` demoted from `size_t` (8 B) to `uint32_t` (4 B); `classSize_` and `usPerTick_` demoted to `uint16_t` (2 B each). `msPerTick_` (float) replaced by `usPerTick_` (uint16_t) — same information, integer µs, no float in the base.
+- [x] **`type_` as `const char*`** (`src/core/MoonModule.h`, `src/core/ModuleManager.cpp`) — `std::string type_` (24 B) replaced by `const char* type_` (8 B) pointing into the stable factory-map key. Zero heap cost; `type()` accessor no longer calls `.c_str()`. `ModuleManager::add()` stores `it->first.c_str()` (stable for the lifetime of `factories_`) or the literal `"unknown"`.
+- [x] **`JsonDocument pendingProps_` → pointer** (`src/core/MoonModule.h`) — inlined 128 B slab moved to heap-allocated `JsonDocument* pendingProps_` (8 B in struct), allocated only when `setProps()`/`loadState()` is called and freed after `runSetup()` drains it. Saves 128 B per module on the common no-pending-props path.
+- [x] **Typed `addControl` overloads** (`src/core/MoonModule.h`, `src/core/MoonModule.cpp`) — `uint8_t`/`uint32_t` lvalue overloads take typed `lo`/`hi` (no float cast at call sites). Four new rvalue-display overloads (`int8_t&&`, `uint8_t&&`, `uint16_t&&`, `uint32_t&&`) replace the single `float&&` catch-all. Removed one hidden footprint: `addControl(uint8_t&, …, float, float)` was silently widening integer slider ranges.
+- [x] **`pal::chip_model_str()` / `pal::mac_address_str()`** (`src/pal/PalSystemInfo.h`) — function-static `const char*` variants; fill a static buffer on first call, return a stable pointer. `SystemStatusModule` removes `char chipModel_[32]` and `char macAddress_[18]` (50 B saved); `fillSystemJson()` uses the pal pointers directly.
+- [x] **Pal heap functions return `uint32_t`** (`src/pal/PalSystemInfo.h`) — `total_heap_kb()`, `free_heap_kb()`, `max_alloc_kb()` changed from `float` to `uint32_t`. Heap sizes are always integer KB; float was a needless precision fiction.
+- [x] **`PreviewModule` PSRAM buffer** (`src/modules/lights/PreviewModule.h`) — `std::vector<uint8_t> frame_` (24 B struct + heap alloc on regular heap) replaced by `pal::psram_alloc`-backed `uint8_t* frame_buf_` / `size_t frame_cap_`. Grows once on first frame, reused. `moduleAllocBytes_` now correctly reports the allocation. On ESP32-S3 the frame goes to PSRAM; on esp32dev it falls back to DRAM via the same code path. `teardown()` frees and zeroes.
+- [x] **`RipplesEffect` ring allocation counted** (`src/modules/lights/RipplesEffect.h`) — `moduleAllocBytes_` previously omitted the `FrameRing` (2 × pixel_bytes). Added `+= 2 * pixel_bytes` after successful `ring_.allocate()`. At 75×13 this raises the reported heap from 7.9 KB to ~13.6 KB — accurate.
+- [x] **`check_class_sizes.py`** (`scripts/check_class_sizes.py`) — new MoonDeck check: scans `src/` for `MoonModule` subclasses, parses fields via regex + inline-body stripping, simulates alignment, reports estimated static size per class with a per-type breakdown (pointer, std::string, float, uint32_t, …) and heap/alloc annotations. Added to MoonDeck `all-checks` card and as a standalone `check-class-sizes` card.
+- [x] **`max_alloc_kb` in status bar** (`src/frontend/app.js`, `src/frontend/frontend_bundle.h`) — status bar now shows `136K free / 104K max heap` instead of just `136K free heap`. The max-alloc number surfaces fragmentation pressure that free-heap alone hides.
+- [x] **RipplesEffect controls 0–255** (`src/modules/lights/RipplesEffect.h`) — `speed` and `hue_base` controls converted to 0–255 integer range for future DMX compatibility. Internal float conversion unchanged.
+- [x] **Frontend µs timing** (`src/frontend/app.js`) — `ms_per_tick` → `us_per_tick` in the timing cache and display; `fmtMs()` → `fmtUs()` renders `<1000 µs` as integer µs, else as decimal ms. Integer controls no longer display fractional progress values.
+
+### Removed
+
+- `std::string type_` — 24 B per module, replaced by 8 B `const char*`
+- `float msPerTick_` — replaced by `uint16_t usPerTick_`; same information, 6 B saved in base
+- `size_t classSize_`, `size_t moduleAllocBytes_` — replaced by `uint16_t` / `uint32_t`; 10 B saved
+- `char chipModel_[32]`, `char macAddress_[18]` in `SystemStatusModule` — 50 B saved; pointers into pal static buffers used instead
+- `std::vector<uint8_t> frame_` in `PreviewModule` — replaced by PSRAM-backed raw pointer
+
+### Deferred
+
+- Progress-bar overwrite in MoonDeck Flash output (esptool `\r` lines) — attempted; esptool ANSI detection logic under a pipe proved fragile across environments. Reverted cleanly; deferred to a later sprint if the annoyance outweighs the fix cost.
 
 ---
 

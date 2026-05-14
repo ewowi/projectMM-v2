@@ -46,16 +46,20 @@ def loop_bodies(text):
 
 def main(argv):
     failed = False
+    loops_scanned = 0
     for f in (ROOT / "src").rglob("*"):
         if not f.is_file() or f.suffix not in EXTS:
             continue
         text = f.read_text()
         for decl_pos, body in loop_bodies(text):
+            loops_scanned += 1
             line_no = text[:decl_pos].count("\n") + 1
             for pat, name in BANNED:
                 if pat.search(body):
                     print(f"FAIL {f.relative_to(ROOT)}:{line_no}: `{name}` in loop*() body")
                     failed = True
+    if not failed:
+        print(f"OK   {loops_scanned} loop*() bodies scanned — no allocs or blocking calls")
     return 1 if failed else 0
 
 

@@ -21,14 +21,18 @@ PATTERNS = [
 
 def main(argv):
     failed = False
+    files_scanned = 0
     for f in (ROOT / "src").rglob("*"):
         if not f.is_file() or f.suffix not in EXTS:
             continue
+        files_scanned += 1
         for i, line in enumerate(f.read_text().splitlines(), 1):
             for pat in PATTERNS:
                 if pat.search(line):
                     print(f"FAIL {f.relative_to(ROOT)}:{i}: raw GPIO pin literal: {line.strip()}")
                     failed = True
+    if not failed:
+        print(f"OK   {files_scanned} files scanned — no raw GPIO pin literals")
     return 1 if failed else 0
 
 

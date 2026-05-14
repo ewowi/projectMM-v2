@@ -19,7 +19,7 @@ The three dimensions are tested differently:
 
 - **Code minimalism** — whether a reader can hold the core in their head. Measured in LOC budgets per surface and in reviewer cognitive load.
 - **CPU minimalism** — `loop()` time under realistic load on every active core.
-- **Resource minimalism** — static and runtime footprint per module across RAM, flash, and any other constrained resource.
+- **Resource minimalism** — static and runtime footprint per module across RAM, flash, and any other constrained resource. Concretely: prefer `uint16_t` / `uint8_t` over `float` or `int` where the value fits; prefer `int` over `float` where the value is integral; use `float` only where fractional precision is actually needed. Floats cost 4 bytes each in the struct, require the FPU on the hot path, and accumulate rounding error when used as counters or indices.
 
 Minimalism applies equally to source, tests, deploy scripts, and documentation. The principle is not new: essential complexity only (Brooks), Gall's Law, and the Saint-Exupéry rule that perfection is reached not when nothing more can be added but when nothing more can be taken away.
 

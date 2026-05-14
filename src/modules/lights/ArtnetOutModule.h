@@ -48,7 +48,7 @@ class ArtnetOutModule : public MoonModule {
   void onBuildControls() override {
     addControl(source_buf_,   sizeof(source_buf_),   "source",   "text");
     addControl(dest_ip_buf_,  sizeof(dest_ip_buf_),  "dest_ip",  "text");
-    addControl(universe_,                            "universe", "range", 0.0f, 15.0f);
+    addControl(universe_,                            "universe", "range", 0u, 15u);
   }
 
   void onUpdate(const char* key) override {

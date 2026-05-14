@@ -117,7 +117,10 @@ struct AutoWireSpec {
 
 class MoonModule {
  public:
+  MoonModule()                             = default;
   virtual ~MoonModule();
+  MoonModule(const MoonModule&)            = delete;
+  MoonModule& operator=(const MoonModule&) = delete;
 
   // -- Lifecycle hooks (override in concrete modules) ------------------------
   virtual void setup() {}
@@ -172,7 +175,7 @@ class MoonModule {
 
   // -- Identity --------------------------------------------------------------
   const char* id() const { return id_.c_str(); }
-  const char* type() const { return type_.c_str(); }
+  const char* type() const { return type_; }
   ModuleManager* manager() const { return manager_; }
   // Override per leaf class — used by the frontend for grouping/labelling.
   virtual const char* category() const { return "system"; }
@@ -183,7 +186,11 @@ class MoonModule {
   // use this when there are no controls). Modules with controls generally use
   // getSchema()/getControlValues() instead.
   virtual void serialize_json(std::string& out) const {
-    out += "{\"type\":\"" + type_ + "\",\"id\":\"" + id_ + "\"}";
+    out += "{\"type\":\"";
+    out += type_;
+    out += "\",\"id\":\"";
+    out += id_;
+    out += "\"}";
   }
 
   // -- State persistence (Sprint 7 modules.json + per-id state files) -------
@@ -205,13 +212,17 @@ class MoonModule {
   // Convention: call addControl() for a field inside onBuildControls() so
   // pending props/state can apply before the first read.
   void addControl(float& v, const char* k, const char* u, float lo = 0.0f, float hi = 1.0f);
-  void addControl(uint8_t& v, const char* k, const char* u, float lo, float hi);
-  void addControl(uint32_t& v, const char* k, const char* u, float lo = 0.0f, float hi = 65535.0f);
+  void addControl(uint8_t&  v, const char* k, const char* u, uint8_t  lo = 0,  uint8_t  hi = 255);
+  void addControl(uint32_t& v, const char* k, const char* u, uint32_t lo = 0,  uint32_t hi = 0);
   void addControl(bool& v, const char* k, const char* u, float lo = 0.0f, float hi = 1.0f);
   // Read-only string DISPLAY backed by a char[] field (e.g. localTime_).
   void addControl(char* v, const char* k, const char* u);
-  // Static float display whose value is baked in at setup() time.
-  void addControl(float&& value, const char* k, const char* u, float lo = 0.0f, float hi = 0.0f);
+  // Static display whose value is baked in at setup() time.
+  void addControl(float&&    value, const char* k, const char* u, float    lo = 0.0f, float    hi = 0.0f);
+  void addControl(int8_t&&   value, const char* k, const char* u, int8_t   lo = -128, int8_t  hi = 127);
+  void addControl(uint8_t&&  value, const char* k, const char* u, uint8_t  lo = 0,    uint8_t  hi = 255);
+  void addControl(uint16_t&& value, const char* k, const char* u, uint16_t lo = 0,    uint16_t hi = 65535);
+  void addControl(uint32_t&& value, const char* k, const char* u, uint32_t lo = 0,    uint32_t hi = 0);
   // Select (dropdown) backed by a uint8_t index field; options must outlive module.
   void addControl(uint8_t& v, const char* k, const char* const* opts, uint8_t count);
   // Select with dynamic options populated via addControlValue() — options
@@ -261,7 +272,7 @@ class MoonModule {
 
   // -- Footprint reporting ---------------------------------------------------
   size_t classSize() const { return classSize_; }
-  void   setClassSize(size_t s) { classSize_ = s; }
+  void   setClassSize(size_t s) { classSize_ = (uint16_t)s; }
   // Total dynamic memory: module's own (moduleAllocBytes_, set by its
   // onAllocateMemory override) + framework overhead (controls + children).
   size_t dynamicMemorySize() const {
@@ -284,37 +295,37 @@ class MoonModule {
   MoonModule* child(uint8_t i) const { return i < childCount_ ? children_[i] : nullptr; }
 
  protected:
-  std::string id_;
-  std::string type_;
-  ModuleManager* manager_ = nullptr;
-  bool enabled_ = true;
-  bool schemaDirty_ = false;
-  size_t classSize_ = 0;          // set by ModuleManager::register_type<T> at registration
-  size_t moduleAllocBytes_ = 0;   // set by the module inside onAllocateMemory()
+  // Field order is optimised for minimum padding on 64-bit:
+  // 8B blocks → 4B → 2B → 1B, eliminating 24 B of alignment waste vs. naïve order.
+  std::string id_;                  // 24B — owned, runtime-assigned instance name
+  const char* type_       = nullptr;// 8B  — points into factory map key (stable)
+  ModuleManager* manager_ = nullptr;// 8B
+  ControlDescriptor* controls_ = nullptr; // 8B — lazily grown
+  MoonModule** children_  = nullptr;// 8B  — lazily grown; owned by ModuleManager
+  // Heap-allocated only when setProps()/loadState() is called; freed after
+  // runSetup() drains it. Null pointer = no pending values (common case).
+  JsonDocument* pendingProps_ = nullptr; // 8B
+
   // Tick counter incremented from runLoop(); sampled in runLoop1s() to derive
-  // ms_per_tick (and from it, fps) for the per-module timing line in the UI.
-  // Cheap: one uint32_t bump per hot-path call, no pal::micros() needed.
-  uint32_t tickCount_         = 0;
-  uint32_t timingPrevTicks_   = 0;
-  uint32_t timingPrevMs_      = 0;
-  float    msPerTick_         = 0.0f;
-  uint8_t  core_              = 0;  // Sprint 7 — scheduler core affinity
+  // usPerTick (and from it fps) for the per-module timing line in the UI.
+  uint32_t tickCount_        = 0;
+  uint32_t timingPrevTicks_  = 0;
+  uint32_t timingPrevMs_     = 0;
+  uint32_t moduleAllocBytes_ = 0;   // set by the module inside onAllocateMemory()
+
+  uint16_t classSize_  = 0;         // set by ModuleManager::register_type<T>; max ~600B fits uint16_t
+  uint16_t usPerTick_  = 0;         // µs/tick; max 65535 µs = 65 ms
  public:
-  float msPerTick() const { return msPerTick_; }
+  uint16_t usPerTick() const { return usPerTick_; }
  protected:
 
-  ControlDescriptor* controls_ = nullptr;
-  uint8_t controlCount_ = 0;
+  bool    enabled_         = true;
+  bool    schemaDirty_     = false;
+  uint8_t core_            = 0;     // scheduler core affinity
+  uint8_t controlCount_    = 0;
   uint8_t controlCapacity_ = 0;
-
-  MoonModule** children_ = nullptr;
-  uint8_t childCount_ = 0;
-  uint8_t childCapacity_ = 0;
-
-  // Pending prop/state values stashed by setProps()/loadState() before setup()
-  // runs. Each addControl() drains the matching pending value. Cleared at
-  // the end of runSetup() to release memory.
-  JsonDocument pendingProps_;
+  uint8_t childCount_      = 0;
+  uint8_t childCapacity_   = 0;
 
   friend class ModuleManager;
 

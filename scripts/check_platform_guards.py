@@ -40,12 +40,14 @@ PATTERNS = [
 def main(argv):
     out = subprocess.check_output(["git", "ls-files", "src"], cwd=ROOT).decode()
     failed = False
+    files_scanned = 0
     for rel in sorted(out.splitlines()):
         if not rel or rel.startswith(PAL_PREFIX):
             continue
         p = ROOT / rel
         if not p.is_file() or p.suffix not in EXTS:
             continue
+        files_scanned += 1
         for lineno, line in enumerate(p.read_text().splitlines(), 1):
             for name, pat in PATTERNS:
                 if pat.match(line):
@@ -57,6 +59,8 @@ def main(argv):
         print("Platform guards must live in src/pal/ files only. Move the conditional")
         print("logic into a pal file (e.g. src/pal/PalHttp.h) and call it via pal::* from")
         print("the module. See docs/architecture/system.md.")
+    else:
+        print(f"OK   {files_scanned} files scanned (src/, excluding src/pal/) — no platform guards")
     return 1 if failed else 0
 
 

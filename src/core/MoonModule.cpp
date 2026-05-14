@@ -13,6 +13,7 @@ MoonModule::~MoonModule() {
   freeOwnedOptions_();
   delete[] controls_;
   delete[] children_;  // array only — children are owned by ModuleManager
+  delete pendingProps_;
 }
 
 // -- Dispatch wrappers -------------------------------------------------------
@@ -42,7 +43,8 @@ void MoonModule::runSetup() {
   for (uint8_t i = 0; i < childCount_; ++i) children_[i]->runSetup();
   onChildrenReady();
   onAllocateMemory();     // settle dynamic buffers once all params are known
-  pendingProps_.clear();  // release pending store memory
+  delete pendingProps_;   // release pending store memory
+  pendingProps_ = nullptr;
   memtracker::log_live(id(), before);
 }
 
@@ -61,7 +63,9 @@ void MoonModule::runLoop1s() {
   // Sample tick rate. timingPrevMs_ starts at 0 (first sample seeds it).
   const uint32_t now = pal::millis();
   if (timingPrevMs_ != 0 && tickCount_ > timingPrevTicks_) {
-    msPerTick_ = (float)(now - timingPrevMs_) / (float)(tickCount_ - timingPrevTicks_);
+    const uint32_t dt = (now - timingPrevMs_) * 1000u;
+    const uint32_t dn = tickCount_ - timingPrevTicks_;
+    usPerTick_ = (uint16_t)(dt / dn > 65535u ? 65535u : dt / dn);
   }
   timingPrevMs_    = now;
   timingPrevTicks_ = tickCount_;
@@ -87,11 +91,13 @@ void MoonModule::runTeardown() {
 // -- State persistence -------------------------------------------------------
 
 void MoonModule::setProps(JsonObjectConst props) {
-  for (auto kv : props) pendingProps_[kv.key()] = kv.value();
+  if (!pendingProps_) pendingProps_ = new JsonDocument();
+  for (auto kv : props) (*pendingProps_)[kv.key()] = kv.value();
 }
 
 void MoonModule::loadState(JsonObjectConst state) {
-  for (auto kv : state) pendingProps_[kv.key()] = kv.value();
+  if (!pendingProps_) pendingProps_ = new JsonDocument();
+  for (auto kv : state) (*pendingProps_)[kv.key()] = kv.value();
 }
 
 void MoonModule::saveState(JsonObject state) const {
@@ -119,15 +125,15 @@ void MoonModule::addControl(float& v, const char* k, const char* u, float lo, fl
   applyPending_(controls_[controlCount_ - 1]);
 }
 
-void MoonModule::addControl(uint8_t& v, const char* k, const char* u, float lo, float hi) {
+void MoonModule::addControl(uint8_t& v, const char* k, const char* u, uint8_t lo, uint8_t hi) {
   ensureCapacity_();
-  controls_[controlCount_++] = {k, u, CtrlType::Uint8, reinterpret_cast<uintptr_t>(&v), lo, hi, (float)v, nullptr, 0, false, false};
+  controls_[controlCount_++] = {k, u, CtrlType::Uint8, reinterpret_cast<uintptr_t>(&v), (float)lo, (float)hi, (float)v, nullptr, 0, false, false};
   applyPending_(controls_[controlCount_ - 1]);
 }
 
-void MoonModule::addControl(uint32_t& v, const char* k, const char* u, float lo, float hi) {
+void MoonModule::addControl(uint32_t& v, const char* k, const char* u, uint32_t lo, uint32_t hi) {
   ensureCapacity_();
-  controls_[controlCount_++] = {k, u, CtrlType::Uint32, reinterpret_cast<uintptr_t>(&v), lo, hi, (float)v, nullptr, 0, false, false};
+  controls_[controlCount_++] = {k, u, CtrlType::Uint32, reinterpret_cast<uintptr_t>(&v), (float)lo, (float)hi, (float)v, nullptr, 0, false, false};
   applyPending_(controls_[controlCount_ - 1]);
 }
 
@@ -145,6 +151,18 @@ void MoonModule::addControl(char* v, const char* k, const char* u) {
 void MoonModule::addControl(float&& value, const char* k, const char* u, float lo, float hi) {
   ensureCapacity_();
   controls_[controlCount_++] = {k, u, CtrlType::FloatConst, 0, lo, hi, value, nullptr, 0, false, false};
+}
+void MoonModule::addControl(int8_t&& value, const char* k, const char* u, int8_t lo, int8_t hi) {
+  addControl((float)value, k, u, (float)lo, (float)hi);
+}
+void MoonModule::addControl(uint8_t&& value, const char* k, const char* u, uint8_t lo, uint8_t hi) {
+  addControl((float)value, k, u, (float)lo, (float)hi);
+}
+void MoonModule::addControl(uint16_t&& value, const char* k, const char* u, uint16_t lo, uint16_t hi) {
+  addControl((float)value, k, u, (float)lo, (float)hi);
+}
+void MoonModule::addControl(uint32_t&& value, const char* k, const char* u, uint32_t lo, uint32_t hi) {
+  addControl((float)value, k, u, (float)lo, (float)hi);
 }
 
 void MoonModule::addControl(uint8_t& v, const char* k, const char* const* opts, uint8_t count) {
@@ -239,6 +257,7 @@ void MoonModule::getSchema(JsonObject out) const {
   out["psram_size_bytes"] = 0u;
   out["setup_ok"]         = true;  // Sprint 8 will surface real setup failures
   out["core"]             = (uint32_t)core_;  // Sprint 7: real scheduler affinity
+  out["us_per_tick"]      = usPerTick_;       // sampled in runLoop1s; 0 until first 1s window elapses
   JsonArray arr = out["controls"].to<JsonArray>();
   for (uint8_t i = 0; i < controlCount_; ++i) {
     const ControlDescriptor& d = controls_[i];
@@ -308,13 +327,14 @@ void MoonModule::clearControls() {
   for (uint8_t i = 0; i < controlCount_; ++i) {
     ControlDescriptor& d = controls_[i];
     if (d.system) { controls_[kept++] = d; continue; }
+    if (!pendingProps_) pendingProps_ = new JsonDocument();
     switch (d.type) {
-      case CtrlType::Float:   pendingProps_[d.key] = *reinterpret_cast<float*>(d.ptr); break;
-      case CtrlType::Uint8:   pendingProps_[d.key] = *reinterpret_cast<uint8_t*>(d.ptr); break;
-      case CtrlType::Select:  pendingProps_[d.key] = *reinterpret_cast<uint8_t*>(d.ptr); break;
-      case CtrlType::Uint32:  pendingProps_[d.key] = *reinterpret_cast<uint32_t*>(d.ptr); break;
-      case CtrlType::Bool:    pendingProps_[d.key] = *reinterpret_cast<bool*>(d.ptr); break;
-      case CtrlType::EditStr: pendingProps_[d.key] = reinterpret_cast<const char*>(d.ptr); break;
+      case CtrlType::Float:   (*pendingProps_)[d.key] = *reinterpret_cast<float*>(d.ptr); break;
+      case CtrlType::Uint8:   (*pendingProps_)[d.key] = *reinterpret_cast<uint8_t*>(d.ptr); break;
+      case CtrlType::Select:  (*pendingProps_)[d.key] = *reinterpret_cast<uint8_t*>(d.ptr); break;
+      case CtrlType::Uint32:  (*pendingProps_)[d.key] = *reinterpret_cast<uint32_t*>(d.ptr); break;
+      case CtrlType::Bool:    (*pendingProps_)[d.key] = *reinterpret_cast<bool*>(d.ptr); break;
+      case CtrlType::EditStr: (*pendingProps_)[d.key] = reinterpret_cast<const char*>(d.ptr); break;
       case CtrlType::String:     break;
       case CtrlType::FloatConst: break;
     }
@@ -365,7 +385,8 @@ bool MoonModule::reorderChildren(MoonModule* const* newOrder, uint8_t count) {
 // -- Private helpers ---------------------------------------------------------
 
 void MoonModule::applyPending_(const ControlDescriptor& d) {
-  JsonVariantConst v = pendingProps_[d.key];
+  if (!pendingProps_) return;
+  JsonVariantConst v = (*pendingProps_)[d.key];
   if (v.isNull()) return;
   switch (d.type) {
     case CtrlType::Float:   *reinterpret_cast<float*>(d.ptr) = v.as<float>(); break;

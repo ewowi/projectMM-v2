@@ -8,6 +8,7 @@
 
 #include "../../../src/frontend/frontend_bundle.h"
 #include "../../core/ModuleManager.h"
+#include "../../pal/Pal.h"
 #include "../system/Logger.h"
 
 namespace pmm {
@@ -178,6 +179,15 @@ void HttpServerModule::setup() {
     for (JsonPairConst kv : doc.as<JsonObjectConst>()) {
       m->setControl(kv.key().c_str(), kv.value());
     }
+    return pal::HttpResponse{200, "application/json", "{\"ok\":true}"};
+  });
+
+  // POST /api/reboot — trigger a device restart. Sends the 200 response
+  // before rebooting so the client receives confirmation; on ESP32 the
+  // TCP stack flushes the response before esp_restart() fires. On PC
+  // this raises SIGINT and triggers the normal shutdown path.
+  server_->onPost("/api/reboot", [](const std::string&) {
+    pal::reboot();
     return pal::HttpResponse{200, "application/json", "{\"ok\":true}"};
   });
 

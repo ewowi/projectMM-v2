@@ -44,13 +44,17 @@ SCRIPTS = [
     {"id": "build",        "tab": "pc",  "group": "Build & Test", "label": "Build",     "scripts": ["build.py"]},
     {"id": "test",         "tab": "pc",  "group": "Build & Test", "label": "Test",      "scripts": ["test.py"]},
     {"id": "run",          "tab": "pc",  "group": "Build & Test", "label": "Run",       "scripts": ["run.py"], "long_running": True, "url": "http://127.0.0.1:8080"},
-    {"id": "all-checks",   "tab": "pc",  "group": "Checks", "label": "Run all checks", "scripts": ["check_loc.py", "check_hot_path.py", "check_gpio.py", "check_structure.py", "check_platform_guards.py", "check_bundle.py"]},
+    {"id": "all-checks",   "tab": "pc",  "group": "Checks", "label": "Run all checks", "scripts": ["check_loc.py", "check_hot_path.py", "check_gpio.py", "check_structure.py", "check_platform_guards.py", "check_bundle.py", "check_class_sizes.py"]},
     {"id": "check-loc",       "tab": "pc", "group": "Checks", "label": "LOC budgets",       "scripts": ["check_loc.py"]},
     {"id": "check-hot-path",  "tab": "pc", "group": "Checks", "label": "Hot-path bans",     "scripts": ["check_hot_path.py"]},
     {"id": "check-gpio",      "tab": "pc", "group": "Checks", "label": "Raw-GPIO ban",      "scripts": ["check_gpio.py"]},
     {"id": "check-structure", "tab": "pc", "group": "Checks", "label": "Structure",         "scripts": ["check_structure.py"]},
     {"id": "check-platform",  "tab": "pc", "group": "Checks", "label": "Platform guards",   "scripts": ["check_platform_guards.py"]},
     {"id": "check-bundle",    "tab": "pc", "group": "Checks", "label": "Frontend bundle drift", "scripts": ["check_bundle.py"]},
+    {"id": "check-analysis",  "tab": "pc", "group": "Checks", "label": "Code analysis (lizard)", "scripts": ["check_analysis.py"]},
+    {"id": "check-ruff",        "tab": "pc", "group": "Checks", "label": "Python lint (ruff)",              "scripts": ["check_ruff.py"]},
+    {"id": "check-cppcheck",   "tab": "pc", "group": "Checks", "label": "C++ static analysis (cppcheck)",  "scripts": ["check_cppcheck.py"]},
+    {"id": "check-class-sizes","tab": "pc", "group": "Checks", "label": "Class size estimates",            "scripts": ["check_class_sizes.py"]},
     {"id": "gen-bundle",   "tab": "pc",  "group": "Docs", "label": "Regenerate frontend bundle", "scripts": ["gen_frontend_bundle.py"]},
     {"id": "mkdocs",       "tab": "pc",  "group": "Docs", "label": "MkDocs serve", "scripts": ["mkdocs_serve.py"], "long_running": True, "url": "http://127.0.0.1:8000"},
 
@@ -290,6 +294,23 @@ def probe_device(host, port, timeout=2.0):
         return None
 
 
+def fetch_device_modules(host, port, timeout=3.0):
+    """GET http://host:port/api/modules; return list or None on failure.
+
+    Routed through MoonDeck so the browser doesn't depend on the device
+    serving CORS headers (parallel to probe_device). Caller (the Live tab's
+    inline module table) polls this every 2 s while expanded.
+    """
+    import urllib.request
+    try:
+        url = f"http://{host}:{port}/api/modules"
+        with urllib.request.urlopen(url, timeout=timeout) as r:
+            data = json.loads(r.read().decode())
+            return data if isinstance(data, list) else None
+    except Exception:
+        return None
+
+
 def scan_subnet(subnet, port, timeout=1.5):
     """Sweep a CIDR subnet and return the projectMM v2 devices that respond."""
     import ipaddress
@@ -334,8 +355,8 @@ INDEX_HTML = r"""<!doctype html>
   body { font-family: system-ui, sans-serif; margin: 0; background: #1e1e22; color: #e0e0e0; }
   header { background: #2a2a30; padding: 14px 24px; border-bottom: 1px solid #444; display: flex; align-items: center; gap: 18px; }
   header .logo { width: 28px; height: 28px; flex-shrink: 0; display: block; }
-  header h1 { margin: 0; font-size: 1.1em; font-weight: 500; flex: 1; }
-  .tabs { display: flex; gap: 4px; margin-left: auto; }
+  header h1 { margin: 0; font-size: 1.1em; font-weight: 500; }
+  .tabs { display: flex; gap: 4px; }
   .tabs .tab { background: transparent; color: #aaa; border: 1px solid #444; border-radius: 4px; padding: 4px 14px; cursor: pointer; font: inherit; font-size: 0.9em; }
   .tabs .tab:hover { color: #e0e0e0; background: #353540; }
   .tabs .tab.active { background: #3a3a55; color: #e0e0e0; border-color: #5a5a7a; }
@@ -374,6 +395,15 @@ INDEX_HTML = r"""<!doctype html>
   .device-row .status.fail { color: #ef9a9a; }
   .device-row .rm { background: transparent; border: none; color: #888; cursor: pointer; padding: 0 6px; min-width: auto; font-size: 1.1em; }
   .device-row .rm:hover { color: #ef9a9a; }
+  .device-row .caret { width: 14px; color: #888; cursor: pointer; user-select: none; text-align: center; }
+  .device-row .caret:hover { color: #ddd; }
+  .device-metrics { background: #232328; border: 1px solid #3a3a40; border-radius: 6px; padding: 6px 8px; margin: -4px 0 6px 24px; font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 0.8em; }
+  .device-metrics table { width: 100%; border-collapse: collapse; }
+  .device-metrics th { text-align: left; color: #888; font-weight: normal; padding: 2px 8px 2px 0; border-bottom: 1px solid #3a3a40; }
+  .device-metrics td { padding: 2px 8px 2px 0; color: #ccc; }
+  .device-metrics td.num { text-align: right; }
+  .device-metrics .err { color: #ef9a9a; }
+  .device-metrics .meta { color: #888; font-size: 0.85em; padding-top: 4px; }
   #right { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   #viewBar { display: flex; align-items: center; gap: 12px; font-size: 0.85em; color: #888; padding: 2px 4px; min-height: 22px; }
   #viewBar .mode { font-weight: 500; color: #ccc; }
@@ -712,6 +742,11 @@ function renderDevices() {
     const row = document.createElement('div'); row.className = 'device-row';
     const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!d.enabled;
     cb.onchange = () => { d.enabled = cb.checked; persistUiState(); };
+    // Caret: ▸ collapsed / ▾ expanded. Toggles inline metrics table below.
+    const caret = document.createElement('span'); caret.className = 'caret';
+    caret.textContent = d._expanded ? '▾' : '▸';
+    caret.title = 'Show module metrics (GET /api/modules every 2s)';
+    caret.onclick = () => toggleMetrics(d, caret);
     const name = document.createElement('span'); name.className = 'name'; name.textContent = d.name || '(unnamed)';
     name.style.cursor = 'pointer';
     name.title = `Click to open ${d.host}:${d.port}/ in the right panel` + (d.chip || d.env ? `\n${[d.chip, d.env].filter(Boolean).join(' / ')}` : '');
@@ -722,10 +757,82 @@ function renderDevices() {
     if (d.last_status === 'reachable') status.classList.add('ok');
     else if (d.last_status === 'unreachable') status.classList.add('fail');
     const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×'; rm.title = 'Remove';
-    rm.onclick = () => { uiState.devices.splice(idx, 1); persistUiState().then(renderDevices); };
-    row.append(cb, name, host, status, rm);
+    rm.onclick = () => {
+      stopMetricsPoll(d);
+      uiState.devices.splice(idx, 1);
+      persistUiState().then(renderDevices);
+    };
+    row.append(caret, cb, name, host, status, rm);
     deviceList.appendChild(row);
+    // If this device was expanded before re-render (e.g. checkbox toggled
+    // somewhere else), recreate its metrics panel and resume polling.
+    if (d._expanded) mountMetricsPanel(d);
   });
+}
+
+// Inline-metrics state lives on the device object as `_expanded` (bool),
+// `_metricsEl` (the DOM panel), and `_metricsHandle` (the setInterval id).
+// Kept off uiState.devices' persisted shape — these are runtime-only.
+function toggleMetrics(d, caret) {
+  if (d._expanded) {
+    stopMetricsPoll(d);
+    d._expanded = false;
+    caret.textContent = '▸';
+  } else {
+    d._expanded = true;
+    caret.textContent = '▾';
+    mountMetricsPanel(d);
+  }
+}
+
+function stopMetricsPoll(d) {
+  if (d._metricsHandle) { clearInterval(d._metricsHandle); d._metricsHandle = null; }
+  if (d._metricsEl) { d._metricsEl.remove(); d._metricsEl = null; }
+}
+
+function mountMetricsPanel(d) {
+  // Locate the parent row so the panel inserts directly under it.
+  const rows = Array.from(deviceList.querySelectorAll('.device-row'));
+  const row = rows.find(r => r.querySelector('.host')?.textContent === `${d.host}:${d.port}`);
+  if (!row) return;
+  const panel = document.createElement('div'); panel.className = 'device-metrics';
+  panel.innerHTML = '<span class="meta">loading…</span>';
+  row.after(panel);
+  d._metricsEl = panel;
+  refreshMetrics(d);
+  d._metricsHandle = setInterval(() => refreshMetrics(d), 2000);
+}
+
+async function refreshMetrics(d) {
+  if (!d._metricsEl) return;
+  try {
+    const r = await fetch('/device-modules', {method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({host: d.host, port: d.port})});
+    const j = await r.json();
+    const mods = j.modules || [];
+    if (!d._metricsEl) return;  // user may have collapsed between request + reply
+    if (mods.length === 0) {
+      d._metricsEl.innerHTML = '<span class="err">no response from /api/modules</span>';
+      return;
+    }
+    const fmtKB = b => (b/1024).toFixed(b < 1024 ? 2 : 1);
+    let html = '<table><thead><tr><th>module</th><th>type</th><th class="num">core</th><th class="num">ms/tick</th><th class="num">heap</th><th class="num">psram</th><th class="num">class</th></tr></thead><tbody>';
+    for (const m of mods) {
+      const ms = (m.ms_per_tick ?? 0).toFixed(2);
+      html += `<tr><td>${esc(m.id || '')}</td><td>${esc(m.type || '')}</td>`
+            + `<td class="num">${m.core ?? 0}</td>`
+            + `<td class="num">${ms}</td>`
+            + `<td class="num">${fmtKB(m.heap_size_bytes ?? 0)} KB</td>`
+            + `<td class="num">${fmtKB(m.psram_size_bytes ?? 0)} KB</td>`
+            + `<td class="num">${m.class_size_bytes ?? 0} B</td></tr>`;
+    }
+    html += '</tbody></table>';
+    html += `<div class="meta">${mods.length} module(s) · refresh 2s · ${new Date().toLocaleTimeString()}</div>`;
+    d._metricsEl.innerHTML = html;
+  } catch (e) {
+    if (d._metricsEl) d._metricsEl.innerHTML = `<span class="err">fetch failed: ${esc(String(e))}</span>`;
+  }
 }
 
 async function probeOne(d) {
@@ -1076,6 +1183,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._do_probe()
         if self.path == "/scan":
             return self._do_scan()
+        if self.path == "/device-modules":
+            return self._do_device_modules()
         if self.path == "/analyze":
             return self._do_agent("analyze")
         if self.path == "/fix":
@@ -1134,6 +1243,20 @@ class Handler(BaseHTTPRequestHandler):
             return
         devices = scan_subnet(subnet, port)
         self._send_json({"devices": devices})
+
+    def _do_device_modules(self):
+        try:
+            body = self._read_json_body()
+        except (json.JSONDecodeError, ValueError):
+            self.send_error(400, "invalid json")
+            return
+        host = (body.get("host") or "").strip()
+        port = int(body.get("port") or 80)
+        if not host:
+            self.send_error(400, "host required")
+            return
+        modules = fetch_device_modules(host, port, timeout=3.0)
+        self._send_json({"modules": modules or []})
 
     # ── Streaming agent invocations (SSE) ─────────────────────────────────
     # All four entry points (analyze / fix / ask / agent-task) build a prompt
