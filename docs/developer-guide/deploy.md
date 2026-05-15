@@ -164,22 +164,26 @@ Live tab. For each device in `moondeck.json` with `enabled: true`, probes `/api/
 
 Runs all `check_*` scripts (LOC budgets, hot-path bans, raw-GPIO ban, structure, platform guards) in sequence and stops at the first failure. Same set the pre-commit hook runs.
 
+### Patch inventory {#check-patches}
+
+Scans `src/` and `scripts/` for `// PATCH:` (C++) and `# PATCH:` (Python) comments and lists them with their names. Each patch has a removal condition; the scan is informational — exit 0 always — but makes all outstanding patches visible in one place. Cross-reference: [backlog — Known patches](../development/backlog.md#known-patches--tracked-for-removal). Source: `scripts/check_patches.py`.
+
 ### LOC budgets {#check-loc}
 
 Counts non-blank lines in each surface and compares against the budget:
 
 | Surface | Budget | Notes |
 |---|---|---|
-| `src/core/` | 300 | ModuleManager + Scheduler only; excludes nested `MoonModule.{h,cpp}` |
+| `src/core/` | 325 | ModuleManager + Scheduler only; excludes nested `MoonModule.{h,cpp}` |
 | `src/core/MoonModule.h` | 250 | the contract: lifecycle + controls + identity (Sprint 3 port) |
-| `src/core/MoonModule.cpp` | 350 | non-trivial method implementations (Sprint 3 port) |
+| `src/core/MoonModule.cpp` | 380 | non-trivial method implementations (Sprint 3 port) |
 | `src/pal/Pal.h` | 100 | timing: millis, micros, yield, sleep |
 | `src/pal/PalFs.h` | 150 | LittleFS (ESP32) + std::filesystem (PC) — lands in Sprint 5 with WifiStaModule |
 | `src/pal/PalWifi.h` | 100 | WiFi STA primitives (Sprint 5) |
 | `src/pal/PalHttp.h` | 350 | HTTP server (cpp-httplib on PC, ESPAsyncWebServer on ESP32) |
 | `src/pal/PalWs.h` | 450 | WebSocket (POSIX sockets on PC, AsyncWebSocket on ESP32) |
 | `src/pal/PalSystemInfo.h` | 250 | chip_model, reset_reason_str, build info (bumped 200→250 in Sprint 4 when the ESP32 branch landed) |
-| `src/modules/network/` | 250 | Module wrappers only: `HttpServerModule` + `WebSocketModule` |
+| `src/modules/network/` | 275 | Module wrappers only: `HttpServerModule` + `WebSocketModule` |
 | `src/modules/system/` | 500 | SystemStatusModule + WifiStaModule + Logger + StateStoreModule — bumped 300→400 in Sprint 5, 400→500 in Sprint 6 |
 
 Pal files for `PalGpio`, `PalRtos`, and `PalHeap` are intentionally **not** pre-registered — each lands with its first consumer (Sprint 6 for the light driver and FreeRTOS task pin). Pre-registering a budget for a file that has no caller is the v1 kitchen-sink pattern this list exists to prevent.

@@ -25,6 +25,8 @@
   #include <WiFi.h>
   #include <WiFiUdp.h>
 
+  #include "PalWifi.h"
+
 namespace pal {
 
 class Udp {
@@ -38,7 +40,10 @@ class Udp {
   }
 
   bool send(const char* ip, uint16_t port, const uint8_t* data, size_t len) {
-    if (!started_) return false;
+    // PATCH: wifi-guard + WiFiUDP — guards against pre-WiFi sends and hides
+    // EHOSTUNREACH spam from WiFiUDP::endPacket(). Remove when AsyncUDP lands
+    // (ArtNet-in, Release 2): AsyncUDP::writeTo() is fire-and-forget, never blocks.
+    if (!started_ || !pal::wifi_is_connected()) return false;
     if (!udp_.beginPacket(ip, port)) return false;
     udp_.write(data, len);
     return udp_.endPacket() == 1;

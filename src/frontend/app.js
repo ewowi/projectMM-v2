@@ -267,8 +267,18 @@ function connectWs() {
                 if (msg && msg.t === 'log') {
                     appendLogLine(msg.m || '');
                 } else if (msg && msg.t === 'schema') {
-                    console.log('[WS] schema received:', (msg.modules || []).length, 'modules, raw', evt.data.length, 'B');
-                    render(msg.modules || []);
+                    const modules = msg.modules || [];
+                    // Only do a full DOM rebuild when the module list itself
+                    // changed (adds/removes/reorder). A schemaDirty from a
+                    // geometry control change has the same id set — patch
+                    // controls in-place instead so the user's active slider
+                    // is not torn down mid-drag.
+                    if (schemaStructureChanged_(modules)) {
+                        console.log('[WS] schema rebuild:', modules.length, 'modules');
+                        render(modules);
+                    } else {
+                        patchControlSchema_(modules);
+                    }
                 } else {
                     handleStateUpdate(msg);
                 }
@@ -332,12 +342,11 @@ function handleStateUpdate(state) {
                     'input[data-mid="' + mid + '"][data-key="' + k + '"]');
                 if (input) {
                     const lastDrag = dragTs[entry.id + ':' + key] || 0;
-                    // Skip the value write if the user is actively editing
-                    // this field (focused). Without this, a text field like
-                    // artnet-out's dest_ip gets clobbered every 1 s while
-                    // the user is still typing.
+                    // PATCH: drag-guard — client-side workaround because the push
+                    // protocol has no "client owns this control" signal. Remove when
+                    // the WS protocol gets a client-lock or optimistic-update frame.
                     const editing = document.activeElement === input;
-                    if (!editing && Date.now() - lastDrag > 1000) {
+                    if (!editing && Date.now() - lastDrag > 2000) {
                         if (input.dataset.toggle) {
                             input.checked = !!value;
                         } else {
@@ -366,7 +375,7 @@ function handleStateUpdate(state) {
                     'select.select-input[data-mid="' + mid + '"][data-key="' + k + '"]');
                 if (sel) {
                     const lastDrag = dragTs[entry.id + ':' + key] || 0;
-                    if (Date.now() - lastDrag > 1000) sel.value = value;
+                    if (Date.now() - lastDrag > 2000) sel.value = value;
                 }
 
                 const resetBtn = document.querySelector(
@@ -382,6 +391,45 @@ function handleStateUpdate(state) {
 }
 
 const dragTs = {};
+
+// Last known module id list for structural-change detection.
+let lastSchemaIds_ = [];
+
+// Returns true if the schema event represents a structural change (new/removed/
+// reordered modules). False means only control values or ranges changed.
+function schemaStructureChanged_(modules) {
+    const ids = modules.map(m => m.id);
+    if (ids.length !== lastSchemaIds_.length) { lastSchemaIds_ = ids; return true; }
+    for (let i = 0; i < ids.length; i++) {
+        if (ids[i] !== lastSchemaIds_[i]) { lastSchemaIds_ = ids; return true; }
+    }
+    return false;
+}
+
+// PATCH: schema-diff — frontend diffs incoming schema to avoid full DOM rebuild
+// at 1 Hz (rebuild resets focus, flickers cards, interrupts canvas). Remove when
+// the backend sends separate schema-structure vs schema-values event types.
+function patchControlSchema_(modules) {
+    for (const mod of modules) {
+        for (const ctrl of (mod.controls || [])) {
+            const mid = esc(mod.id), k = esc(ctrl.key);
+            const input = document.querySelector(
+                'input[data-mid="' + mid + '"][data-key="' + k + '"]');
+            if (input && ctrl.type === 'slider') {
+                input.min  = ctrl.min;
+                input.max  = ctrl.max;
+                // Only update value if user is not actively interacting.
+                const lastDrag = dragTs[mod.id + ':' + ctrl.key] || 0;
+                if (document.activeElement !== input && Date.now() - lastDrag > 2000) {
+                    input.value = ctrl.value;
+                    const disp = input.nextElementSibling;
+                    if (disp) disp.textContent = ctrl.integer
+                        ? String(Math.round(Number(ctrl.value))) : fmt(ctrl.value);
+                }
+            }
+        }
+    }
+}
 
 /* ============================================================
    fps / ms timing toggle
@@ -1033,6 +1081,11 @@ function buildControl(moduleId, ctrl) {
             : fmt(ctrl.value);
 
         let timer = null;
+        // pointerdown marks the drag start so the 1s state push doesn't
+        // overwrite the slider before the first input event fires.
+        input.addEventListener('pointerdown', () => {
+            dragTs[moduleId + ':' + ctrl.key] = Date.now();
+        });
         input.addEventListener('input', () => {
             dragTs[moduleId + ':' + ctrl.key] = Date.now();
             display.textContent = ctrl.integer

@@ -30,7 +30,8 @@ class WebSocketModule : public MoonModule {
   void broadcastBinary(const uint8_t* data, size_t len) {
     if (ws_) ws_->broadcastBinary(data, len);
   }
-  bool hasClients() const { return ws_ && ws_->hasClients(); }
+  bool hasClients()        const { return ws_ && ws_->hasClients(); }
+  bool canBroadcastBinary() { return ws_ && ws_->canBroadcastBinary(); }
 
  private:
   std::unique_ptr<pal::WsServer> ws_;

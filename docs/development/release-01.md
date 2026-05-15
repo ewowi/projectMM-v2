@@ -6,7 +6,7 @@ Bring v2 to parity with v1's first-boot pipeline — effect → blend → driver
 
 A v2 codebase that runs v1's first-boot pipeline as modules over a small core: [`MoonModule`](../architecture/system.md#moonmodule-the-contract) + [`ModuleManager`](../architecture/system.md#modulemanager-instance-ownership) + [`Scheduler`](../architecture/system.md#scheduler-dag-runner-across-cores) + a minimal [`Pal`](../developer-guide/pal.md). Networking, persistence, the HTTP / WS server, and the entire lighting domain are modules. The deploy surface is [MoonDeck](../developer-guide/deploy.md#moondeck) + a handful of scripts.
 
-CI-enforced minimalism budgets are the load-bearing constraint: core ≤ 300 LOC, pal files capped individually ([pal inventory](../developer-guide/pal.md)), per-module 200–300 LOC depending on domain. Overshoot fails CI; bumps require an explicit signed-off edit to `scripts/check_loc.py`. Concurrency is [arbitrary DAG, SPSC per edge, depth 2 by default](../architecture/system.md#concurrency-model).
+CI-enforced minimalism budgets are the load-bearing constraint: core ≤ 300 LOC, pal files capped individually ([pal inventory](../developer-guide/pal.md)), per-module 200–300 LOC depending on domain. Overshoot fails CI; bumps require an explicit signed-off edit to `scripts/check_loc.py`. Data sharing between modules is [one shared buffer, multiple zero-copy readers](../architecture/system.md#hot-path-data-sharing-between-modules).
 
 ### Mid-release pivot: port-and-minimize (2026-05-12)
 
@@ -31,6 +31,7 @@ Sprint 2 and Sprint 3 were initially attempted as greenfield rewrites of v1's HT
 | [11](#sprint-11) | Docs restructure: four top-level sections (User Guide / Architecture / Developer Guide / Development), agent-memory framing in CLAUDE.md, MoonModule contract update, Pal inventory page | [docs](../index.md), [CLAUDE.md](https://github.com/ewowi/projectMM-v2/blob/main/CLAUDE.md) |
 | [12](#sprint-12) | Minimalism pass: MoonModule field reorder (136B→96B), `type_` as `const char*`, typed `addControl` overloads, PSRAM-backed PreviewModule, RingBuffer heap accounting, class-size checker, `max_alloc_kb` in status bar | `src/core/`, `src/modules/`, `scripts/check_class_sizes.py` |
 | [13](#sprint-13) | Shared data ring: `DataRing<T>` + `DataRegistry` in core; zero-copy producer/consumer pixel pipeline; removes `FrameRing`, `PixelRegistry`, and `PreviewModule` staging buffer; depth 1 on esp32dev, 2 on S3 | `src/core/DataRing.h`, `src/core/DataRegistry.h`, `src/modules/lights/` |
+| [14](#sprint-14) | Ring → single-slot buffer; PATCH: convention; script LOC budgets; `frontend.md`; doc crosslink pass | `src/core/DataBuffer.h`, `scripts/check_patches.py`, `docs/developer-guide/` |
 
 The v1 → v2 cutover (rename + final stable tag) closes [Release 2](backlog.md#release-2-v1-parity-cutover), which adds ArtNet **in**, OTA, NTP, and any remaining v1 parity bits.
 
@@ -39,6 +40,8 @@ The v1 → v2 cutover (rename + final stable tag) closes [Release 2](backlog.md#
 ## Sprint 1 — Guardrails and skeleton {#sprint-1}
 
 The minimum guardrails framework that the empty `Module` / `Manager` / `Scheduler` / `Pal` skeleton justifies — no more. Four lifecycle cadences (`loop`, `loop20ms`, `loop1s`, `loop10s`) as first-class scheduler concerns from commit 1, not afterthoughts. Linux-PC CI green; macOS / Windows / ESP32 envs land when those platforms gain real code. Pre-commit hook + CI gates active for raw-GPIO ban, hot-path allocation ban, hot-path blocking-call ban, structural-additions allowlist, LOC budget. Per-script `moondeck.py` cards from day one — see [Deploy → MoonDeck](../developer-guide/deploy.md#moondeck).
+
+v1's Release 9 proposed specific tools for each guardrail tier; each was evaluated against the minimalism rule before adoption: **tool choices** — none of v1's candidates (`clang-format`, `ruff`, `clang-tidy`, `cppcheck`) adopted; each tier ships a purpose-built Python check in `scripts/check_*.py` instead. **Hot-path enforcement** — kept as regex/Python (`check_hot_path.py`, ~50 LOC); clang-tidy/AST rejected as overkill. **Footprint baseline format** — budgets inline in `check_loc.py`'s `BUDGETS` dict, PR-visible; no separate `baselines/footprint.json`. **Structural-additions justification** — top-of-file docstring (Python) or `//` block (C++); top-level dirs require an ADR. **Verifier-of-the-verifier** — `check_structure.py` covers the structural half; `healthReport()` meta-test never landed (test surface readable in one sitting). Dropped outcomes are in [backlog.md → Parking lot](backlog.md#parking-lot).
 
 ## Sprint 2 — Port `HttpServer` + serve v1 UI shell {#sprint-2}
 
@@ -106,7 +109,7 @@ The script-UI grew into a real tool and earned a name. Five themes:
 
 - **Tabbed rearchitecture** — flat card list → four panes (**PC**, **ESP32**, **Live**, **Develop**). Collapses ten per-env ESP32 cards into four tab-scoped ones with an env selector.
 - **Live tab Devices list** — persistent inventory at `moondeck.json` (gitignored). Refresh probes `/api/system`; Discover sweeps a `/24` subnet via 32-thread pool; clicking a device opens its UI in the right-panel iframe.
-- **REST scenario runner** — `scripts/scenario.py` (210 LOC) promoted from Sprint 8's deferred list. Replays `test/test_pc/scenarios/*.json` against `--host` or `--all-enabled` devices. Drift episode that unlocked promotion: device list with no live runner to consume it — see [Sprint 8 § Tools investigation](#sprint-8) and the [Artefact promotions](#artefact-promotions) ledger.
+- **REST scenario runner** — `scripts/scenario.py` (210 LOC) promoted from Sprint 8's deferred list. Replays `test/test_pc/scenarios/*.json` against `--host` or `--all-enabled` devices. Drift episode that unlocked promotion: after Sprint 8 landed in-process replay and Sprint 10 added the Devices list, there was no card that consumed the device list — the gap was visible.
 - **Agent loop** — Analyze / Fix / Ask buttons below the output panel + a Develop-tab task list (**Reverse engineer sprint**, **Commit via agent**). All four endpoints stream live via SSE (POST + `fetch` + ReadableStream — `EventSource` is GET-only). User sees Claude's narration + tool calls live, same UX as a terminal run.
 - **Naming** — `ui.py` → `moondeck.py`, `ui.json` → `moondeck.json`. Branded header + favicon (`docs/assets/moonlight-logo.png`). Two readings of "deck": deck of cards (the UI is literally cards) and flight deck (control). Brand-consistent with MoonModules.
 
@@ -266,24 +269,37 @@ On esp32dev (~180 KB internal heap, no PSRAM) a 128×128 panel is impossible. Ev
 
 `DataRing` and `DataRegistry` move into `src/core/` — this crosses the core boundary as defined in [architecture/system.md](../architecture/system.md) (core currently contains only `Module`, `ModuleManager`, `Scheduler`, `Pal`). The justification: `DataRing` is a concurrency primitive (SPSC ring with acquire/release semantics), not a domain type — it belongs alongside `Scheduler` as core infrastructure. `DataRegistry` is a typed singleton store, analogous to `ModuleManager`. An ADR will be filed before implementation.
 
----
+## Sprint 14 — Ring → single-slot buffer; patch convention; script budgets; frontend.md; doc crosslink pass {#sprint-14}
 
-## Artefact promotions {#artefact-promotions}
+Two independent workstreams landed together.
 
-Each line records the promotion of a deferred test or tooling artefact back into an active sprint. Format: `YYYY-MM-DD — promoted <artefact>. Drift episode: <one-line description>.` Without a drift-episode entry, no promotion lands. This is the [§3 anti-drift rule](../architecture/process.md#3-anti-drift-why-these-rules-survive) applied to test infrastructure itself.
+**DataRing → DataBuffer.** Sprint 13's `DataRing<T>` carried a `depth` parameter (1 on esp32dev, 2 on S3). The depth was identified as overdesign: a ring with depth > 1 *within one module* puts the double-buffer boundary in the wrong place — it belongs between two separate modules (producer owns one slot, consumer owns its own). `DataRing.h` was deleted and replaced by `DataBuffer.h`: a single pre-allocated slot with the same acquire/release atomics and revision counter, but no depth concept. `test_frame_ring.cpp` was deleted; `test_data_buffer.cpp` replaced it with seven focused cases. `RipplesEffect`, `ArtnetOutModule`, and `PreviewModule` updated; `DataRegistry` entry renamed `DataBufferEntry` (field `ring_ptr` → `buf_ptr`, `depth` removed). ADR 0003 updated to reflect what actually landed.
 
-- **2026-05-13** — promoted **REST scenario runner** (`scripts/scenario.py`). Drift episode: after Sprint 8 Rail 3 landed in-process replay and Sprint 10's Live tab added a discovered-Devices list, there was no card that *used* the device list — the "Run scenarios" card still only exercised the maintainer's PC via `pio test`. The gap was visible: a device list with no live runner to consume it.
+**PATCH: comment convention + script LOC budgets.** Workarounds that exist because of a missing backend feature are now annotated `// PATCH: <name>` (C++) or `# PATCH: <name>` (Python) at the call site. `scripts/check_patches.py` scans `src/` and `scripts/` for these markers and lists them with their removal conditions (informational, exit 0). Four patches annotated in source: `drag-guard` and `schema-diff` in `app.js`, `queue-headroom` in `PalWs.h`, `wifi-guard + WiFiUDP` in `PalUdp.h`. `moondeck-monolith` annotated in `moondeck.py` and a `check-patches` card added to MoonDeck. `scripts/check_loc.py` extended with a `SCRIPT_BUDGETS` dict covering all `scripts/*.py` files — new scripts must have a budget entry or CI fails. MoonDeck header made sticky (`position: sticky; top: 0`). `BrokenPipeError` after flash fixed in `_send_json()`. Ruff F841 unused variable in `check_ui.py` removed. Frontend bundle regenerated.
 
----
+**Docs.** `frontend.md` added (full `app.js` section-by-section walkthrough, `style.css` structure, architectural fit). `backend.md` added (DataBuffer API, DataRegistry usage pattern, layering design, module lifecycle sequence). Both added to mkdocs.yml nav. Layering section moved from `backend.md` to `architecture/system.md` (architectural concept); `backend.md` keeps the `map_blend` implementation detail. Crosslink pass across `pal.md`, `frontend.md`, `process.md`, `deploy.md`, `user-guide/lights/`, ADR 0003, and `backlog.md`: stale `FrameRing`/`PixelRegistry`/`PixelSource` references replaced, LOC budget table in `deploy.md` updated to match `check_loc.py`.
 
-## Validated during Release 1
+### Removed
 
-Items from v1's Release 9 guardrails outline that had to earn their place under the minimalism rule.
+- `src/core/DataRing.h` — depth-configurable SPSC ring; ring concept is the wrong boundary; replaced by `DataBuffer.h` (single slot)
+- `test/test_pc/test_frame_ring.cpp` — ring-specific tests; replaced by `test_data_buffer.cpp`
+- `depth` field from `DataBufferEntry` / `DataRegistry` — no longer a per-buffer concept
+- `default_depth()` static method from `DataRegistry` — concept removed with depth
+- Unused `has_pointerdown` variable in `check_ui.py` (ruff F841)
 
-- **Tool choices for the three guardrail tiers** — **REPLACED.** None of v1's candidates (`clang-format`, `ruff`, `clang-tidy`, `cppcheck`) adopted. Each tier ships a purpose-built Python check in `scripts/check_*.py`. No formatter was added — mechanical formatting wasn't on v1's failure list.
-- **Hot-path enforcement mechanism** — **KEPT (regex/Python).** `scripts/check_hot_path.py` matches `void [Class::]loop*() {` with brace-balanced body extraction and a banned-pattern scan. ~50 LOC. The clang-tidy plugin and AST options were not adopted — overkill for the surface.
-- **Footprint baseline format** — **REPLACED.** Budgets live inline in `scripts/check_loc.py`'s `BUDGETS = {...}` dict. Bumps are PR-visible inline edits. No separate `baselines/footprint.json` was created.
-- **Structural-additions justification format** — **REPLACED.** Top-of-file docstring (Python) or `//` block (C++). Top-level directory additions require an ADR — enforced by `scripts/check_structure.py`'s allowlist.
-- **Verifier-of-the-verifier** — **REPLACED.** The "growth gated by the structural rule" half stayed (`check_structure.py`). The `healthReport()` meta-test never landed and isn't needed — the test surface stays readable in one sitting; meta-assertion buys nothing at that size.
+### Definition of Done
 
-DROPPED outcomes (doc-growth budget number, `test_techdebt.cpp`-style encoded TODO tests, `test_health_checks.cpp` meta-test) are recorded in [backlog.md → Parking lot](backlog.md#parking-lot).
+- [x] `src/core/DataBuffer.h` — single-slot SPSC; `allocate(count)`, `acquire_write`, `publish`, `try_acquire_read`, `release_read`, `revision`. All 36 PC tests green.
+- [x] `src/core/DataRing.h` deleted; `src/core/DataRegistry.h` updated (`DataBufferEntry`, `buf_ptr`, no `depth`).
+- [x] `RipplesEffect`, `ArtnetOutModule`, `PreviewModule` updated to `DataBuffer<RGB>`.
+- [x] `test/test_pc/test_data_buffer.cpp` — 7 cases covering allocation, publish/read, revision, SPSC no-tear.
+- [x] `scripts/check_patches.py` — scans `src/` + `scripts/` for `// PATCH:` / `# PATCH:` markers; informational.
+- [x] Four `PATCH:` annotations in source; `check-patches` card in MoonDeck.
+- [x] `SCRIPT_BUDGETS` in `check_loc.py` covers all `scripts/*.py`; new scripts without a budget entry fail CI.
+- [x] `docs/developer-guide/frontend.md` — full frontend walkthrough; added to mkdocs.yml.
+- [x] `docs/developer-guide/backend.md` — DataBuffer/DataRegistry API + usage pattern + layering + lifecycle; added to mkdocs.yml.
+- [x] Layering section in `system.md` (concept); `map_blend` detail in `backend.md`.
+- [x] Crosslink pass complete: no stale `DataRing`/`FrameRing`/`PixelRegistry`/`PixelSource` in docs outside historical sprint entries.
+- [x] ADR 0003 updated to reflect `DataBuffer<T>` and the ring-depth removal rationale.
+- [x] Build green on `pc`. ESP32 build not re-verified this sprint (no hardware change beyond renaming; structural equivalence confirmed by test suite).
+

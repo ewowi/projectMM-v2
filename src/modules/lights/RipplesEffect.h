@@ -2,8 +2,8 @@
 //
 // RipplesEffect — radial sine ripples on a 2D panel (with optional repeated
 // depth slices). Writes a working RGB buffer each tick, then publishes it
-// into a DataRing<RGB> owned by DataRegistry so PreviewModule and
-// ArtnetOutModule can read it zero-copy.
+// into a DataBuffer<RGB> owned here and declared in DataRegistry so
+// PreviewModule and ArtnetOutModule can read it zero-copy from the same slot.
 //
 // Controls (all 0–255 for DMX compatibility):
 //   width, height: 1..128 (default 16) — buffer geometry
@@ -15,11 +15,10 @@
 //   pixels_       — working copy, pal::psram_alloc, w*h*d * 3B
 //   phase_offset_ — per-pixel Q16 phase table, w*h * 2B
 //   base_color_   — per-pixel precomputed colour, w*h * 3B
-//   DataRegistry  — declares a DataRing<RGB> of depth 1 (esp32dev) or 2 (S3)
-//                   owned by the registry, counted separately from moduleAllocBytes_
+//   buf_          — DataBuffer<RGB>, one slot, w*h*d * 3B (consumers read from here)
 //
-// Hot-path optimisation: inner loop is one Q16 subtract, one LUT load,
-// three uint8 multiply-shifts per pixel. No sqrt/cos/HSV per frame.
+// Hot-path: inner loop is one Q16 subtract, one LUT load, three uint8
+// multiply-shifts per pixel. No sqrt/cos/HSV per frame.
 //
 
 #include <cmath>
@@ -27,8 +26,8 @@
 #include <cstdio>
 #include <cstring>
 
+#include "../../core/DataBuffer.h"
 #include "../../core/DataRegistry.h"
-#include "../../core/DataRing.h"
 #include "../../core/MoonModule.h"
 #include "../../pal/Pal.h"
 #include "../../pal/PalHeap.h"
@@ -90,36 +89,32 @@ class RipplesEffect : public MoonModule, public PixelSource {
       }
     }
 
-    // Publish into the shared DataRing — consumers read zero-copy from it.
-    if (ring_ && ring_->valid()) {
-      RGB* dst = ring_->acquire_write_slot();
+    // Publish into the shared DataBuffer — consumers (Preview, ArtNet) read
+    // zero-copy from the same single slot.
+    if (buf_ && buf_->valid()) {
+      RGB* dst = buf_->acquire_write();
       std::memcpy(dst, pixels_, allocated_count_ * sizeof(RGB));
-      ring_->publish();
+      buf_->publish();
       revision_++;
     }
   }
 
   void teardown() override {
-    if (ring_) {
-      DataRegistry::instance().undeclare(ring_);
-      delete ring_;
-      ring_ = nullptr;
+    if (buf_) {
+      DataRegistry::instance().undeclare(buf_);
+      delete buf_;
+      buf_ = nullptr;
     }
     free_pixels_();
   }
 
   PixelBufferRef pixelBuffer() const override {
-    // Fast path for same-core consumers (Preview): returns the working buffer
-    // directly. Revision lets consumers detect geometry changes.
     return { pixels_,
              (uint16_t)width_,
              (uint16_t)height_,
              (uint16_t)depth_,
              revision_ };
   }
-
-  // Cross-core consumers (ArtNet) resolve the ring from DataRegistry directly.
-  DataRing<RGB>* dataRing() { return ring_; }
 
  private:
   uint8_t width_    = 16;
@@ -128,10 +123,10 @@ class RipplesEffect : public MoonModule, public PixelSource {
   uint8_t speed_    = 26;
   uint8_t hue_base_ = 153;
 
-  RGB*           pixels_          = nullptr;
-  uint32_t       revision_        = 0;
-  uint32_t       allocated_count_ = 0;
-  DataRing<RGB>* ring_            = nullptr;  // owned here, declared in DataRegistry
+  RGB*              pixels_          = nullptr;
+  uint32_t          revision_        = 0;
+  uint32_t          allocated_count_ = 0;
+  DataBuffer<RGB>*  buf_             = nullptr;  // owned here, declared in DataRegistry
 
   uint16_t* phase_offset_ = nullptr;
   RGB*      base_color_   = nullptr;
@@ -166,11 +161,10 @@ class RipplesEffect : public MoonModule, public PixelSource {
 
     free_pixels_();
 
-    // Tear down old ring before re-declaring at new size.
-    if (ring_) {
-      DataRegistry::instance().undeclare(ring_);
-      delete ring_;
-      ring_ = nullptr;
+    if (buf_) {
+      DataRegistry::instance().undeclare(buf_);
+      delete buf_;
+      buf_ = nullptr;
     }
 
     if (want_pixels == 0) { ++revision_; return; }
@@ -195,21 +189,20 @@ class RipplesEffect : public MoonModule, public PixelSource {
     rebuild_phase_table_();
     rebuild_color_table_();
 
-    // Declare a DataRing<RGB> in the registry. Ring is owned by this module;
-    // registry holds a pointer and exposes it to consumers by id.
-    const uint8_t depth = DataRegistry::default_depth();
-    ring_ = new DataRing<RGB>();
-    if (!ring_->allocate(want_pixels, depth)) {
-      log("[ripples] ring alloc failed at %ux%ux%u depth=%u\n",
-          (unsigned)width_, (unsigned)height_, (unsigned)depth_, (unsigned)depth);
-      delete ring_;
-      ring_ = nullptr;
+    // Declare a DataBuffer<RGB> in the registry. Buffer owned by this module;
+    // registry exposes it to consumers (Preview, ArtNet) by id.
+    buf_ = new DataBuffer<RGB>();
+    if (!buf_->allocate(want_pixels)) {
+      log("[ripples] buf alloc failed at %ux%ux%u\n",
+          (unsigned)width_, (unsigned)height_, (unsigned)depth_);
+      delete buf_;
+      buf_ = nullptr;
     } else {
-      DataRegistry::instance().declare(id(), ring_, want_pixels, sizeof(RGB), depth,
+      DataRegistry::instance().declare(id(), buf_, want_pixels, sizeof(RGB),
                                        width_, height_, depth_);
-      log("[ripples] allocated %ux%ux%u pixels=%uB tables=%uB ring depth=%u\n",
+      log("[ripples] allocated %ux%ux%u pixels=%uB tables=%uB\n",
           (unsigned)width_, (unsigned)height_, (unsigned)depth_,
-          (unsigned)pixel_bytes, (unsigned)(phase_bytes + color_bytes), (unsigned)depth);
+          (unsigned)pixel_bytes, (unsigned)(phase_bytes + color_bytes));
     }
     ++revision_;
   }

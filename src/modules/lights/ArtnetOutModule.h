@@ -17,16 +17,15 @@
 //     len_hi len_lo        2 bytes  DMX byte count (big-endian)
 //     <data>               1..510 bytes
 //
-// Sprint 13: reads from the shared DataRing<RGB> owned by DataRegistry —
-// zero-copy cross-core path. Resolves source by id via DataRegistry.
-// PixelRegistry and FrameRing removed.
+// Reads from the shared DataBuffer<RGB> declared in DataRegistry —
+// zero-copy path. Resolves source by id via DataRegistry.
 //
 
 #include <cstdint>
 #include <cstring>
 
+#include "../../core/DataBuffer.h"
 #include "../../core/DataRegistry.h"
-#include "../../core/DataRing.h"
 #include "../../core/MoonModule.h"
 #include "../../pal/PalUdp.h"
 #include "../system/Logger.h"
@@ -42,7 +41,7 @@ class ArtnetOutModule : public MoonModule {
 
   void setup() override {
     udp_.begin();
-    resolve_ring_();
+    resolve_buf_();
   }
 
   void onBuildControls() override {
@@ -52,18 +51,18 @@ class ArtnetOutModule : public MoonModule {
   }
 
   void onUpdate(const char* key) override {
-    if (std::strcmp(key, "source") == 0) resolve_ring_();
+    if (std::strcmp(key, "source") == 0) resolve_buf_();
   }
 
   void loop20ms() override {
-    if (!ring_) resolve_ring_();
-    if (!ring_) return;
+    if (!buf_) resolve_buf_();
+    if (!buf_) return;
 
-    const RGB* frame = ring_->try_acquire_read();
+    const RGB* frame = buf_->try_acquire_read();
     if (!frame) return;  // no fresh frame since last tick
 
     const uint8_t* bytes       = reinterpret_cast<const uint8_t*>(frame);
-    const uint32_t total_bytes = (uint32_t)ring_->slot_bytes();
+    const uint32_t total_bytes = (uint32_t)buf_->slot_bytes();
 
     uint32_t offset = 0;
     uint8_t  uni    = (uint8_t)universe_;
@@ -79,7 +78,7 @@ class ArtnetOutModule : public MoonModule {
       ++uni;
     }
 
-    ring_->release_read();
+    buf_->release_read();
   }
 
  public:
@@ -106,15 +105,15 @@ class ArtnetOutModule : public MoonModule {
   char             source_buf_[24]  = "ripples-0";
   char             dest_ip_buf_[24] = "255.255.255.255";
   uint32_t         universe_        = 0;
-  DataRing<RGB>*   ring_            = nullptr;
+  DataBuffer<RGB>* buf_             = nullptr;
   pal::Udp         udp_;
   uint8_t          packet_[kHeaderBytes + kDmxPerPacket] = {};
 
-  void resolve_ring_() {
-    ring_ = nullptr;
-    const DataRingEntry* e = DataRegistry::instance().resolve(source_buf_);
-    if (!e || !e->ring_ptr) return;
-    ring_ = static_cast<DataRing<RGB>*>(e->ring_ptr);
+  void resolve_buf_() {
+    buf_ = nullptr;
+    const DataBufferEntry* e = DataRegistry::instance().resolve(source_buf_);
+    if (!e || !e->buf_ptr) return;
+    buf_ = static_cast<DataBuffer<RGB>*>(e->buf_ptr);
   }
 };
 

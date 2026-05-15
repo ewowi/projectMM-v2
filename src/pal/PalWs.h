@@ -110,6 +110,17 @@ class WsServer {
       if (c.status() == WS_CONNECTED && !c.queueIsFull()) c.binary(data, len);
   }
 
+  // PATCH: queue-headroom — reserves slots so 50fps binary can't starve 1fps
+  // text (state/schema). Remove when AsyncWebSocket separates binary and text
+  // queues, or when the preview stream moves to a dedicated WebSocket endpoint.
+  bool canBroadcastBinary() {
+    static constexpr size_t kBinaryHeadroom = 4;
+    for (auto& c : ws_.getClients())
+      if (c.status() == WS_CONNECTED && c.queueLen() + kBinaryHeadroom >= WS_MAX_QUEUED_MESSAGES)
+        return false;
+    return true;
+  }
+
   bool   hasClients() const  { return ws_.count() > 0; }
   size_t clientCount() const { return (size_t)ws_.count(); }
   void   tick()              { ws_.cleanupClients(); }
@@ -262,6 +273,8 @@ class WsServer {
   void broadcastBinary(const uint8_t* data, size_t len) {
     sendAll(detail::frame(0x02, data, len));
   }
+
+  bool canBroadcastBinary() const { return true; }  // PC: blocking send, no queue
 
   bool hasClients() const {
     std::lock_guard<std::mutex> lk(mx_);

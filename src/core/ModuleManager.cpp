@@ -12,8 +12,11 @@ MoonModule* ModuleManager::add(const char* type, const char* id) {
     m = it->second();
     m->type_ = it->first.c_str();  // stable: points into the factory map key
   } else {
+    // Unknown type: store the requested type name so type() is truthful.
+    // The key lives in unknown_type_ on the manager so the pointer is stable.
+    unknown_types_.emplace_back(type);
     m = std::make_unique<MoonModule>();
-    m->type_ = "unknown";
+    m->type_ = unknown_types_.back().c_str();
   }
   m->id_ = id;
   m->manager_ = this;

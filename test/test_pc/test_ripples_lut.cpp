@@ -97,14 +97,14 @@ TEST_CASE("RipplesEffect: hue_base change recolours the output") {
   ModuleManager mm;
   RipplesEffect* r = add_ripples_(mm, "r0");
   REQUIRE(r != nullptr);
-  REQUIRE(r->setControl("hue_base", 0.0f));
+  REQUIRE(r->setControl("hue_base", 0.0f));   // hue_base is uint8: 0 = hue 0.0
   r->runLoop20ms();
 
   const PixelBufferRef ref0 = r->pixelBuffer();
   REQUIRE(ref0.data != nullptr);
   std::vector<RGB> snap_at_red(ref0.data, ref0.data + ref0.count());
 
-  REQUIRE(r->setControl("hue_base", 0.5f));
+  REQUIRE(r->setControl("hue_base", 127.0f));  // uint8 127 ≈ hue 0.5 (complementary)
   r->runLoop20ms();
 
   const PixelBufferRef ref1 = r->pixelBuffer();
@@ -122,13 +122,13 @@ TEST_CASE("RipplesEffect: hue_base change recolours the output") {
   CHECK(differ > (ref1.count() * 9 / 10));
 }
 
-TEST_CASE("RipplesEffect: DataRegistry declares ring for consumers to find") {
+TEST_CASE("RipplesEffect: DataRegistry declares buffer for consumers to find") {
   ModuleManager mm;
   RipplesEffect* r = add_ripples_(mm, "r-published");
   REQUIRE(r != nullptr);
-  const DataRingEntry* e = DataRegistry::instance().resolve("r-published");
+  const DataBufferEntry* e = DataRegistry::instance().resolve("r-published");
   CHECK(e != nullptr);
-  CHECK(e->ring_ptr != nullptr);
+  CHECK(e->buf_ptr != nullptr);
   CHECK(e->dim[0] == 16);   // default width
   CHECK(e->dim[1] == 16);   // default height
 }

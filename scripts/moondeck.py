@@ -16,6 +16,12 @@ docs pages. Stdlib only, bound to 127.0.0.1.
 
 Pre-commit and CI invoke scripts directly (see .githooks/pre-commit and
 .github/workflows/ci.yml). MoonDeck is for interactive developer use only.
+
+# PATCH: moondeck-monolith — HTTP server, HTML/CSS/JS, agent prompts, device
+# discovery, and process management all live in one file for stdlib-only,
+# zero-dependency deployment. Remove when the file exceeds its check_loc.py
+# budget and a split pays for itself (e.g. separate moondeck_ui.py for the
+# inline HTML blob, or a templated file served from disk).
 """
 import argparse
 import json
@@ -55,6 +61,8 @@ SCRIPTS = [
     {"id": "check-ruff",        "tab": "pc", "group": "Checks", "label": "Python lint (ruff)",              "scripts": ["check_ruff.py"]},
     {"id": "check-cppcheck",   "tab": "pc", "group": "Checks", "label": "C++ static analysis (cppcheck)",  "scripts": ["check_cppcheck.py"]},
     {"id": "check-class-sizes","tab": "pc", "group": "Checks", "label": "Class size estimates",            "scripts": ["check_class_sizes.py"]},
+    {"id": "check-ui",         "tab": "pc", "group": "Checks", "label": "UI control-sync audit",           "scripts": ["check_ui.py"]},
+    {"id": "check-patches",    "tab": "pc", "group": "Checks", "label": "Known patches (PATCH: markers)",   "scripts": ["check_patches.py"]},
     {"id": "gen-bundle",   "tab": "pc",  "group": "Docs", "label": "Regenerate frontend bundle", "scripts": ["gen_frontend_bundle.py"]},
     {"id": "mkdocs",       "tab": "pc",  "group": "Docs", "label": "MkDocs serve", "scripts": ["mkdocs_serve.py"], "long_running": True, "url": "http://127.0.0.1:8000"},
 
@@ -353,7 +361,7 @@ INDEX_HTML = r"""<!doctype html>
 <link rel="icon" type="image/png" href="/assets/moonlight-logo.png">
 <style>
   body { font-family: system-ui, sans-serif; margin: 0; background: #1e1e22; color: #e0e0e0; }
-  header { background: #2a2a30; padding: 14px 24px; border-bottom: 1px solid #444; display: flex; align-items: center; gap: 18px; }
+  header { background: #2a2a30; padding: 14px 24px; border-bottom: 1px solid #444; display: flex; align-items: center; gap: 18px; position: sticky; top: 0; z-index: 10; }
   header .logo { width: 28px; height: 28px; flex-shrink: 0; display: block; }
   header h1 { margin: 0; font-size: 1.1em; font-weight: 500; }
   .tabs { display: flex; gap: 4px; }
@@ -1205,7 +1213,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
     def _save_ui_state(self):
         try:

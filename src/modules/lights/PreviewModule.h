@@ -1,8 +1,8 @@
 #pragma once
 //
 // PreviewModule — ships the current pixel frame to the frontend as a binary
-// WebSocket message at 50 fps. Reads from the shared DataRing<RGB> owned by
-// DataRegistry — zero allocation in this module (no staging buffer).
+// WebSocket message at 50 fps. Reads from the shared DataBuffer<RGB> declared
+// in DataRegistry — zero allocation in this module (no staging buffer).
 //
 // Wire format (unchanged from Sprint 6):
 //     byte  0:    0x02   magic / version
@@ -11,7 +11,7 @@
 //     bytes 5-6:  uint16 depth  (LE)
 //     bytes 7..:  RGB[width*height*depth]
 //
-// Hot path: one ring try_acquire_read (two atomic loads), one broadcastBinary
+// Hot path: one buf try_acquire_read (two atomic loads), one broadcastBinary
 // (copies into WS frame internally — unavoidable). No allocation, no staging
 // buffer, no extra memcpy beyond the WS copy.
 //
@@ -23,8 +23,8 @@
 #include <cstdint>
 #include <cstring>
 
+#include "../../core/DataBuffer.h"
 #include "../../core/DataRegistry.h"
-#include "../../core/DataRing.h"
 #include "../../core/MoonModule.h"
 #include "../../core/ModuleManager.h"
 #include "../../pal/PalHeap.h"
@@ -40,7 +40,7 @@ class PreviewModule : public MoonModule {
   const char* category() const override { return "effect"; }
 
   void setup() override {
-    resolve_ring_();
+    resolve_buf_();
     resolve_ws_();
   }
 
@@ -49,28 +49,28 @@ class PreviewModule : public MoonModule {
   }
 
   void onUpdate(const char* key) override {
-    if (std::strcmp(key, "source") == 0) resolve_ring_();
+    if (std::strcmp(key, "source") == 0) resolve_buf_();
   }
 
   void loop20ms() override {
     if (!ws_) resolve_ws_();
-    if (!ring_) resolve_ring_();
-    if (!ring_ || !ws_ || !frame_buf_) return;
+    if (!buf_) resolve_buf_();
+    if (!buf_ || !ws_ || !frame_buf_) return;
     if (!ws_->hasClients()) return;
+    if (!ws_->canBroadcastBinary()) return;  // queue congested — skip frame, text gets priority
 
-    const uint32_t rev_before = ring_->revision();
-    const RGB* src = ring_->try_acquire_read();
+    const uint32_t rev_before = buf_->revision();
+    const RGB* src = buf_->try_acquire_read();
     if (!src) return;
 
-    if (ring_->depth() == 1) {
-      // Torn-frame check for single-slot rings (esp32dev, same-core).
-      if (ring_->revision() != rev_before) { ring_->release_read(); return; }
-    }
+    // Torn-frame check: with a single slot the producer may write while we
+    // read. If revision changed between try_acquire_read and now, skip frame.
+    if (buf_->revision() != rev_before) { buf_->release_read(); return; }
 
     // Header is already written in frame_buf_[0..6]; copy pixels after it.
     std::memcpy(frame_buf_ + 7, src, pixel_bytes_);
     ws_->broadcastBinary(frame_buf_, 7 + pixel_bytes_);
-    ring_->release_read();
+    buf_->release_read();
   }
 
   void teardown() override {
@@ -78,22 +78,22 @@ class PreviewModule : public MoonModule {
     frame_buf_   = nullptr;
     pixel_bytes_ = 0;
     moduleAllocBytes_ = 0;
-    ring_ = nullptr;
-    ws_   = nullptr;
+    buf_ = nullptr;
+    ws_  = nullptr;
   }
 
  private:
   char             source_buf_[24] = "ripples-0";
-  DataRing<RGB>*   ring_           = nullptr;
+  DataBuffer<RGB>* buf_            = nullptr;
   WebSocketModule* ws_             = nullptr;
   uint8_t*         frame_buf_      = nullptr;  // header + pixels; grown on resolve
   size_t           pixel_bytes_    = 0;
 
-  void resolve_ring_() {
-    ring_ = nullptr;
-    const DataRingEntry* e = DataRegistry::instance().resolve(source_buf_);
-    if (!e || !e->ring_ptr) return;
-    ring_ = static_cast<DataRing<RGB>*>(e->ring_ptr);
+  void resolve_buf_() {
+    buf_ = nullptr;
+    const DataBufferEntry* e = DataRegistry::instance().resolve(source_buf_);
+    if (!e || !e->buf_ptr) return;
+    buf_ = static_cast<DataBuffer<RGB>*>(e->buf_ptr);
 
     // Rebuild frame_buf_ if geometry changed.
     const uint16_t w = e->dim[0], h = e->dim[1], d = e->dim[2];
@@ -101,7 +101,7 @@ class PreviewModule : public MoonModule {
     if (need != pixel_bytes_ || !frame_buf_) {
       pal::psram_free(frame_buf_);
       frame_buf_ = (uint8_t*)pal::psram_alloc(7 + need);
-      if (!frame_buf_) { pixel_bytes_ = 0; moduleAllocBytes_ = 0; ring_ = nullptr; return; }
+      if (!frame_buf_) { pixel_bytes_ = 0; moduleAllocBytes_ = 0; buf_ = nullptr; return; }
       pixel_bytes_      = need;
       moduleAllocBytes_ = 7 + need;
       // Write static header once.

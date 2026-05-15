@@ -85,6 +85,7 @@ class HttpServer {
     server_.on(path, HTTP_GET, [contentType, data, len](AsyncWebServerRequest* req) {
       AsyncWebServerResponse* resp = req->beginResponse(200, String(contentType), data, len);
       resp->addHeader("Content-Encoding", "gzip");
+      resp->addHeader("Cache-Control", "no-cache");
       req->send(resp);
     });
   }
@@ -278,6 +279,7 @@ class HttpServer {
     server_.Get(path, [contentType, data, len](const httplib::Request& /*req*/, httplib::Response& res) {
       res.status = 200;
       res.set_header("Content-Encoding", "gzip");
+      res.set_header("Cache-Control", "no-cache");
       res.set_content(reinterpret_cast<const char*>(data), len, contentType);
     });
   }

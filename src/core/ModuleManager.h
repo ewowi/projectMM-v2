@@ -64,6 +64,7 @@ class ModuleManager {
   mutable std::recursive_mutex mu_;
   std::unordered_map<std::string, Factory> factories_;
   std::vector<std::unique_ptr<MoonModule>> modules_;
+  std::vector<std::string> unknown_types_;  // stable storage for unregistered type names
 };
 
 }  // namespace pmm

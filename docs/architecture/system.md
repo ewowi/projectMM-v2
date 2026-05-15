@@ -83,11 +83,47 @@ public:
 };
 ```
 
-The Scheduler holds the DAG. Each edge is a single-producer-single-consumer (SPSC) lock-free ring buffer; the producer's `loop()` writes one item, the consumer's `loop()` reads one item, no other thread touches either. The ring buffer is the data-crossing mechanism between cores; depth defaults to 2 and is configurable per edge.
+The Scheduler holds the DAG of modules and drives their `loop*()` calls across cores.
 
-**Topology.** Arbitrary DAG. A linear pipeline is the trivial case (one producer, one consumer). Fan-out is supported (one producer, several consumers). Cycles are rejected at wire time.
+**Topology.** Arbitrary DAG. A linear pipeline is the trivial case; fan-out (one producer, several consumers) is supported. Cycles are rejected at wire time.
 
-**Pinning.** One pinned task per core. The scheduler distributes Module `loop()` calls across cores; a Module's preferred core is a hint, not a guarantee.
+**Pinning.** One pinned task per core. A module declares its preferred core; the scheduler places it there. Data shared between modules on different cores crosses via `DataBuffer<T>` — see the next section.
+
+**Note on data flow.** The Scheduler does not move data between modules. It only drives when each module's `loop()` runs. Data sharing is the responsibility of the modules themselves, through the `DataBuffer` / `DataRegistry` mechanism described below.
+
+---
+
+## Hot-path data sharing between modules
+
+On a general-purpose machine every module in a pipeline can afford its own copy of the data: module A produces a buffer, B copies and transforms it, C copies and transforms again. Memory is abundant and the OS scheduler hides latency between stages.
+
+On an ESP32 this is the key difference: modules share data rather than each holding their own copy. SRAM is kilobytes, PSRAM bandwidth is shared with the WiFi radio, and the hot path must complete in under a millisecond without a single allocation, blocking call, or context switch. Each buffer and each copy must be justified.
+
+A module that generates data owns one `DataBuffer<T>` — a single pre-allocated slot. Another module can read that slot directly (zero-copy, no transform), or copy and transform it into its own `DataBuffer<T>`. The copy/transform path is the default when a layout mapping or blend is needed and is also what enables true parallelism — each module working on its own buffer on its own core simultaneously.
+
+```
+RipplesEffect   DataBuffer "ripples-0"
+  → writes pixel data, calls publish()
+        │
+        ▼
+ArtnetOutModule   DataBuffer "artnet-0"
+  → copies + maps from "ripples-0"
+  → sends UDP Art-Net packets
+```
+
+Both modules run on separate cores in parallel. The direct-read path (no consumer buffer, no transform) is an optimisation for when parallelism is not needed.
+
+### Layering
+
+The same model scales to N effect layers: each effect owns one `DataBuffer<RGB>`; a driver module blends them into its own buffer and sends the result to the strip.
+
+```
+EffectA.buf  ──┐
+EffectB.buf  ──┤── map_blend(…) ──→ Driver.buf ──→ LED strip
+EffectC.buf  ──┘
+```
+
+No change to `DataBuffer` or `DataRegistry` is required — the registry already handles multiple producers. See [developer-guide/backend.md — Layering](../developer-guide/backend.md#layering) for the `map_blend` design.
 
 ---
 
@@ -132,20 +168,14 @@ The runtime never references any of these. They reference the runtime.
 
 ---
 
-## Concurrency model
-
-**Topology: arbitrary DAG. Mechanism: SPSC lock-free ring buffer per edge, depth 2 by default.**
-
-A linear pipeline (effect → blend → driver) is the trivial case of an arbitrary DAG. Per-edge SPSC ring buffers give zero contention by construction (one writer, one reader), no allocation after init, bounded memory known at wire time, and degenerate to classic double-buffering at depth 2 — which is what fits on esp32dev without PSRAM. On ESP32-S3 / PC with memory headroom, depth >2 gives pipelining and backpressure for free. There is no alternative concurrency primitive in the runtime; everything that crosses a core boundary uses this one.
-
----
-
 ## The core files
 
 ```
 src/core/MoonModule.h       — the contract: lifecycle + controls + identity (≤ 600 LOC)
 src/core/ModuleManager.cpp  — add / remove / replace / wire
-src/core/Scheduler.cpp      — DAG runner with SPSC rings
+src/core/Scheduler.cpp      — DAG runner across cores
+src/core/DataBuffer.h       — single-slot SPSC shared buffer primitive
+src/core/DataRegistry.h     — string-keyed directory of declared DataBuffer instances
 src/pal/*.h                 — one file per platform concern (see Pal section)
 ```
 
