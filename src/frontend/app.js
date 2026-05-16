@@ -541,11 +541,17 @@ function saveChildOrder(parentId, children) {
 // The backend fires auto-wire and re-sorts loop order; we refresh immediately
 // so the tree reflects the change without waiting for the 1 Hz WS push.
 async function reparentModule(id, newParentId) {
-    await fetch('/api/modules/reparent', {
+    const res = await fetch('/api/modules/reparent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, parent_id: newParentId })
     });
+    // Sprint 17: backend rejects the drop when the child has no input named
+    // for the parent's type. Surface it; the module stays where it was.
+    if (!res.ok) {
+        console.warn('[reparent] rejected:', id, '→', newParentId || '(root)');
+        return;  // no loadModules() — nothing changed server-side
+    }
     await loadModules();
 }
 
@@ -758,8 +764,19 @@ function buildCard(mod, parentId = null) {
 
     // Controls section — for group modules wrap in a collapsible so the
     // children list is the visual focus; for leaf modules render inline.
-    const controls = mod.controls || [];
-    const isGroup  = mod.is_group === true;
+    // Sprint 17: hide the parent-flagged input — the input whose value is
+    // this module's parent_id. The parent nesting already expresses that
+    // relationship; an editable field for it is redundant and confusing.
+    // If the parent is NOT what this input resolves (e.g. a future `layer`
+    // parent vs a `layout` input), parent_id won't match the input value,
+    // so it stays visible as a real override. Same rule as canvas noodle
+    // suppression — one model, two views.
+    const allControls = mod.controls || [];
+    const controls = allControls.filter(
+        c => !(c.type === 'text' && mod.parent_id && c.value === mod.parent_id));
+    // A "group" is just a module that has children — no schema flag needed
+    // (Sprint 17: the parent-input relationship is the only source).
+    const isGroup  = (mod._children && mod._children.length > 0);
     if (isGroup && controls.length > 0) {
         const details = document.createElement('details');
         details.className = 'group-controls';
@@ -780,7 +797,9 @@ function buildCard(mod, parentId = null) {
     }
 
     // Connections subsection — show string-ID inputs so the implicit data-flow
-    // edges are visible in the tree view without needing the canvas.
+    // edges are visible in the tree view without needing the canvas. Uses the
+    // already-filtered list, so the parent-flagged input is not re-listed here
+    // (it's shown as nesting, not a connection).
     const stringCtrls = controls.filter(c => c.type === 'text' && c.value);
     if (stringCtrls.length > 0) {
         const connDiv = document.createElement('div');
@@ -1715,15 +1734,11 @@ async function loadHealth() {
 let canvasView = false;        // false = tree, true = canvas
 let canvasPan  = { x: 40, y: 40 };
 let canvasDrag = null;         // { type:'pan'|'box', id, ox, oy, px, py }
-const CANVAS_POS_KEY = 'mm_canvas_pos';
-
-function canvasPositions() {
-    try { return JSON.parse(localStorage.getItem(CANVAS_POS_KEY) || '{}'); } catch { return {}; }
-}
-function saveCanvasPos(id, x, y) {
-    const p = canvasPositions(); p[id] = { x, y };
-    localStorage.setItem(CANVAS_POS_KEY, JSON.stringify(p));
-}
+// No position persistence (Sprint 17): auto-layout is the single source of
+// truth. Dragging a box is a session-only nudge for inspection; a refresh
+// re-runs auto-layout. Persisting positions made auto-layout impossible to
+// get right (half the boxes pinned to stale manual spots) and produced
+// noodles that visually crossed unrelated boxes.
 
 function renderCanvas(modules) {
     const viewport = document.getElementById('canvas-viewport');
@@ -1732,7 +1747,6 @@ function renderCanvas(modules) {
     const sidebar  = document.getElementById('canvas-sidebar');
     if (!viewport || !world || !svg) return;
 
-    const positions = canvasPositions();
     const moduleIds = new Set(modules.map(m => m.id));
 
     // Build parent→children tree. Roots are modules with no (resolvable) parent;
@@ -1765,7 +1779,7 @@ function renderCanvas(modules) {
 
         const title = document.createElement('div');
         title.className = 'cbox-title';
-        title.textContent = m.id + (m.is_group ? ' ⬡' : '');
+        title.textContent = m.id + (m._kids && m._kids.length ? ' ⬡' : '');
         head.appendChild(title);
 
         const sub = document.createElement('div');
@@ -1795,11 +1809,11 @@ function renderCanvas(modules) {
         box.style.left = '40px';   // provisional; vertical layout pass fixes y
         box.style.top  = '40px';
 
-        // Drag the whole root subtree by its header only
+        // Drag the whole root subtree by its header only (session-only nudge).
         box.querySelector('.cbox-head').addEventListener('mousedown', e => {
             if (e.button !== 0) return;
             e.stopPropagation();
-            const p = canvasPositions()[r.id] || { x: parseInt(box.style.left), y: parseInt(box.style.top) };
+            const p = { x: parseInt(box.style.left) || 0, y: parseInt(box.style.top) || 0 };
             canvasDrag = { type: 'box', id: r.id, ox: e.clientX - p.x, oy: e.clientY - p.y };
         });
 
@@ -1808,9 +1822,15 @@ function renderCanvas(modules) {
     });
 
     // --- Topology-aware auto-layout ---
-    // A root that consumes data from another root's subtree is placed in the
-    // next column to the right of its source, vertically near it. Roots with
-    // a saved position keep it and are skipped by auto-layout.
+    // Auto-layout is the single source of truth — every box is placed here,
+    // every render (no persistence). All roots start in column 0 (left
+    // edge). A root that consumes data from another root is placed in the
+    // next column to its right, vertically aligned near its source — so an
+    // input module sits to the right of the top-level module it feeds, like
+    // before. Roots with no data edges (system, wifi, http, ws, state-store
+    // — pure utilities) stay in column 0 so pipeline noodles never visually
+    // cross them (this was the only real bug: stale positions made
+    // state-store and layout overlap; auto-layout every render fixes it).
     const GAP_X = 90;
     const rootIds = roots.map(r => r.id);
     const rootIdx = {};
@@ -1823,12 +1843,13 @@ function renderCanvas(modules) {
     }
 
     // Root→root edges: consumer root depends on source root (source feeds it).
-    // srcModuleOf[consumerRoot] = the specific source module id it reads from,
+    // srcModuleOf[consumerRoot] = the specific source module it reads from,
     // used to vertically align the consumer next to that node.
     const feeds = {};       // sourceRoot -> [consumerRoot...]
     const inDeg = {};
+    const hasEdge = {};     // root participates in at least one data edge
     const srcModuleOf = {};
-    rootIds.forEach(id => { feeds[id] = []; inDeg[id] = 0; });
+    rootIds.forEach(id => { feeds[id] = []; inDeg[id] = 0; hasEdge[id] = false; });
     modules.forEach(m => {
         (m.controls || []).forEach(c => {
             if (c.type === 'text' && c.value && moduleIds.has(c.value)) {
@@ -1836,13 +1857,17 @@ function renderCanvas(modules) {
                 if (cons !== src && feeds[src] && !feeds[src].includes(cons)) {
                     feeds[src].push(cons);
                     inDeg[cons]++;
+                    hasEdge[cons] = true;
+                    hasEdge[src]  = true;
                     if (!srcModuleOf[cons]) srcModuleOf[cons] = c.value;
                 }
             }
         });
     });
 
-    // Longest-path column assignment (Kahn topological order).
+    // Column = longest path from a source (Kahn topological order). Utilities
+    // (no edges) and pipeline sources both start at column 0; consumers move
+    // right. Result: all top-levels left-aligned, inputs to the right.
     const colOf = {};
     rootIds.forEach(id => { colOf[id] = 0; });
     const rem = { ...inDeg };
@@ -1855,8 +1880,7 @@ function renderCanvas(modules) {
         });
     }
 
-    // Place: per column, stack top-to-bottom by measured height. Manually
-    // positioned roots are honored and excluded from the auto flow.
+    // Per-column X, sized to the widest box in that column.
     const colNextY = {};
     const colX = {};
     let runX = 40;
@@ -1864,35 +1888,21 @@ function renderCanvas(modules) {
     for (let c = 0; c <= maxCol; c++) {
         colX[c] = runX;
         colNextY[c] = 40;
-        // Column width = widest auto-positioned root box in this column.
         let colW = 0;
         rootBoxes.forEach(({ r, box }) => {
-            if (!positions[r.id] && colOf[r.id] === c) colW = Math.max(colW, box.offsetWidth);
+            if (colOf[r.id] === c) colW = Math.max(colW, box.offsetWidth);
         });
         runX += (colW || 240) + GAP_X;
     }
 
-    const boxOf = {};
-    rootBoxes.forEach(({ r, box }) => { boxOf[r.id] = box; });
-
-    // Place column-by-column so a consumer can read its source's final Y.
-    // Honor manual positions first, then auto-flow the rest per column.
-    rootBoxes.forEach(({ r, box }) => {
-        if (positions[r.id]) {
-            box.style.left = positions[r.id].x + 'px';
-            box.style.top  = positions[r.id].y + 'px';
-        }
-    });
-
+    // Place column-by-column (left→right) so a consumer can read its source's
+    // already-set Y and align to it.
     for (let c = 0; c <= maxCol; c++) {
         rootBoxes
-            .filter(({ r }) => !positions[r.id] && colOf[r.id] === c)
+            .filter(({ r }) => colOf[r.id] === c)
             .sort((a, b) => rootIdx[a.r.id] - rootIdx[b.r.id])
             .forEach(({ r, box }) => {
                 box.style.left = colX[c] + 'px';
-
-                // Prefer aligning to the source module's rendered top
-                // (works for deeply-nested sources via rect math).
                 let wantY = colNextY[c];
                 const srcId = srcModuleOf[r.id];
                 if (srcId) {
@@ -1903,7 +1913,6 @@ function renderCanvas(modules) {
                         wantY = srcEl.getBoundingClientRect().top - wRect.top;
                     }
                 }
-                // Never overlap a box already placed above in this column.
                 const y = Math.max(wantY, colNextY[c]);
                 box.style.top = y + 'px';
                 colNextY[c] = y + box.offsetHeight + GAP_Y;
@@ -1915,10 +1924,16 @@ function renderCanvas(modules) {
     svg.setAttribute('width', '6000');
     svg.setAttribute('height', '4000');
 
+    // Sprint 17: a text input whose value == this module's parent_id IS the
+    // parent-flagged input — it's already shown as nesting, so suppress its
+    // noodle (no more nested-box + duplicate wire for the same relationship).
+    // Every other id-valued text input still draws a data-flow noodle.
     const dataEdges = [];
     modules.forEach(m => {
         (m.controls || []).forEach(c => {
             if (c.type === 'text' && c.value && moduleIds.has(c.value)) {
+                const isParentInput = m.parent_id && c.value === m.parent_id;
+                if (isParentInput) return;  // shown as nesting, not a noodle
                 dataEdges.push({ from: m.id, to: c.value, label: c.key });
             }
         });
@@ -2021,11 +2036,8 @@ function initCanvasEvents() {
     window.addEventListener('mouseup', e => {
         if (!canvasDrag) return;
         if (canvasDrag.type === 'box') {
-            const box = document.querySelector('.cbox[data-id="' + CSS.escape(canvasDrag.id) + '"]');
-            if (box) {
-                saveCanvasPos(canvasDrag.id, parseInt(box.style.left), parseInt(box.style.top));
-                drawCanvasNoodles();
-            }
+            // Session-only nudge — no persistence. A refresh re-runs auto-layout.
+            drawCanvasNoodles();
         }
         canvasDrag = null;
     });
@@ -2045,10 +2057,14 @@ function initCanvasEvents() {
 
 function toggleView(toCanvas) {
     canvasView = toCanvas;
-    document.getElementById('modules').style.display    = toCanvas ? 'none' : '';
-    document.getElementById('canvas-view').style.display = toCanvas ? '' : 'none';
+    // body.canvas-mode drives CSS: hide side-nav, drop body padding-left,
+    // hide hamburger — canvas goes full-width (preview + canvas).
+    document.body.classList.toggle('canvas-mode', toCanvas);
+    document.getElementById('modules').style.display     = toCanvas ? 'none' : '';
+    document.getElementById('canvas-view').style.display  = toCanvas ? '' : 'none';
     document.getElementById('view-tree-btn').classList.toggle('active', !toCanvas);
     document.getElementById('view-canvas-btn').classList.toggle('active', toCanvas);
+    if (toCanvas) closeNav();  // ensure mobile drawer is shut when leaving tree
     if (toCanvas && window._lastModules) renderCanvas(window._lastModules);
 }
 

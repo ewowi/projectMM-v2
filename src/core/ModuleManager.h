@@ -50,8 +50,13 @@ class ModuleManager {
                const std::string& parent_id = "");
 
   // Move `id` to be a child of `new_parent_id` (or to root if empty).
-  // Updates children arrays, re-sorts modules_ depth-first, fires auto-wire.
-  // Returns false if id not found.
+  // Sprint 17: the parent IS an input. Sets the parent flag on the child's
+  // input whose key matches the new parent's type, writing the parent id
+  // into it; rebuilds the derived parent_/children_ index and re-sorts
+  // depth-first. Returns false if `id` not found, `new_parent_id` not found,
+  // or the child has no input named for the parent's type (drop rejected).
+  // Promote to root (empty new_parent_id) clears the flag but KEEPS the
+  // input value — the link degrades to a plain data-flow reference.
   bool reparent(const std::string& id, const std::string& new_parent_id);
 
   // Snapshot of registered type names for the frontend's "Add module"
@@ -68,7 +73,9 @@ class ModuleManager {
 
  private:
   void sort_depth_first_();
-  void auto_wire_(MoonModule* child, MoonModule* new_parent);
+  // Index into child->controls_ of the String/EditStr input whose key equals
+  // parent_type, or -1 if the child has no such input.
+  static int8_t parent_input_idx_(const MoonModule* child, const char* parent_type);
 
   mutable std::recursive_mutex mu_;
   std::unordered_map<std::string, Factory> factories_;

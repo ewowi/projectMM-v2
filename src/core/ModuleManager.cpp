@@ -67,22 +67,25 @@ void ModuleManager::sort_depth_first_() {
   modules_ = std::move(out);
 }
 
-// Fire auto-wire: for every CtrlType::String control on `child` whose key
-// matches the new parent's type name, write the parent's id into the bound
-// buffer. On detach (new_parent == null), clear all string controls to "".
-void ModuleManager::auto_wire_(MoonModule* child, MoonModule* new_parent) {
-  const char* parent_type = new_parent ? new_parent->type() : nullptr;
-  const char* parent_id   = new_parent ? new_parent->id()   : "";
+// Index of the input on `child` that can be the parent link. An input
+// matches the parent if its key == parent's type (e.g. effect's "layout"
+// input ↔ "layout"-type parent), OR its key is the conventional wildcard
+// "source" (a type-agnostic "reads from whatever produces data" input —
+// preview/artnet use it). A precise name==type match wins over a generic
+// "source" if the child has both. -1 if no input matches — the signal to
+// reject the reparent (a module nests only under a parent it has an input
+// for). See architecture/system.md "Inputs, and the parent input".
+int8_t ModuleManager::parent_input_idx_(const MoonModule* child,
+                                         const char* parent_type) {
+  if (!parent_type) return -1;
+  int8_t source_idx = -1;
   for (uint8_t i = 0; i < child->controlCount_; ++i) {
-    ControlDescriptor& d = child->controls_[i];
+    const ControlDescriptor& d = child->controls_[i];
     if (d.type != CtrlType::String && d.type != CtrlType::EditStr) continue;
-    if (parent_type && std::strcmp(d.key, parent_type) != 0) continue;
-    char* buf = reinterpret_cast<char*>(d.ptr);
-    size_t cap = d.maxVal > 0 ? (size_t)d.maxVal - 1 : 63;
-    std::strncpy(buf, parent_id, cap);
-    buf[cap] = '\0';
-    child->schemaDirty_ = true;
+    if (std::strcmp(d.key, parent_type) == 0) return (int8_t)i;  // exact wins
+    if (source_idx < 0 && std::strcmp(d.key, "source") == 0) source_idx = (int8_t)i;
   }
+  return source_idx;  // wildcard fallback, or -1 if none
 }
 
 // -- Public API --------------------------------------------------------------
@@ -146,25 +149,52 @@ bool ModuleManager::reparent(const std::string& id,
   MoonModule* m = find(id.c_str());
   if (!m) { std::printf("[mm] reparent: id %s not found\n", id.c_str()); return false; }
 
-  // Detach from old parent (or root list — root has no parent pointer to update).
-  if (m->parent_) m->parent_->removeChild(m);
-  // parent_ is cleared by removeChild.
+  if (new_parent_id.empty()) {
+    // Promote to root: clear the parent flag but KEEP the input value, so the
+    // link survives as a plain data-flow reference (a noodle, no nesting).
+    // Targeted detach only — no full-forest rebuild (that thrashes the
+    // children_ arrays and fragments the ESP32 heap; Sprint 17 regression fix).
+    m->parentControlIdx_ = -1;
+    if (m->parent_) m->parent_->removeChild(m);
+    sort_depth_first_();
+    std::printf("[mm] reparent: %s → (root), parent flag cleared\n", id.c_str());
+    return true;
+  }
 
-  MoonModule* new_parent = new_parent_id.empty() ? nullptr : find(new_parent_id.c_str());
-  if (!new_parent_id.empty() && !new_parent) {
+  MoonModule* new_parent = find(new_parent_id.c_str());
+  if (!new_parent) {
     std::printf("[mm] reparent: new_parent_id %s not found\n", new_parent_id.c_str());
     return false;
   }
 
-  if (new_parent) {
-    new_parent->addChild(m);  // sets m->parent_ = new_parent
+  // The parent IS an input: find the child's input named for the parent's
+  // type. No such input → the drop is rejected (no universal parent).
+  int8_t idx = parent_input_idx_(m, new_parent->type());
+  if (idx < 0) {
+    std::printf("[mm] reparent: %s has no input named '%s' — drop rejected\n",
+                id.c_str(), new_parent->type());
+    return false;
   }
-  // else: m->parent_ stays null → root module
 
-  auto_wire_(m, new_parent);
+  // Write the parent id into that input and raise its parent flag. This IS
+  // the operation — nothing is copied to a separate pointer.
+  ControlDescriptor& d = m->controls_[idx];
+  char* buf = reinterpret_cast<char*>(d.ptr);
+  size_t cap = d.maxVal > 0 ? (size_t)d.maxVal - 1 : 63;
+  std::strncpy(buf, new_parent->id(), cap);
+  buf[cap] = '\0';
+  m->parentControlIdx_ = idx;
+  m->schemaDirty_ = true;
+  m->onUpdate(d.key);  // let the module re-resolve (e.g. effect re-reads layout)
+
+  // Targeted relink: detach from old parent, attach to new. Touches only the
+  // two affected children_ arrays — no full-forest teardown (Sprint 17 heap
+  // regression fix; rebuild_tree_ is now only for StateStore bulk load).
+  if (m->parent_ && m->parent_ != new_parent) m->parent_->removeChild(m);
+  if (m->parent_ != new_parent) new_parent->addChild(m);
   sort_depth_first_();
-  std::printf("[mm] reparent: %s → parent=%s\n",
-              id.c_str(), new_parent_id.empty() ? "(root)" : new_parent_id.c_str());
+  std::printf("[mm] reparent: %s → parent=%s via input '%s'\n",
+              id.c_str(), new_parent_id.c_str(), d.key);
   return true;
 }
 

@@ -61,9 +61,9 @@ This collapses what would otherwise be two states (a structural `parent_` pointe
 
 **Reparenting = setting the parent flag, by name match.** Dropping module C onto module P:
 
-- Find C's input whose **name equals P's type** (`strcmp(input.name, P.type())`). An effect with inputs `layer` and `layout` dropped on a `layer` module → the `layer` input is chosen; dropped on a `layout` module → the `layout` input is chosen.
+- Find C's input that matches P. An input matches if its **name equals P's type** (`strcmp(input.name, P.type())`) **or** its name is the conventional wildcard **`source`** — a type-agnostic "reads from whatever produces data" input (`ArtnetOutModule`, `PreviewModule` use it). An effect with inputs `layer` and `layout` dropped on a `layer` module → the `layer` input is chosen; on a `layout` module → the `layout` input. A `preview` dropped on a `ripples` → its `source` input is chosen (no input named `ripples`, but `source` is the wildcard). A precise `name == type` match wins over a generic `source` if C has both.
 - Set that input's value to P's id and raise its parent flag. This is the *entire* operation — no separate pointer, no value copied anywhere else.
-- **If no input name matches P's type, the drop is rejected.** A module can only be nested under a parent it has a named input for. A module with no inputs can never be a child. This is the logical end of "the parent is an input": no input, no parenting.
+- **If no input matches (neither a name==type input nor a `source` input), the drop is rejected.** A module can only be nested under a parent it has an input for. A module with no inputs can never be a child. This is the logical end of "the parent is an input": no input, no parenting.
 - Promoting a child back to root **clears the parent flag but keeps the input value.** The structural nesting becomes a plain data-flow link (a noodle in the canvas, no nesting in the tree). The link survives the move; nothing is silently lost.
 
 System modules participate by declaring a `system` input, so a system module can be nested under another system module by the same name-match rule. No universal/implicit parent input exists — that would reintroduce the dual concept this model removes.

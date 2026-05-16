@@ -128,6 +128,25 @@ An EffectGroup overrides `loop()`, calls `runChildren()` mid-method (between pre
 - **End-user flash path via WebSerial** (ESP Web Tools / ESPConnect). From [Tools investigation](#tools-investigation-orchestration-alternatives-to-moondeck). Land when external contributors arrive (likely Release 2 cutover). Default reference is ESP Web Tools (Espressif-blessed `<esp-web-install-button>` component); ESPConnect is the polished bespoke version if more than flash is needed.
 - **Firmware-in-WASM via Emscripten.** From [Tools investigation](#tools-investigation-orchestration-alternatives-to-moondeck). Land when shareable effect-demo URLs become a felt need (Wokwi-style). Not Release 1 scope.
 
+### Editable canvas (node-graph editor)
+
+Sprint 17 shipped the canvas as **read-only**: it renders the module tree as nested boxes + data-flow noodles, supports pan and a click-to-inspect sidebar, but all mutation (add / delete / reparent / edit controls) happens in the tree view only. The deliberate scope cut (per [Sprint 17 Step 3 DoD](release-01.md#sprint-17)) keeps the canvas a visualisation, not an editor.
+
+**Unlock = make the canvas a first-class editor**, matching the tree view's mutation set:
+- Drag a box onto another box → reparent (reuse `POST /api/modules/reparent`; the parent-input model already backs this).
+- Delete a node from the canvas (reuse the tree's delete path).
+- Add a module on the canvas (the add-module picker, currently tree-only in the side-nav).
+- Draw a noodle to set a data-flow input (write the target id into the source's text control — the inverse of today's read-only noodle rendering).
+- Editable controls in the canvas sidebar (today it shows values as static text; reuse `buildControl`).
+
+When this lands, the side-nav's add-module button and the read-only sidebar become redundant for canvas users; revisit whether the tree view stays the default or becomes the "structural projection" companion to the canvas (see [system.md — Inputs, and the parent input](../architecture/system.md)). Not Release 1/2 scope; lands when the canvas is wanted as the primary authoring surface.
+
+### System-module grouping (`system` input)
+
+Sprint 17's parent-input model means a module can only be nested under a parent it has a matching input for (name == parent type, or the wildcard `source`). Light-domain modules have such inputs (`layout`, `source`); **system modules (`system-0`, `wifi-sta-0`, `http-0`, `ws-0`, `state-store-0`) have none**, so they cannot currently be grouped under one another. This was an original Sprint 17 DoD item, deferred: there is no current need to nest system modules (they work fine flat), and adding a speculative `system` input to every system module with no consumer is exactly the kind of just-in-case addition the [minimalism rule](../../CLAUDE.md) rejects.
+
+**Unlock = a real need to group system modules** (e.g. a "network" group owning wifi + http + ws, or per-environment system bundles). Then: add a `system` input to the system-module base (or the specific modules that should be groupable); the existing match rule handles the rest with zero core change. Until then, system modules stay flat by design — *no implicit universal parent input exists* (that would re-introduce the dual concept Sprint 17 removed).
+
 ### WebSocket OOM crash on large displays
 
 `WebSocketModule::broadcast_schema_()` and `broadcast_state_()` serialize JSON into static char buffers (Sprint 15 partial fix: `std::string` double-allocation removed). The remaining crash path: `JsonDocument` itself heap-allocates its DOM; on a large display with many modules, with the heap at ~37 KB free after the WiFi + lwIP stack takes its share, `operator new` inside ArduinoJson's pool allocator throws and `std::terminate` is called. `try/catch(std::bad_alloc)` in `PalWs.h` does not help because the throw happens before `broadcastText` is called.

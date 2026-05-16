@@ -630,33 +630,6 @@ body {
     margin-left: auto;
 }
 #log-clear:hover { color: #a78bfa; border-color: #a78bfa; }
-/* ---- Community links in nav footer ---- */
-.nav-copyright {
-    font-size: 0.7rem;
-    color: #6b7280;
-    margin-top: 0.6rem;
-}
-.nav-copyright a { color: #a78bfa; text-decoration: none; }
-.nav-copyright a:hover { text-decoration: underline; }
-.nav-community {
-    margin-top: 0.6rem;
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-.nav-community a {
-    color: #6b7280;
-    text-decoration: none;
-    padding: 0.2rem;
-    font-size: 1rem;
-    line-height: 1;
-    border: 1px solid #2a2a4a;
-    border-radius: 4px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-.nav-community a:hover { color: #a78bfa; border-color: #a78bfa; }
 /* ---- Theme toggle button ---- */
 #theme-btn {
     font-size: 1rem;
@@ -746,8 +719,8 @@ body {
 [data-theme="light"] .nav-item:hover,
 [data-theme="light"] .nav-item.active      { color: #7c3aed !important; background: #e4d8ff !important; }
 [data-theme="light"] .nav-footer           { border-top-color: #c8c8dc !important; }
-[data-theme="light"] .nav-copyright        { color: #9ca3af !important; }
-[data-theme="light"] .nav-copyright a      { color: #7c3aed !important; }
+[data-theme="light"] #app-footer           { background: #eaeaf4 !important; border-top-color: #c8c8dc !important; color: #9ca3af !important; }
+[data-theme="light"] .app-copyright a      { color: #7c3aed !important; }
 [data-theme="light"] #app-brand             { color: #7c3aed !important; }
 [data-theme="light"] #device-name          { color: #6b7280 !important; }
 [data-theme="light"] #theme-btn            { color: #7c3aed !important; }
@@ -790,38 +763,73 @@ body {
 [data-theme="light"] #log-output           { color: #4b5563 !important; }
 [data-theme="light"] #log-output .log-warn  { color: #b45309 !important; }
 [data-theme="light"] #log-output .log-error { color: #dc2626 !important; }
-[data-theme="light"] .nav-community a      { color: #9ca3af !important; border-color: #c8c8dc !important; }
-[data-theme="light"] .nav-community a:hover { color: #7c3aed !important; border-color: #7c3aed !important; }
+[data-theme="light"] .app-community a      { color: #9ca3af !important; border-color: #c8c8dc !important; }
+[data-theme="light"] .app-community a:hover { color: #7c3aed !important; border-color: #7c3aed !important; }
 
 /* ============================================================
    Step 3: Canvas / node-graph view
    ============================================================ */
-#view-toolbar {
-    display: flex;
-    gap: 0.4rem;
-    padding: 0.4rem 1rem;
-    background: var(--bg-card, #16162a);
-    border-bottom: 1px solid rgba(124,124,220,0.15);
+/* Tree/canvas segmented toggle — lives in the status bar. */
+#view-toggle {
+    display: inline-flex;
+    border: 1px solid rgba(124,124,220,0.35);
+    border-radius: 5px;
+    overflow: hidden;
+    flex-shrink: 0;
 }
-.view-btn {
+.view-seg {
     background: transparent;
-    border: 1px solid rgba(124,124,220,0.3);
+    border: none;
     color: #a0a0c0;
-    border-radius: 4px;
-    padding: 0.2rem 0.7rem;
-    font-size: 0.8rem;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.95rem;
+    line-height: 1.4;
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
 }
-.view-btn.active {
-    background: rgba(124,124,220,0.2);
-    color: #c4b5fd;
-    border-color: #7c7cdc;
+.view-seg + .view-seg { border-left: 1px solid rgba(124,124,220,0.35); }
+.view-seg.active { background: rgba(124,124,220,0.25); color: #c4b5fd; }
+.view-seg:hover:not(.active) { background: rgba(124,124,220,0.1); color: #c4b5fd; }
+
+/* Shared bottom bar — present in both views, single node. */
+#app-footer {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    background: #12122a;
+    border-top: 1px solid #2a2a4a;
+    font-size: 0.7rem;
+    color: #6b7280;
+    z-index: 150;
 }
-.view-btn:hover:not(.active) {
-    background: rgba(124,124,220,0.1);
-    color: #c4b5fd;
+.app-copyright a { color: #a78bfa; text-decoration: none; }
+.app-copyright a:hover { text-decoration: underline; }
+.app-community { display: flex; gap: 0.5rem; align-items: center; }
+.app-community a {
+    color: #6b7280;
+    border: 1px solid #2a2a4a;
+    border-radius: 3px;
+    padding: 1px 3px;
+    display: inline-flex;
+    line-height: 0;
+    text-decoration: none;
 }
+.app-community a:hover { color: #a78bfa; border-color: #a78bfa; }
+
+/* Canvas mode: side-nav not needed (no root list); preview + canvas go
+   full-width. body gets .canvas-mode; tree view is the default. */
+body.canvas-mode #side-nav    { display: none; }
+body.canvas-mode #nav-overlay { display: none; }
+@media (min-width: 820px) {
+    body.canvas-mode { padding-left: 0; }
+}
+body.canvas-mode #hamburger   { display: none; }
+/* leave space so fixed footer never overlaps content */
+body { padding-bottom: 32px; }
 
 #canvas-view {
     display: flex;
@@ -945,6 +953,7 @@ body {
 [data-theme="light"] #canvas-sidebar { background: #eaeaf4; border-color: #c8c8dc; }
 [data-theme="light"] .csb-info strong { color: #5b21b6; }
 [data-theme="light"] .csb-ctrl { color: #4b5563; border-color: #e0e0f0; }
-[data-theme="light"] #view-toolbar { background: #eaeaf4; border-color: #c8c8dc; }
-[data-theme="light"] .view-btn { color: #6b7280; border-color: #c8c8dc; }
-[data-theme="light"] .view-btn.active { background: rgba(100,100,200,0.1); color: #5b21b6; border-color: #7c7cdc; }
+[data-theme="light"] #view-toggle { border-color: #c8c8dc; }
+[data-theme="light"] .view-seg { color: #6b7280; }
+[data-theme="light"] .view-seg + .view-seg { border-left-color: #c8c8dc; }
+[data-theme="light"] .view-seg.active { background: rgba(100,100,200,0.12); color: #5b21b6; }

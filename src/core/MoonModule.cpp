@@ -265,7 +265,12 @@ void MoonModule::getSchema(JsonObject out) const {
   out["setup_ok"]         = true;  // Sprint 8 will surface real setup failures
   out["core"]             = (uint32_t)core_;  // Sprint 7: real scheduler affinity
   out["us_per_tick"]      = usPerTick_;       // sampled in runLoop1s; 0 until first 1s window elapses
-  out["parent_id"] = parent_ ? parent_->id_.c_str() : ""; out["is_group"] = isGroup();
+  // Sprint 17: the parent IS an input. Only parent_id is emitted (the flagged
+  // input's resolved module id, "" if root). The frontend derives WHICH input
+  // is the parent by finding the control whose value == parent_id — no extra
+  // schema field (ESP32 heap is tight; every per-module key costs). No
+  // is_group either: "is a group" = has children, derived from the child list.
+  out["parent_id"] = parent_ ? parent_->id_.c_str() : "";
   JsonArray arr = out["controls"].to<JsonArray>();
   for (uint8_t i = 0; i < controlCount_; ++i) {
     const ControlDescriptor& d = controls_[i];

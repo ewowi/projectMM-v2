@@ -149,12 +149,25 @@ class RipplesEffect : public MoonModule, public PixelSource {
   RGB*      base_color_   = nullptr;
   uint32_t  plane_count_  = 0;
 
+  // Sprint 17 resolution precedence (domain-local, cold path only):
+  //   1. parent that resolves geometry (a parent layer's layout, or a
+  //      parent that IS a GridLayoutModule) — the structural source wins
+  //   2. own "layout" input (layout_id_) — explicit override / lone effect
+  //   3. 16×16 default (handled by geometry_from_layout_ when layout_==null)
+  // The `layer` rung is automatic once a parent-flagged "layer" input lands
+  // (deferred EffectGroup): walking parent() already covers it — no new code.
   void resolve_layout_() {
     layout_ = nullptr;
     if (!manager_) return;
+    for (MoonModule* p = parent(); p; p = p->parent()) {
+      if (std::strcmp(p->type(), "layout") == 0) {
+        layout_ = static_cast<GridLayoutModule*>(p);
+        return;
+      }
+    }
     MoonModule* m = manager_->find(layout_id_);
-    if (!m) return;
-    layout_ = static_cast<GridLayoutModule*>(m);
+    if (m && std::strcmp(m->type(), "layout") == 0)
+      layout_ = static_cast<GridLayoutModule*>(m);
   }
 
   void geometry_from_layout_() {

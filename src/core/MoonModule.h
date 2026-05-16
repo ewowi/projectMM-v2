@@ -297,12 +297,21 @@ class MoonModule {
   MoonModule* child(uint8_t i) const { return i < childCount_ ? children_[i] : nullptr; }
   MoonModule* parent() const { return parent_; }
 
-  // -- Group flag (Sprint 16) -----------------------------------------------
-  // Override to return true for container modules (EffectGroup, DriverGroup,
-  // etc.). Tells the frontend to render this module as a container node with
-  // its own controls collapsible above the children list, not as a leaf card.
-  // Domain-neutral: "layer" naming intentionally avoided at the protocol level.
-  virtual bool isGroup() const { return false; }
+  // -- Parent-input model (Sprint 17) ---------------------------------------
+  // The parent IS an input: at most one control is flagged as the structural
+  // parent link. -1 = root. The control's value holds the parent's id; the
+  // flag says "this input is the parent". parent_/children_[] track this and
+  // are relinked targeted-only by ModuleManager::reparent (no full-forest
+  // rebuild — that fragments the ESP32 heap). See architecture/system.md.
+  int8_t parentControlIdx() const { return parentControlIdx_; }
+  // Key of the parent-flagged input, or nullptr if root / index out of range.
+  const char* parentInputKey() const {
+    return (parentControlIdx_ >= 0 && parentControlIdx_ < (int)controlCount_)
+             ? controls_[parentControlIdx_].key : nullptr;
+  }
+  // No isGroup(): a "group" is simply a module with children. The frontend
+  // derives that from the child list it already builds — no core method,
+  // no schema flag, no per-type virtual (Sprint 16's isGroup() removed).
 
  protected:
   // Field order is optimised for minimum padding on 64-bit:
@@ -337,6 +346,12 @@ class MoonModule {
   uint8_t controlCapacity_ = 0;
   uint8_t childCount_      = 0;
   uint8_t childCapacity_   = 0;
+  // Sprint 17: index into controls_ of the input that IS the parent link
+  // (-1 = root, no parent). Single source of truth for the structural
+  // relationship; parent_/children_[] track it, relinked targeted-only by
+  // ModuleManager::reparent. Packs into the existing 1-byte block — no
+  // instance-size cost.
+  int8_t  parentControlIdx_ = -1;
 
   friend class ModuleManager;
 

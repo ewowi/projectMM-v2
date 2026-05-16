@@ -22,6 +22,8 @@ ROOT = Path(__file__).resolve().parent.parent
 BUDGETS = {
     "src/core": 420,                  # ModuleManager + Scheduler (excludes MoonModule.{h,cpp})
                                       # +95 Sprint 16: reparent(), sort_depth_first_(), auto_wire_(), nested reorder
+                                      # Sprint 17: auto_wire_ → parent_input_idx_ + targeted relink;
+                                      #   net LOC-flat (rebuild_tree_ tried then removed — heap fix)
     "src/core/MoonModule.h": 250,     # contract declarations + small inlines (Sprint 3 port)
     "src/core/MoonModule.cpp": 382,   # non-trivial method implementations (Sprint 3 port)
                                       # +1 Sprint 11 ms_per_tick; +1 Sprint 16 parent_id/is_group in getSchema
@@ -57,7 +59,7 @@ BUDGETS = {
     "test/test_pc/test_scheduler_affinity.cpp": 75,   # coreAffinity dispatch (one-core / two-core)
     "test/test_pc/test_state_store.cpp":        85,   # /modules.json + /state-<id>.json round-trip
     "test/test_pc/test_scenarios.cpp":         130,   # Rail 3 — JSON-driven in-process pipeline replay
-    "test/test_pc/test_reparent.cpp":           95,   # Sprint 16 — reparent, auto-wire, loop order, nested reorder
+    "test/test_pc/test_reparent.cpp":          160,   # Sprint 17 — name-match + wildcard "source" reparent, reject-on-no-input, exact-wins-over-source, promote-keeps-value, loop order, nested reorder
 }
 
 EXTS = {".h", ".hpp", ".cpp", ".cc"}

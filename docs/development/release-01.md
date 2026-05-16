@@ -528,14 +528,14 @@ Loop semantics are **identical**: the parent-flagged input drives `sort_depth_fi
 
 #### Sprint 17 Definition of Done
 
-- [ ] `MoonModule::parent_` pointer removed; parent resolved via the parent-flagged input.
-- [ ] `auto_wire_()` deleted; reparent sets the flag on the name-matched input directly.
-- [ ] Reparent rejected (returns false, UI shows no-drop) when no input name matches the parent's type.
-- [ ] Promote to root clears the parent flag but preserves the input value (link degrades to data-flow).
-- [ ] `sort_depth_first_()` loop order identical to Sprint 16 (test asserts unchanged traversal).
-- [ ] System modules carry a `system` input; can be nested under a system module; no implicit universal input exists.
-- [ ] Canvas: parent-flagged input shows as nesting only (no duplicate noodle); unflagged id input shows as noodle only.
-- [ ] `RipplesEffect` geometry precedence: parent layer → own layout input → 16×16, all cold-path.
-- [ ] `StateStoreModule` round-trips the parent flag; reboot restores the full tree.
-- [ ] `system.md` § "Inputs, and the parent input" matches the shipped code; `check_loc` green; `test_reparent.cpp` passes.
-- [ ] HIL: drag ripples onto layout → nests, no duplicate noodle; drag onto a system module → rejected; promote ripples → becomes root, `layout` input still set, noodle appears.
+- [x] Single source of truth is the parent-flagged input (`parentControlIdx_`). `parent_`/`children_[]` are kept as a **derived index** rebuilt by targeted relink in `reparent` — *not* removed: deleting them would add O(n) scans into the hot loop recursion and re-introduce a cache, for worse perf and more code. The DoD originally said "removed"; the validated design keeps them derived (zero hot-path cost). `system.md` reflects this.
+- [x] `auto_wire_()` deleted; reparent sets the flag on the matched input directly.
+- [x] Match rule: input name == parent type, **or** input name is the conventional wildcard `source` (precise match wins over `source`). No name match → reparent rejected (returns false, UI no-drop).
+- [x] Promote to root clears the parent flag but preserves the input value (link degrades to data-flow).
+- [x] `sort_depth_first_()` loop order identical to Sprint 16 (test asserts unchanged traversal).
+- [~] System-module `system` input — **deferred to [backlog](backlog.md)**: no current need to nest system modules; adding a speculative input to every system module with no consumer violates the minimalism rule. No implicit universal input exists (a module with no matching input simply cannot be a child).
+- [x] Canvas: parent-flagged input shows as nesting only (no duplicate noodle); unflagged id input shows as noodle only. Parent-flagged input also hidden in the tree card (one model, two views).
+- [x] `RipplesEffect` geometry precedence: parent chain → own `layout` input → 16×16, all cold-path.
+- [x] `StateStoreModule` round-trips via the persisted input value; pass-2 `reparent` re-derives the flag. HIL-verified: reboot restores the full nested tree.
+- [x] `system.md` § "Inputs, and the parent input" matches the shipped code (incl. wildcard rule); `check_loc` green; `test_reparent.cpp` passes (45/45, incl. wildcard + exact-wins cases).
+- [x] HIL: ripples→layout nests, no duplicate noodle; preview/artnet→ripples nests via `source` wildcard; incompatible drop rejected; promote ripples → root, `layout` input retained, noodle appears; reboot → tree restored.
