@@ -33,6 +33,7 @@ Sprint 2 and Sprint 3 were initially attempted as greenfield rewrites of v1's HT
 | [13](#sprint-13) | Shared data ring: `DataRing<T>` + `DataRegistry` in core; zero-copy producer/consumer pixel pipeline; removes `FrameRing`, `PixelRegistry`, and `PreviewModule` staging buffer; depth 1 on esp32dev, 2 on S3 | `src/core/DataRing.h`, `src/core/DataRegistry.h`, `src/modules/lights/` |
 | [14](#sprint-14) | Ring → single-slot buffer; PATCH: convention; script LOC budgets; `frontend.md`; doc crosslink pass | `src/core/DataBuffer.h`, `scripts/check_patches.py`, `docs/developer-guide/` |
 | [15](#sprint-15) | GridLayoutModule: geometry flow + serpentine wiring; effects become geometry-agnostic | `modules/lights/GridLayoutModule.h`, `RipplesEffect` geometry controls removed |
+| [16](#sprint-16) | Module tree drag & reparent: cross-level drag-drop, auto-wire, loop order, layer slot | `src/core/`, `src/modules/network/HttpServerModule.cpp`, `src/frontend/app.js` |
 
 The v1 → v2 cutover (rename + final stable tag) closes [Release 2](backlog.md#release-2-v1-parity-cutover), which adds ArtNet **in**, OTA, NTP, and any remaining v1 parity bits.
 
@@ -354,3 +355,187 @@ The frontend already renders all controls from schema. Phase 2 verifies the UI s
 - **`StateStoreModule` lost-module fix** — `/modules.json` write moved from `loop10s` to `loop1s`. A crash within 10 s of adding a module no longer loses the module list. Per-module state files remain on `loop10s` (larger, change frequently).
 - **`WebSocketModule` static output buffers** — `broadcast_schema_()` and `broadcast_state_()` serialize into `static char buf[]` (4 KB + 2 KB in `.bss`) instead of heap-allocated `std::string`. Eliminates one heap allocation per 1 Hz broadcast cycle.
 - **OOM crash logged to backlog** — remaining crash path (ArduinoJson `JsonDocument` DOM heap allocation under extreme memory pressure) recorded in `backlog.md` with root cause, investigated approaches, and unlock conditions.
+
+---
+
+## Sprint 16 — Module tree drag & reparent {#sprint-16}
+
+Second step of the light domain architecture (UI layer). The module tree becomes a live, drag-reorderable graph: modules can be moved between parents, promoted to root, or demoted as children entirely from the browser. Reordering changes loop execution order immediately. The data model and REST protocol gain a `group` slot so future container modules (EffectGroup, DriverGroup, or any domain-specific grouping) can land without a protocol break.
+
+### Design context — nodes and noodles
+
+The module tree is a **tree-shaped DAG**: the structural parent/child tree gives one parent per module (grouping, loop order); string-ID controls on modules act as the data-flow edges ("noodles"), allowing arbitrary fan-in from anywhere in the graph. This is the same model as TouchDesigner — tree hierarchy for organization, wires for data flow — with the wires stored as control values rather than explicit edge objects (a valid tradeoff for an embedded target).
+
+The design is an established pattern. Three guardrails follow from the nodes-and-noodles survey:
+
+- **String-ID validation at setup time** — every module resolves and validates its string-ID inputs in `setup()` / `onUpdate()`; missing or wrong-type references log clearly and fail safely.
+- **Connections surfaced in the UI** — each module card's controls section shows its string-ID inputs (e.g. `layout → layout-0`) so the implicit data-flow edges are visible without a full canvas editor.
+- **`is_group` is domain-neutral** — a group node is a structural container; the light-domain semantics (EffectLayer, DriverLayer) are attributes of the module type, not of the grouping mechanism.
+
+### What exists (no work needed)
+
+- `MoonModule::addChild` / `removeChild` / `reorderChildren` — child management in backend
+- `buildTree(modules)` in `app.js` — builds two-level tree from `parent_id` field in schema JSON
+- Drag-to-reorder within root nav (`saveNavOrder` → `POST /api/modules/reorder` with `parent_id: ""`)
+- Drag-to-reorder within a parent's children (`saveChildOrder` → same endpoint, `parent_id` set)
+- `POST /api/modules/reorder` endpoint — exists in `HttpServerModule`; nested `parent_id` path is stubbed with a comment
+
+---
+
+### Step 1 — Backend reparent + reorder (C++ only, no UI change)
+
+All backend plumbing. Frontend untouched. Done signal: tests pass, `check_loc` green, HIL confirms reparent survives reboot.
+
+**1a. `parent_id` field in schema JSON** — every module's schema object includes `"parent_id": "<id or empty>"`. `MoonModule` gains a `parent_` back-reference (raw pointer, set by `addChild` / `removeChild`); serialised as `parent_id` in `getSchema`. This is the source of truth for `buildTree` in the frontend.
+
+**1b. `POST /api/modules/reparent`** — new endpoint in `HttpServerModule`. Body: `{ "id": "ripples-0", "parent_id": "layout-0" }`. Steps:
+- Remove module from its current parent's children list (or from the root order).
+- Add as last child of the new parent (or append to root list if `parent_id` is empty).
+- Re-sort `modules_` flat vector to depth-first tree order so loop execution order matches the visual tree (parent always before its children).
+- Trigger auto-wire (1c).
+- Mark schema dirty; next WS push reflects the change.
+
+**1c. Auto-wire on reparent** — after a reparent, iterate the moved module's controls. For every `CtrlType::String` control whose key matches the new parent's type name (e.g. key `"layout"`, parent type `"layout"`), call `setControl(key, new_parent->id())`. All matching controls are wired, not just the first. On detach (`parent_id: ""`), reset matching controls to `""`.
+
+**1d. `POST /api/modules/reorder` — nested path** — the existing stub comment (`"reserved for nested reorder"`) replaced with a real implementation: when `parent_id` is non-empty, call `reorderChildren` on the named module and re-sort `modules_` to maintain depth-first order. Root path unchanged.
+
+**1e. `is_group` flag in schema JSON** — `virtual bool isGroup() const { return false; }` on `MoonModule`; emitted as `"is_group": false` in every schema object. A group module is a full `MoonModule` — controls, hot-path loops, memory allocation — distinguished only by this flag, which tells the frontend to render it as a container (own controls collapsible above children) rather than a leaf card. "Layer" intentionally avoided: that term implies compositing semantics from Blender/Photoshop/TouchDesigner which don't belong at the protocol level.
+
+**1f. `StateStoreModule` persistence** — `parent_id` added to `/modules.json` per module entry; restored on boot so the full tree topology survives reboot.
+
+**1g. `test_reparent.cpp`** — new test file covering:
+- Reparent child to new parent → `parent_id` set; auto-wire fires; matching string controls updated.
+- Reparent to root → `parent_id` cleared; matching controls reset to `""`.
+- Loop order after reparent: parent precedes child in `modules_` traversal.
+- Nested reorder: `reorderChildren` + depth-first re-sort produce the expected order.
+
+#### Step 1 Definition of Done
+
+- [ ] `MoonModule` carries `parent_` back-reference; set by `addChild` / `removeChild`; serialised as `parent_id` in schema JSON.
+- [ ] `POST /api/modules/reparent` — updates children arrays, re-sorts `modules_`, triggers auto-wire, marks schema dirty.
+- [ ] `POST /api/modules/reorder` — nested path (`parent_id` non-empty) calls `reorderChildren` and re-sorts `modules_`; root path unchanged.
+- [ ] Auto-wire fires on reparent for all matching string controls; clears on detach.
+- [ ] `modules_` flat vector always in depth-first tree order after any reparent or reorder.
+- [ ] `virtual bool isGroup() const { return false; }` on `MoonModule`; `"is_group"` emitted in schema JSON.
+- [ ] `StateStoreModule` persists and restores `parent_id` in `/modules.json`.
+- [ ] `test_reparent.cpp` passes; budget entry added to `check_loc.py`.
+- [ ] `check_loc` green.
+- [ ] HIL: `POST /api/modules/reparent` via REST → module moves; reboot → tree topology restored.
+
+---
+
+### Step 2 — Tree view drag-reparent (frontend, tree UI only)
+
+Exercises the Step 1 backend from the browser. The tree view gains cross-level drag-drop. Canvas view not yet present. Done signal: HIL drag ripples onto layout → `layout` control auto-fills; drag back → clears; group modules render as containers.
+
+**2a. Cross-level drag: root → child** — dragging a root nav item and dropping it onto another root module's content area calls `POST /api/modules/reparent` with the drop target's id as `parent_id`. The nav item disappears from root; the module appears as the last child of the target.
+
+**2b. Cross-level drag: child → root** — dragging a child module's handle out of the parent card and dropping it onto the root nav calls `POST /api/modules/reparent` with `parent_id: ""`. The module is promoted to root.
+
+**2c. Visual drop zones** — while dragging:
+- Root nav items show a distinct "reparent here" indicator when a nav item hovers over them (separate from the sibling-reorder indicator).
+- A drop zone strip appears at the bottom of the root nav when a child handle enters the nav region.
+- Sibling reorder within a parent unchanged.
+
+**2d. Group module rendering** — modules with `is_group: true` in schema rendered as container nodes: own controls (if any) in a collapsible header above the children list, not as a standalone leaf card.
+
+**2e. String-ID connections surfaced** — each module card lists its string-ID controls in a "Connections" subsection (e.g. `layout → layout-0`) so data-flow edges are visible in the tree view without a canvas.
+
+#### Step 2 Definition of Done
+
+- [ ] Cross-level drag root → child calls `reparent`; nav item moves to children in tree.
+- [ ] Cross-level drag child → root calls `reparent` with `parent_id: ""`; module promoted to root nav.
+- [ ] Visual drop zones distinguish reparent target from sibling reorder target.
+- [ ] Group modules (`is_group: true`) rendered as containers with collapsible controls header.
+- [ ] String-ID controls shown in a "Connections" subsection on each module card.
+- [ ] HIL: drag ripples onto layout → `layout` control auto-fills with `layout-0`; drag back to root → control clears.
+
+---
+
+### Step 3 — Canvas view PoC + toggle (additive, no regressions)
+
+Purely additive. Reads the same module list produced by Steps 1 and 2. Touches no existing code paths. If this step slips, Steps 1 and 2 ship independently.
+
+**3a. Tree/canvas toggle** — a button in the header switches between `#tree-view` (existing, default) and `#canvas-view` (new). Both read from the same in-memory module list; state is shared.
+
+**3b. Canvas renderer (`renderCanvas()`)** — self-contained function (~150–200 lines of JS, no new dependencies):
+- One `<div id="canvas-viewport">` with `overflow: hidden`; one inner `<div id="canvas-world">` transformed for pan/zoom.
+- Per-module `<div>` boxes, `position: absolute`, placed at `{x, y}` from `localStorage` (`canvas_x_<id>`, `canvas_y_<id>`); first-open defaults to a simple grid arrangement.
+- `mousedown` / `mousemove` / `mouseup` on a box drags it; position written back to `localStorage` on drop. No backend call — positions are a UI concern only in the PoC.
+- `wheel` on viewport zooms; drag on the background pans.
+
+**3c. Noodles (SVG overlay)** — one `<svg>` layer covering the canvas world:
+- One cubic bezier path per string-ID control: source = right edge of the referenced module's box; destination = left edge of the control owner's box.
+- Structural parent edges: solid, 2 px.
+- Data-flow noodles: dashed, 1.5 px, coloured by control type (one colour per key name, derived from a small palette).
+- Noodles are read-only in the PoC — they reflect existing connections; drawing new noodles is deferred.
+- Noodles update on box drag and on each schema push.
+
+**3d. Sidebar on click** — clicking a module box selects it; the existing `buildCard(mod)` output is injected into a `<div id="canvas-sidebar">` beside the canvas. No controls rendering is duplicated.
+
+**3e. Canvas position persistence** — `canvas_x_<id>` / `canvas_y_<id>` keys in `localStorage`. Noted in code with a comment pointing to future backend promotion if the canvas becomes the primary UI.
+
+#### Step 3 Definition of Done
+
+- [ ] Toggle button switches tree ↔ canvas; both views stay in sync with the module list.
+- [ ] Module boxes draggable; positions persist in `localStorage`; first-open shows grid layout.
+- [ ] Noodles: solid lines for parent edges, dashed for data-flow; update on drag and schema push.
+- [ ] Clicking a box opens the module's controls card in the sidebar.
+- [ ] Pan (drag background) and zoom (wheel) work on the canvas viewport.
+- [ ] Tree view unchanged when canvas view is active; toggling back restores tree state.
+- [ ] HIL: toggle to canvas view → modules as boxes with noodles; pan, zoom, drag work; sidebar opens on click; toggle back → tree unchanged.
+
+---
+
+## Sprint 17 — The parent *is* an input (core unification) {#sprint-17}
+
+Sprint 16 shipped reparent with two states for one intent: a structural `parent_` pointer **and** the data-flow string controls, kept in sync by `auto_wire_()` (a name-match copy heuristic). The canvas made the redundancy visible — a module nested under a parent *and* showing a noodle to the same parent. The "sometimes a source is not linked right" bug is a direct symptom: two states, copied by a heuristic, drift.
+
+This sprint removes the duplication. **The parent is not a separate concept — it is an input that carries a parent flag.** This is a core architecture change; it is recorded in [architecture/system.md](../architecture/system.md) (§ Inputs, and the parent input), not an ADR — making the model *more* minimal is the system architecture's own job, per [Rule #1](../../CLAUDE.md). This sprint brings the code into line with that page.
+
+### What changes conceptually
+
+| Sprint 16 (removed) | Sprint 17 (the model) |
+|---|---|
+| `MoonModule::parent_` raw pointer | parent flag on a `ControlDescriptor` |
+| `auto_wire_()` copies parent id into a name-matched control | reparent *sets the flag on* the name-matched input — nothing copied |
+| reparent always succeeds (pointer is universal) | reparent rejected if no input name matches the parent's type |
+| detach clears the matched control value | promote clears the *flag*, keeps the value (link survives as data-flow) |
+| `is_group` virtual | a "group" is any module that has children via a parent-flagged input — flag removable from schema once tree/canvas read children from the relationship |
+
+Loop semantics are **identical**: the parent-flagged input drives `sort_depth_first_()` exactly as `parent_` did. Pure refactor of the lookup; runtime behavior unchanged. The backlog `runChildren()` / child-dispatch-timing item stays deferred — explicitly out of scope here.
+
+### Step 1 — Core: parent flag replaces `parent_` (C++ only)
+
+- **1a.** Add a `bool isParent` (or a reserved sentinel) to `ControlDescriptor`. At most one input per module carries it.
+- **1b.** `MoonModule::parent()` resolves via the flagged input's value (`manager_->find(flaggedInput.value)`) instead of a stored pointer. `childCount()` / `child(i)` derive from "modules whose parent-flagged input points at me." Remove `parent_`.
+- **1c.** `ModuleManager::reparent(id, parentId)`: find the child's input whose **name == parent's type** (`strcmp`); if none, **return false** (drop rejected). Otherwise set that input's value to `parentId` and raise its parent flag. Delete `auto_wire_()` — its job is now the operation itself, not a follow-up copy.
+- **1d.** Promote to root (`parentId == ""`): clear the parent flag on whatever input held it; **keep the value**. Module becomes a root; the input is a normal visible input again.
+- **1e.** `sort_depth_first_()` walks the parent relationship via the flagged-input lookup. Traversal order unchanged.
+- **1f.** System modules declare a `system` input so they can be nested under a system module by the same rule. No implicit/universal parent input.
+- **1g.** `StateStoreModule`: persist which input is parent-flagged (the value is already persisted as a control). Restore order unchanged (two-pass: add all, then re-apply flags).
+- **1h.** `test_reparent.cpp` updated: reparent by name match; reject when no matching input; promote keeps value clears flag; loop order unchanged; round-trip through StateStore.
+
+### Step 2 — Frontend: one relationship, no doubling
+
+- **2a.** `buildTree` reads the parent from the parent-flagged input (schema exposes which input is flagged), not a separate `parent_id`.
+- **2b.** Canvas: a parent-flagged input renders as **nesting only** — suppress its noodle (no more nested-box + duplicate noodle). An unflagged id input renders as a noodle only. Exactly the duality made visible without redundancy.
+- **2c.** Drag-drop reparent: if the backend rejects (no name match), the UI shows a no-drop indicator and the module stays put.
+
+### Step 3 — Module resolution precedence (lights domain)
+
+- **3a.** `RipplesEffect` (and any effect with overlapping geometry sources) resolves geometry from a fixed local precedence: parent `layer`'s resolved layout → own `layout` input → 16×16 default. Evaluated in `onUpdate`/`onAllocateMemory`, never the hot loop. This logic stays in the module; core gains nothing.
+
+#### Sprint 17 Definition of Done
+
+- [ ] `MoonModule::parent_` pointer removed; parent resolved via the parent-flagged input.
+- [ ] `auto_wire_()` deleted; reparent sets the flag on the name-matched input directly.
+- [ ] Reparent rejected (returns false, UI shows no-drop) when no input name matches the parent's type.
+- [ ] Promote to root clears the parent flag but preserves the input value (link degrades to data-flow).
+- [ ] `sort_depth_first_()` loop order identical to Sprint 16 (test asserts unchanged traversal).
+- [ ] System modules carry a `system` input; can be nested under a system module; no implicit universal input exists.
+- [ ] Canvas: parent-flagged input shows as nesting only (no duplicate noodle); unflagged id input shows as noodle only.
+- [ ] `RipplesEffect` geometry precedence: parent layer → own layout input → 16×16, all cold-path.
+- [ ] `StateStoreModule` round-trips the parent flag; reboot restores the full tree.
+- [ ] `system.md` § "Inputs, and the parent input" matches the shipped code; `check_loc` green; `test_reparent.cpp` passes.
+- [ ] HIL: drag ripples onto layout → nests, no duplicate noodle; drag onto a system module → rejected; promote ripples → becomes root, `layout` input still set, noodle appears.

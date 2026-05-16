@@ -72,20 +72,34 @@ void HttpServerModule::setup() {
     return pal::HttpResponse{200, "application/json", std::move(body)};
   });
 
-  // POST /api/modules/reorder — reorder root modules. Body: {"parent_id":"",
-  // "ids":["id1","id2",...]}. parent_id is reserved for nested reorder once
-  // child trees exist (Sprint 6); ignored here. Registered before the more
-  // general "/api/modules" POST so exact-path matching cannot clash.
+  // POST /api/modules/reorder — reorder modules. Body: {"parent_id":"<id or
+  // empty>","ids":["id1","id2",...]}. Empty parent_id reorders root modules;
+  // non-empty parent_id reorders children of that module.
   server_->onPost("/api/modules/reorder", [this](const std::string& body) {
     if (!manager_) return json_err(500, "no manager");
     JsonDocument doc;
     if (deserializeJson(doc, body)) return json_err(400, "bad json");
+    std::string parent_id = doc["parent_id"] | "";
     std::vector<std::string> ids;
     for (JsonVariantConst v : doc["ids"].as<JsonArrayConst>()) {
       const char* s = v.as<const char*>();
       if (s) ids.emplace_back(s);
     }
-    manager_->reorder(ids);
+    manager_->reorder(ids, parent_id);
+    return pal::HttpResponse{200, "application/json", "{\"ok\":true}"};
+  });
+
+  // POST /api/modules/reparent — move a module to a new parent or to root.
+  // Body: {"id":"<module-id>","parent_id":"<new-parent-id or empty>"}.
+  server_->onPost("/api/modules/reparent", [this](const std::string& body) {
+    if (!manager_) return json_err(500, "no manager");
+    JsonDocument doc;
+    if (deserializeJson(doc, body)) return json_err(400, "bad json");
+    const char* id        = doc["id"]        | "";
+    const char* parent_id = doc["parent_id"] | "";
+    if (!*id) return json_err(400, "id required");
+    if (!manager_->reparent(id, parent_id))
+      return json_err(404, "id or parent_id not found");
     return pal::HttpResponse{200, "application/json", "{\"ok\":true}"};
   });
 

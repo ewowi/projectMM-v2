@@ -265,6 +265,7 @@ void MoonModule::getSchema(JsonObject out) const {
   out["setup_ok"]         = true;  // Sprint 8 will surface real setup failures
   out["core"]             = (uint32_t)core_;  // Sprint 7: real scheduler affinity
   out["us_per_tick"]      = usPerTick_;       // sampled in runLoop1s; 0 until first 1s window elapses
+  out["parent_id"] = parent_ ? parent_->id_.c_str() : ""; out["is_group"] = isGroup();
   JsonArray arr = out["controls"].to<JsonArray>();
   for (uint8_t i = 0; i < controlCount_; ++i) {
     const ControlDescriptor& d = controls_[i];
@@ -369,6 +370,7 @@ void MoonModule::addChild(MoonModule* child) {
     childCapacity_ = newCap;
   }
   children_[childCount_++] = child;
+  child->parent_ = this;
 }
 
 void MoonModule::removeChild(MoonModule* child) {
@@ -376,6 +378,7 @@ void MoonModule::removeChild(MoonModule* child) {
     if (children_[i] != child) continue;
     for (uint8_t j = i; j < childCount_ - 1; ++j) children_[j] = children_[j + 1];
     --childCount_;
+    child->parent_ = nullptr;
     return;
   }
 }

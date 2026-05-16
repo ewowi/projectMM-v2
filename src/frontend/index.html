@@ -54,7 +54,18 @@
   <canvas id="preview" width="16" height="16"></canvas>
 </section>
 
+<div id="view-toolbar">
+  <button id="view-tree-btn" class="view-btn active" title="tree view">⎇ tree</button>
+  <button id="view-canvas-btn" class="view-btn" title="node canvas">⬡ canvas</button>
+</div>
 <div id="modules"></div>
+<div id="canvas-view" style="display:none">
+  <div id="canvas-viewport">
+    <svg id="canvas-svg"></svg>
+    <div id="canvas-world"></div>
+  </div>
+  <div id="canvas-sidebar"></div>
+</div>
 
 <!-- Part F: System health panel -->
 <div id="health-section">

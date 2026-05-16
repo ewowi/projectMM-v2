@@ -20,10 +20,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 BUDGETS = {
-    "src/core": 325,                  # ModuleManager + Scheduler (excludes MoonModule.{h,cpp})
+    "src/core": 420,                  # ModuleManager + Scheduler (excludes MoonModule.{h,cpp})
+                                      # +95 Sprint 16: reparent(), sort_depth_first_(), auto_wire_(), nested reorder
     "src/core/MoonModule.h": 250,     # contract declarations + small inlines (Sprint 3 port)
-    "src/core/MoonModule.cpp": 380,   # non-trivial method implementations (Sprint 3 port)
-                                      # +1 for ms_per_tick in getSchema (Sprint 11 — MoonDeck Live-tab metrics)
+    "src/core/MoonModule.cpp": 382,   # non-trivial method implementations (Sprint 3 port)
+                                      # +1 Sprint 11 ms_per_tick; +1 Sprint 16 parent_id/is_group in getSchema
 
     # Pal — one budget per platform concern. New pal file → new entry here.
     # Deferred pal files (PalGpio, PalRtos, PalHeap) are intentionally absent:
@@ -56,6 +57,7 @@ BUDGETS = {
     "test/test_pc/test_scheduler_affinity.cpp": 75,   # coreAffinity dispatch (one-core / two-core)
     "test/test_pc/test_state_store.cpp":        85,   # /modules.json + /state-<id>.json round-trip
     "test/test_pc/test_scenarios.cpp":         130,   # Rail 3 — JSON-driven in-process pipeline replay
+    "test/test_pc/test_reparent.cpp":           95,   # Sprint 16 — reparent, auto-wire, loop order, nested reorder
 }
 
 EXTS = {".h", ".hpp", ".cpp", ".cc"}

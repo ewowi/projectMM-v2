@@ -493,7 +493,57 @@ body {
 .drag-handle:hover { color: #a78bfa; }
 .nav-item { position: relative; }
 .nav-item.drag-over { outline: 1px dashed #7c3aed; background: #1e1e50; }
+.nav-item.drag-over-reparent { outline: 2px solid #f59e0b; background: #1e1800; }
 .module-card.drag-over { outline: 1px dashed #7c3aed; }
+.module-card.drag-over-reparent { outline: 2px solid #f59e0b; background: rgba(245,158,11,0.05); }
+.nav-root-drop {
+    margin: 6px 8px 2px;
+    padding: 5px 8px;
+    border: 1px dashed #4b5563;
+    border-radius: 4px;
+    color: #6b7280;
+    font-size: 0.72rem;
+    text-align: center;
+    display: none;
+}
+#nav-links.child-dragging .nav-root-drop { display: block; }
+.nav-root-drop.drag-over-reparent {
+    border-color: #f59e0b;
+    color: #f59e0b;
+    background: #1e1800;
+}
+.group-controls { margin: 0 0 4px; }
+.group-controls summary {
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    color: #6b7280;
+    cursor: pointer;
+    user-select: none;
+}
+.connections {
+    padding: 4px 12px 6px;
+    font-size: 0.72rem;
+    color: #6b7280;
+    border-top: 1px solid #1e1e3a;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-items: center;
+}
+.connections-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #4b5563;
+    margin-right: 4px;
+}
+.connection-item {
+    background: #12122a;
+    border: 1px solid #2a2a4a;
+    border-radius: 3px;
+    padding: 1px 6px;
+}
+.connection-item strong { color: #a78bfa; }
 /* ---- Part F: health panel ---- */
 #health-section {
     max-width: 500px;
@@ -742,3 +792,159 @@ body {
 [data-theme="light"] #log-output .log-error { color: #dc2626 !important; }
 [data-theme="light"] .nav-community a      { color: #9ca3af !important; border-color: #c8c8dc !important; }
 [data-theme="light"] .nav-community a:hover { color: #7c3aed !important; border-color: #7c3aed !important; }
+
+/* ============================================================
+   Step 3: Canvas / node-graph view
+   ============================================================ */
+#view-toolbar {
+    display: flex;
+    gap: 0.4rem;
+    padding: 0.4rem 1rem;
+    background: var(--bg-card, #16162a);
+    border-bottom: 1px solid rgba(124,124,220,0.15);
+}
+.view-btn {
+    background: transparent;
+    border: 1px solid rgba(124,124,220,0.3);
+    color: #a0a0c0;
+    border-radius: 4px;
+    padding: 0.2rem 0.7rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.view-btn.active {
+    background: rgba(124,124,220,0.2);
+    color: #c4b5fd;
+    border-color: #7c7cdc;
+}
+.view-btn:hover:not(.active) {
+    background: rgba(124,124,220,0.1);
+    color: #c4b5fd;
+}
+
+#canvas-view {
+    display: flex;
+    height: calc(100vh - 80px);
+    overflow: hidden;
+}
+#canvas-viewport {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #0e0e1c;
+    background-image:
+        radial-gradient(circle, rgba(124,124,220,0.08) 1px, transparent 1px);
+    background-size: 28px 28px;
+    cursor: grab;
+}
+#canvas-viewport:active { cursor: grabbing; }
+
+#canvas-world {
+    position: absolute;
+    top: 0; left: 0;
+    will-change: transform;
+}
+#canvas-svg {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+    overflow: visible;
+    will-change: transform;
+}
+
+.cbox {
+    background: #1a1a2e;
+    border: 1px solid rgba(124,124,220,0.4);
+    border-radius: 8px;
+    user-select: none;
+}
+.cbox-root {
+    position: absolute;
+    width: 240px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    transition: box-shadow 0.15s;
+}
+.cbox-root:hover {
+    border-color: rgba(124,124,220,0.8);
+    box-shadow: 0 4px 20px rgba(124,124,220,0.2);
+}
+.cbox-child {
+    background: rgba(124,124,220,0.07);
+    border-color: rgba(245,158,11,0.35);
+}
+.cbox-head {
+    cursor: move;
+    padding-bottom: 0.2rem;
+}
+.cbox-child > .cbox-head { cursor: pointer; }
+.cbox-title {
+    padding: 0.45rem 0.7rem 0.15rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #c4b5fd;
+    cursor: pointer;
+}
+.cbox-child > .cbox-head > .cbox-title { font-size: 0.78rem; color: #d8c9ff; }
+.cbox-title:hover { text-decoration: underline; }
+.cbox-type {
+    padding: 0 0.7rem 0.35rem;
+    font-size: 0.7rem;
+    color: #6b7280;
+}
+.cbox-kids {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0 0.5rem 0.5rem;
+}
+
+.noodle-data {
+    fill: none;
+    stroke: #7c3aed;
+    stroke-width: 1.5;
+    stroke-dasharray: 6 4;
+    opacity: 0.6;
+}
+
+/* Sidebar */
+#canvas-sidebar {
+    display: none;
+    width: 240px;
+    background: #16162a;
+    border-left: 1px solid rgba(124,124,220,0.2);
+    padding: 0.75rem;
+    overflow-y: auto;
+    flex-shrink: 0;
+}
+.csb-close {
+    float: right;
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+.csb-info { margin-top: 0.5rem; margin-bottom: 0.75rem; }
+.csb-info strong { display: block; color: #c4b5fd; font-size: 0.9rem; }
+.csb-type { display: block; font-size: 0.7rem; color: #6b7280; margin-top: 0.15rem; }
+.csb-parent { display: block; font-size: 0.7rem; color: #f59e0b; margin-top: 0.25rem; }
+.csb-ctrl {
+    font-size: 0.75rem;
+    color: #a0a0c0;
+    padding: 0.2rem 0;
+    border-bottom: 1px solid rgba(124,124,220,0.08);
+}
+
+/* Light theme canvas overrides */
+[data-theme="light"] #canvas-viewport { background: #f5f5fa; background-image: radial-gradient(circle, rgba(100,100,180,0.1) 1px, transparent 1px); background-size: 28px 28px; }
+[data-theme="light"] .cbox-root { background: #ffffff; border-color: rgba(100,100,200,0.3); }
+[data-theme="light"] .cbox-child { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.35); }
+[data-theme="light"] .cbox-title { color: #5b21b6; }
+[data-theme="light"] .cbox-type { color: #9ca3af; }
+[data-theme="light"] #canvas-sidebar { background: #eaeaf4; border-color: #c8c8dc; }
+[data-theme="light"] .csb-info strong { color: #5b21b6; }
+[data-theme="light"] .csb-ctrl { color: #4b5563; border-color: #e0e0f0; }
+[data-theme="light"] #view-toolbar { background: #eaeaf4; border-color: #c8c8dc; }
+[data-theme="light"] .view-btn { color: #6b7280; border-color: #c8c8dc; }
+[data-theme="light"] .view-btn.active { background: rgba(100,100,200,0.1); color: #5b21b6; border-color: #7c7cdc; }

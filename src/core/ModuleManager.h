@@ -43,10 +43,16 @@ class ModuleManager {
   bool remove(const char* id);
   MoonModule* find(const char* id) const;
 
-  // Reorder the root module list to match `ids`. Any modules whose ids are
-  // not in `ids` are appended at the end, preserving their existing relative
-  // order. Unknown ids in `ids` are ignored. Driven by frontend drag/drop.
-  void reorder(const std::vector<std::string>& ids);
+  // Reorder root modules to match `ids`. Modules not in `ids` appended at end.
+  // If parent_id is non-empty, reorders that module's children instead.
+  // Both paths re-sort modules_ to depth-first order after reordering.
+  void reorder(const std::vector<std::string>& ids,
+               const std::string& parent_id = "");
+
+  // Move `id` to be a child of `new_parent_id` (or to root if empty).
+  // Updates children arrays, re-sorts modules_ depth-first, fires auto-wire.
+  // Returns false if id not found.
+  bool reparent(const std::string& id, const std::string& new_parent_id);
 
   // Snapshot of registered type names for the frontend's "Add module"
   // picker. Category defaults to "system" — future sprints record the
@@ -61,6 +67,9 @@ class ModuleManager {
   std::recursive_mutex& mutex() { return mu_; }
 
  private:
+  void sort_depth_first_();
+  void auto_wire_(MoonModule* child, MoonModule* new_parent);
+
   mutable std::recursive_mutex mu_;
   std::unordered_map<std::string, Factory> factories_;
   std::vector<std::unique_ptr<MoonModule>> modules_;

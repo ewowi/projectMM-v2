@@ -113,6 +113,7 @@ class StateStoreModule : public MoonModule {
       JsonObject e = arr.add<JsonObject>();
       e["type"] = m->type();
       e["id"]   = m->id();
+      if (m->parent()) e["parent_id"] = m->parent()->id();
     }
     modules_out.reserve(measureJson(list) + 1);
     serializeJson(list, modules_out);
@@ -144,19 +145,24 @@ class StateStoreModule : public MoonModule {
     }
     JsonArrayConst arr = doc.as<JsonArrayConst>();
     if (arr.isNull()) return;
+    // Pass 1: add all modules (parent may not exist yet).
     int added = 0;
     for (JsonVariantConst entry : arr) {
       const char* type = entry["type"] | "";
       const char* id   = entry["id"]   | "";
       if (!*type || !*id) continue;
       if (manager_->find(id)) continue;  // already there (head modules from main.cpp)
-      // Pre-load the state file so it lands in pendingProps_ via the new
-      // module's setProps; addControl drains pending values into the live
-      // control bindings inside runSetup().
       MoonModule* m = manager_->add(type, id);
       if (!m) { log("[state] unknown type \"%s\" for id \"%s\"\n", type, id); continue; }
       load_state_into_(m);
       ++added;
+    }
+    // Pass 2: restore parent→child relationships now that all modules exist.
+    for (JsonVariantConst entry : arr) {
+      const char* id        = entry["id"]        | "";
+      const char* parent_id = entry["parent_id"] | "";
+      if (!*id || !*parent_id) continue;
+      manager_->reparent(id, parent_id);
     }
     log("[state] loaded %d module(s) from %s\n", added, kModulesPath);
   }

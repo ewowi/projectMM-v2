@@ -295,6 +295,14 @@ class MoonModule {
   bool reorderChildren(MoonModule* const* newOrder, uint8_t count);
   uint8_t childCount() const { return childCount_; }
   MoonModule* child(uint8_t i) const { return i < childCount_ ? children_[i] : nullptr; }
+  MoonModule* parent() const { return parent_; }
+
+  // -- Group flag (Sprint 16) -----------------------------------------------
+  // Override to return true for container modules (EffectGroup, DriverGroup,
+  // etc.). Tells the frontend to render this module as a container node with
+  // its own controls collapsible above the children list, not as a leaf card.
+  // Domain-neutral: "layer" naming intentionally avoided at the protocol level.
+  virtual bool isGroup() const { return false; }
 
  protected:
   // Field order is optimised for minimum padding on 64-bit:
@@ -304,6 +312,7 @@ class MoonModule {
   ModuleManager* manager_ = nullptr;// 8B
   ControlDescriptor* controls_ = nullptr; // 8B — lazily grown
   MoonModule** children_  = nullptr;// 8B  — lazily grown; owned by ModuleManager
+  MoonModule*  parent_    = nullptr;// 8B  — set by addChild/removeChild; null = root
   // Heap-allocated only when setProps()/loadState() is called; freed after
   // runSetup() drains it. Null pointer = no pending values (common case).
   JsonDocument* pendingProps_ = nullptr; // 8B

@@ -51,9 +51,26 @@ The contract is the entire module-facing API of the runtime. Six lifecycle virtu
 
 **Multi-core.** The runtime is built to exploit every core the platform offers. Several `loop()` instances run in parallel, connected as a DAG. The scheduler pins a separate task per core and arranges the topology declared at wire time.
 
-**Grouping modules (layer pattern).** A module may act as a group — owning the `DataBuffer` on behalf of its children, and driving `onAllocateMemory` top-down so children receive geometry from the parent rather than sizing it themselves. A lone child with no parent layer falls back to owning its own buffer (valid starting point; add a layer later without changing the effect). Grouping is a lights-domain pattern (EffectLayer, DriverLayer) but the mechanism — parent calls `onAllocateMemory` on children after allocating its own buffer — is generic and lives in `MoonModule` / `ModuleManager`. See [backlog — Light domain architecture](../development/backlog.md#light-domain-architecture).
+### Inputs, and the parent input
 
-**Multiple inputs.** A module may declare more than one source — for example a driver that reads from an effect layer and a layout. Each source is resolved independently via `DataRegistry` or direct manager lookup; the module owns a `DataBufferReader<T>` per source. This is already the case for `ArtnetOutModule` (one source) and will extend naturally to two or more. No core change is required; it is a module-level wiring decision.
+A module may declare one or more **inputs**. An input is an ordinary string control whose value is the id of another module the owner reads from — `RipplesEffect` has a `layout` input, `ArtnetOutModule` has a `source` input, a future effect may have both `layout` and `layer`. Each input is resolved independently (via `DataRegistry` or direct manager lookup); the module owns a `DataBufferReader<T>` per input it consumes. The input *name* matters: it is the type of module that input accepts (`layout` accepts a `layout`, `layer` accepts a `layer`).
+
+**There is no separate parent concept. The parent *is* an input.** One of a module's inputs may carry a *parent flag*. The flagged input is the structural parent: it determines tree nesting in the UI and loop execution order (parent ticks, then its children depth-first). Everything else about it is just an input — it still holds an id, still resolves data, still appears in the schema.
+
+This collapses what would otherwise be two states (a structural `parent_` pointer *and* a data-flow control, kept in sync by a copy heuristic) into one. There is exactly one place the relationship lives: the value of the parent-flagged input.
+
+**Reparenting = setting the parent flag, by name match.** Dropping module C onto module P:
+
+- Find C's input whose **name equals P's type** (`strcmp(input.name, P.type())`). An effect with inputs `layer` and `layout` dropped on a `layer` module → the `layer` input is chosen; dropped on a `layout` module → the `layout` input is chosen.
+- Set that input's value to P's id and raise its parent flag. This is the *entire* operation — no separate pointer, no value copied anywhere else.
+- **If no input name matches P's type, the drop is rejected.** A module can only be nested under a parent it has a named input for. A module with no inputs can never be a child. This is the logical end of "the parent is an input": no input, no parenting.
+- Promoting a child back to root **clears the parent flag but keeps the input value.** The structural nesting becomes a plain data-flow link (a noodle in the canvas, no nesting in the tree). The link survives the move; nothing is silently lost.
+
+System modules participate by declaring a `system` input, so a system module can be nested under another system module by the same name-match rule. No universal/implicit parent input exists — that would reintroduce the dual concept this model removes.
+
+**Grouping (layer pattern) is this same mechanism.** A group module owns the `DataBuffer` on behalf of its children and drives `onAllocateMemory` top-down so children receive geometry from the parent rather than sizing it themselves. "Group" is not a separate kind of module — it is any module that has children via the parent-input relationship above. A lone child with no parent falls back to owning its own buffer (valid starting point; add a parent later without changing the module). Grouping is exercised by the lights domain (EffectLayer, DriverLayer) but the mechanism — parent-flagged input drives nesting, loop order, and top-down `onAllocateMemory` — is generic and lives in `MoonModule` / `ModuleManager`. See [backlog — Light domain architecture](../development/backlog.md#light-domain-architecture).
+
+**Resolution precedence stays in the module, not the core.** When a module has overlapping inputs (an effect parented by a `layer` still has its own `layout` input), how it reconciles them is domain logic local to that module: an effect resolves geometry from the first non-empty source in a fixed precedence — parent `layer`'s resolved layout → own `layout` input → 16×16 default — evaluated in `onUpdate`/`onAllocateMemory`, never in the hot loop. The core knows only "an input holds an id; a flagged input is the parent." It does not know about resolution chains; that would push domain knowledge into `MoonModule`.
 
 `MoonModule` total target: ≤ 600 LOC. v1's `Module` + `StatefulModule` together is ~996 LOC; v2's minimized merger lands smaller.
 

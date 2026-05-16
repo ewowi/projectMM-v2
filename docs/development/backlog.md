@@ -91,6 +91,23 @@ The following backlog entries from earlier sprints are superseded by this plan a
 
 **Step 1 landed in Sprint 15.** `GridLayoutModule` is the geometry authority; `RipplesEffect` receives dimensions top-down; `PreviewModule` and `ArtnetOutModule` update automatically. Step 2 (EffectLayer grouping) unlocks when multiple effects need to composite into one buffer.
 
+#### Child dispatch timing — design note for Step 2
+
+`MoonModule::runLoop()` currently recurses into children automatically after calling `loop()` (parent-first order). This is correct for geometry flow (parent sets dimensions, children read them) but wrong for compositing (children produce pixels, parent blends them — parent needs to run *after* children).
+
+**Chosen approach for Step 2:** add `runChildren()` as a protected helper and a `childrenDispatched_` bool (fits in existing padding, zero overhead):
+
+```cpp
+// In runLoop(): after loop(), if (!childrenDispatched_) recurse; reset flag.
+// In runChildren(): recurse now, set childrenDispatched_ = true.
+```
+
+An EffectGroup overrides `loop()`, calls `runChildren()` mid-method (between prepare and composite), and the framework skips the automatic pass because `childrenDispatched_` is already true. Non-overriding modules are unaffected — they never call `runChildren()`, so the flag stays false and the automatic recursion fires as before.
+
+**Rejected alternative:** `loopBeforeChildren()` + `loopAfterChildren()` split — splits one logical operation across two methods, doesn't handle conditional or multi-pass child dispatch. **Also rejected:** removing automatic recursion entirely — every grouping module that doesn't override `loop()` would silently stop dispatching children; the bug is invisible at compile time.
+
+**Not a Sprint 16 concern.** Land `runChildren()` + `childrenDispatched_` in the same sprint as EffectGroup (Step 2).
+
 ---
 
 - **Per-module core affinity via UI control.** From [Sprint 7 deferred](release-01.md#sprint-7). `core_` is hardcoded per module class; making it a settable schema control lands when there's user demand for runtime remapping.

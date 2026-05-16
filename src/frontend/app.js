@@ -398,7 +398,8 @@ let lastSchemaIds_ = [];
 // Returns true if the schema event represents a structural change (new/removed/
 // reordered modules). False means only control values or ranges changed.
 function schemaStructureChanged_(modules) {
-    const ids = modules.map(m => m.id);
+    // Fingerprint includes id + parent_id so reparent triggers a full rebuild.
+    const ids = modules.map(m => m.id + '|' + (m.parent_id || ''));
     if (ids.length !== lastSchemaIds_.length) { lastSchemaIds_ = ids; return true; }
     for (let i = 0; i < ids.length; i++) {
         if (ids[i] !== lastSchemaIds_[i]) { lastSchemaIds_ = ids; return true; }
@@ -518,7 +519,7 @@ function buildTree(modules) {
 const NAV_KEY = 'pmm_selectedRoot';
 let selectedRootId = localStorage.getItem(NAV_KEY) || null;
 
-/* ---- Part D: reorder — persisted in backend, no localStorage ---- */
+/* ---- Part D: reorder + reparent — persisted in backend, no localStorage ---- */
 
 function saveNavOrder(roots) {
     fetch('/api/modules/reorder', {
@@ -535,6 +536,23 @@ function saveChildOrder(parentId, children) {
         body: JSON.stringify({ parent_id: parentId, ids: children.map(c => c.id) })
     });
 }
+
+// Move a module to a new parent (or to root when newParentId is '').
+// The backend fires auto-wire and re-sorts loop order; we refresh immediately
+// so the tree reflects the change without waiting for the 1 Hz WS push.
+async function reparentModule(id, newParentId) {
+    await fetch('/api/modules/reparent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, parent_id: newParentId })
+    });
+    await loadModules();
+}
+
+// Module id being dragged across levels (set on dragstart of a child handle
+// or a root nav item; cleared on dragend).
+let crossDragId   = null;  // id of the module being dragged cross-level
+let crossDragType = null;  // 'root' (nav item) or 'child' (child handle)
 
 function updateNav(roots) {
     const nav = document.getElementById('nav-links');
@@ -557,19 +575,38 @@ function updateNav(roots) {
         };
         btn.addEventListener('dragstart', e => {
             dragSrc = btn;
+            crossDragId   = mod.id;
+            crossDragType = 'root';
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('text/plain', mod.id);
+        });
+        btn.addEventListener('dragend', () => {
+            crossDragId = null; crossDragType = null; dragSrc = null;
         });
         btn.addEventListener('dragover', e => {
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
-            nav.querySelectorAll('.nav-item').forEach(b => b.classList.remove('drag-over'));
-            if (btn !== dragSrc) btn.classList.add('drag-over');
+            nav.querySelectorAll('.nav-item').forEach(b => b.classList.remove('drag-over', 'drag-over-reparent'));
+            if (btn === dragSrc) return;
+            // A child being dragged → this nav item = reparent indicator.
+            // A root being dragged → sibling reorder indicator.
+            if (crossDragType === 'child') btn.classList.add('drag-over-reparent');
+            else                           btn.classList.add('drag-over');
         });
-        btn.addEventListener('dragleave', () => btn.classList.remove('drag-over'));
+        btn.addEventListener('dragleave', () => btn.classList.remove('drag-over', 'drag-over-reparent'));
         btn.addEventListener('drop', e => {
             e.preventDefault();
-            btn.classList.remove('drag-over');
+            btn.classList.remove('drag-over', 'drag-over-reparent');
+            if (!dragSrc && crossDragType !== 'child') return;
+
+            // Child → root nav item: reparent the child under this root module.
+            if (crossDragType === 'child' && crossDragId && crossDragId !== mod.id) {
+                reparentModule(crossDragId, mod.id);
+                crossDragId = null; crossDragType = null;
+                return;
+            }
+
+            // Root → root: sibling reorder.
             if (!dragSrc || dragSrc === btn) return;
             const items = [...nav.querySelectorAll('.nav-item[data-id]')];
             const fromIdx = items.indexOf(dragSrc);
@@ -582,6 +619,26 @@ function updateNav(roots) {
         });
         nav.appendChild(btn);
     }
+
+    // Drop zone at the bottom of nav: child handle dropped here → promote to root.
+    const rootDrop = document.createElement('div');
+    rootDrop.className = 'nav-root-drop';
+    rootDrop.textContent = '↑ promote to root';
+    rootDrop.addEventListener('dragover', e => {
+        if (crossDragType !== 'child') return;
+        e.preventDefault();
+        rootDrop.classList.add('drag-over-reparent');
+    });
+    rootDrop.addEventListener('dragleave', () => rootDrop.classList.remove('drag-over-reparent'));
+    rootDrop.addEventListener('drop', e => {
+        e.preventDefault();
+        rootDrop.classList.remove('drag-over-reparent');
+        if (crossDragType === 'child' && crossDragId) {
+            reparentModule(crossDragId, '');
+            crossDragId = null; crossDragType = null;
+        }
+    });
+    nav.appendChild(rootDrop);
 }
 
 function fmtBytes(n) {
@@ -600,6 +657,7 @@ function renderSelected(roots) {
    Render
    ============================================================ */
 function render(modules) {
+    window._lastModules = modules;
     const roots = buildTree(modules);
 
     // Keep selection valid; fall back to first root if current id is gone
@@ -609,6 +667,7 @@ function render(modules) {
 
     updateNav(roots);
     renderSelected(roots);
+    if (canvasView) renderCanvas(modules);
 }
 
 /* ============================================================
@@ -697,14 +756,42 @@ function buildCard(mod, parentId = null) {
 
     card.appendChild(hdr);
 
+    // Controls section — for group modules wrap in a collapsible so the
+    // children list is the visual focus; for leaf modules render inline.
     const controls = mod.controls || [];
-    if (controls.length === 0) {
-        const none = document.createElement('div');
-        none.className = 'no-controls';
-        none.textContent = 'no controls';
-        card.appendChild(none);
+    const isGroup  = mod.is_group === true;
+    if (isGroup && controls.length > 0) {
+        const details = document.createElement('details');
+        details.className = 'group-controls';
+        const summary = document.createElement('summary');
+        summary.textContent = 'controls (' + controls.length + ')';
+        details.appendChild(summary);
+        for (const ctrl of controls) details.appendChild(buildControl(mod.id, ctrl));
+        card.appendChild(details);
+    } else if (controls.length === 0) {
+        if (!isGroup) {
+            const none = document.createElement('div');
+            none.className = 'no-controls';
+            none.textContent = 'no controls';
+            card.appendChild(none);
+        }
     } else {
         for (const ctrl of controls) card.appendChild(buildControl(mod.id, ctrl));
+    }
+
+    // Connections subsection — show string-ID inputs so the implicit data-flow
+    // edges are visible in the tree view without needing the canvas.
+    const stringCtrls = controls.filter(c => c.type === 'text' && c.value);
+    if (stringCtrls.length > 0) {
+        const connDiv = document.createElement('div');
+        connDiv.className = 'connections';
+        connDiv.innerHTML = '<span class="connections-label">connections</span>' +
+            stringCtrls.map(c =>
+                '<span class="connection-item">' +
+                esc(c.key) + ' → <strong>' + esc(c.value) + '</strong>' +
+                '</span>'
+            ).join('');
+        card.appendChild(connDiv);
     }
 
     if (mod._children && mod._children.length > 0) {
@@ -719,9 +806,16 @@ function buildCard(mod, parentId = null) {
                 handle.draggable = true;
                 handle.addEventListener('dragstart', e => {
                     dragSrc = cc;
+                    crossDragId   = child.id;
+                    crossDragType = 'child';
                     e.dataTransfer.effectAllowed = 'move';
                     e.dataTransfer.setDragImage(cc, 20, 20);
                     e.stopPropagation();
+                    document.getElementById('nav-links').classList.add('child-dragging');
+                });
+                handle.addEventListener('dragend', () => {
+                    crossDragId = null; crossDragType = null;
+                    document.getElementById('nav-links').classList.remove('child-dragging');
                 });
             }
             cc.addEventListener('dragover', e => {
@@ -777,6 +871,30 @@ function buildCard(mod, parentId = null) {
     actions.appendChild(delBtn);
 
     card.appendChild(actions);
+
+    // Root card drop zone: a root nav item dragged over this card becomes a
+    // child of this module. Only active when this card is itself a root module
+    // (parentId === null) and a root nav item is being dragged (crossDragType === 'root').
+    if (parentId === null) {
+        card.addEventListener('dragover', e => {
+            if (crossDragType !== 'root' || crossDragId === mod.id) return;
+            e.preventDefault();
+            e.stopPropagation();
+            card.classList.add('drag-over-reparent');
+        });
+        card.addEventListener('dragleave', e => {
+            if (!card.contains(e.relatedTarget)) card.classList.remove('drag-over-reparent');
+        });
+        card.addEventListener('drop', e => {
+            card.classList.remove('drag-over-reparent');
+            if (crossDragType !== 'root' || !crossDragId || crossDragId === mod.id) return;
+            e.preventDefault();
+            e.stopPropagation();
+            reparentModule(crossDragId, mod.id);
+            crossDragId = null; crossDragType = null;
+        });
+    }
+
     return card;
 }
 
@@ -1592,6 +1710,349 @@ async function loadHealth() {
 }
 
 /* ============================================================
+   Step 3: Canvas (node-graph) view
+   ============================================================ */
+let canvasView = false;        // false = tree, true = canvas
+let canvasPan  = { x: 40, y: 40 };
+let canvasDrag = null;         // { type:'pan'|'box', id, ox, oy, px, py }
+const CANVAS_POS_KEY = 'mm_canvas_pos';
+
+function canvasPositions() {
+    try { return JSON.parse(localStorage.getItem(CANVAS_POS_KEY) || '{}'); } catch { return {}; }
+}
+function saveCanvasPos(id, x, y) {
+    const p = canvasPositions(); p[id] = { x, y };
+    localStorage.setItem(CANVAS_POS_KEY, JSON.stringify(p));
+}
+
+function renderCanvas(modules) {
+    const viewport = document.getElementById('canvas-viewport');
+    const world    = document.getElementById('canvas-world');
+    const svg      = document.getElementById('canvas-svg');
+    const sidebar  = document.getElementById('canvas-sidebar');
+    if (!viewport || !world || !svg) return;
+
+    const positions = canvasPositions();
+    const moduleIds = new Set(modules.map(m => m.id));
+
+    // Build parent→children tree. Roots are modules with no (resolvable) parent;
+    // children render nested inside their parent box, like the tree view.
+    const byId = {};
+    modules.forEach(m => { byId[m.id] = m; m._kids = []; });
+    const roots = [];
+    modules.forEach(m => {
+        if (m.parent_id && byId[m.parent_id]) byId[m.parent_id]._kids.push(m);
+        else roots.push(m);
+    });
+
+    // Auto-layout (only roots get a canvas position) is done in a second pass
+    // below — root heights vary with nesting depth, so we measure rendered
+    // boxes before stacking them top-to-bottom.
+    const GAP_Y = 30;
+
+    // Render world transform
+    world.style.transform = `translate(${canvasPan.x}px,${canvasPan.y}px)`;
+    svg.style.transform   = `translate(${canvasPan.x}px,${canvasPan.y}px)`;
+
+    // --- Boxes (recursive: a box contains its children) ---
+    function buildBox(m, isRoot) {
+        const box = document.createElement('div');
+        box.className = 'cbox' + (isRoot ? ' cbox-root' : ' cbox-child');
+        box.dataset.id = m.id;
+
+        const head = document.createElement('div');
+        head.className = 'cbox-head';
+
+        const title = document.createElement('div');
+        title.className = 'cbox-title';
+        title.textContent = m.id + (m.is_group ? ' ⬡' : '');
+        head.appendChild(title);
+
+        const sub = document.createElement('div');
+        sub.className = 'cbox-type';
+        sub.textContent = m.type || '';
+        head.appendChild(sub);
+        box.appendChild(head);
+
+        title.addEventListener('click', e => {
+            e.stopPropagation();
+            showCanvasSidebar(m, modules, sidebar);
+        });
+
+        if (m._kids.length) {
+            const kidWrap = document.createElement('div');
+            kidWrap.className = 'cbox-kids';
+            m._kids.forEach(k => kidWrap.appendChild(buildBox(k, false)));
+            box.appendChild(kidWrap);
+        }
+        return box;
+    }
+
+    world.innerHTML = '';
+    const rootBoxes = [];
+    roots.forEach(r => {
+        const box = buildBox(r, true);
+        box.style.left = '40px';   // provisional; vertical layout pass fixes y
+        box.style.top  = '40px';
+
+        // Drag the whole root subtree by its header only
+        box.querySelector('.cbox-head').addEventListener('mousedown', e => {
+            if (e.button !== 0) return;
+            e.stopPropagation();
+            const p = canvasPositions()[r.id] || { x: parseInt(box.style.left), y: parseInt(box.style.top) };
+            canvasDrag = { type: 'box', id: r.id, ox: e.clientX - p.x, oy: e.clientY - p.y };
+        });
+
+        world.appendChild(box);
+        rootBoxes.push({ r, box });
+    });
+
+    // --- Topology-aware auto-layout ---
+    // A root that consumes data from another root's subtree is placed in the
+    // next column to the right of its source, vertically near it. Roots with
+    // a saved position keep it and are skipped by auto-layout.
+    const GAP_X = 90;
+    const rootIds = roots.map(r => r.id);
+    const rootIdx = {};
+    roots.forEach((r, i) => { rootIdx[r.id] = i; });
+
+    function rootOf(id) {
+        let m = byId[id], guard = 0;
+        while (m && m.parent_id && byId[m.parent_id] && guard++ < 64) m = byId[m.parent_id];
+        return m ? m.id : id;
+    }
+
+    // Root→root edges: consumer root depends on source root (source feeds it).
+    // srcModuleOf[consumerRoot] = the specific source module id it reads from,
+    // used to vertically align the consumer next to that node.
+    const feeds = {};       // sourceRoot -> [consumerRoot...]
+    const inDeg = {};
+    const srcModuleOf = {};
+    rootIds.forEach(id => { feeds[id] = []; inDeg[id] = 0; });
+    modules.forEach(m => {
+        (m.controls || []).forEach(c => {
+            if (c.type === 'text' && c.value && moduleIds.has(c.value)) {
+                const cons = rootOf(m.id), src = rootOf(c.value);
+                if (cons !== src && feeds[src] && !feeds[src].includes(cons)) {
+                    feeds[src].push(cons);
+                    inDeg[cons]++;
+                    if (!srcModuleOf[cons]) srcModuleOf[cons] = c.value;
+                }
+            }
+        });
+    });
+
+    // Longest-path column assignment (Kahn topological order).
+    const colOf = {};
+    rootIds.forEach(id => { colOf[id] = 0; });
+    const rem = { ...inDeg };
+    const q = rootIds.filter(id => inDeg[id] === 0);
+    while (q.length) {
+        const id = q.shift();
+        feeds[id].forEach(nxt => {
+            colOf[nxt] = Math.max(colOf[nxt], colOf[id] + 1);
+            if (--rem[nxt] === 0) q.push(nxt);
+        });
+    }
+
+    // Place: per column, stack top-to-bottom by measured height. Manually
+    // positioned roots are honored and excluded from the auto flow.
+    const colNextY = {};
+    const colX = {};
+    let runX = 40;
+    const maxCol = Math.max(0, ...rootIds.map(id => colOf[id]));
+    for (let c = 0; c <= maxCol; c++) {
+        colX[c] = runX;
+        colNextY[c] = 40;
+        // Column width = widest auto-positioned root box in this column.
+        let colW = 0;
+        rootBoxes.forEach(({ r, box }) => {
+            if (!positions[r.id] && colOf[r.id] === c) colW = Math.max(colW, box.offsetWidth);
+        });
+        runX += (colW || 240) + GAP_X;
+    }
+
+    const boxOf = {};
+    rootBoxes.forEach(({ r, box }) => { boxOf[r.id] = box; });
+
+    // Place column-by-column so a consumer can read its source's final Y.
+    // Honor manual positions first, then auto-flow the rest per column.
+    rootBoxes.forEach(({ r, box }) => {
+        if (positions[r.id]) {
+            box.style.left = positions[r.id].x + 'px';
+            box.style.top  = positions[r.id].y + 'px';
+        }
+    });
+
+    for (let c = 0; c <= maxCol; c++) {
+        rootBoxes
+            .filter(({ r }) => !positions[r.id] && colOf[r.id] === c)
+            .sort((a, b) => rootIdx[a.r.id] - rootIdx[b.r.id])
+            .forEach(({ r, box }) => {
+                box.style.left = colX[c] + 'px';
+
+                // Prefer aligning to the source module's rendered top
+                // (works for deeply-nested sources via rect math).
+                let wantY = colNextY[c];
+                const srcId = srcModuleOf[r.id];
+                if (srcId) {
+                    const srcEl = world.querySelector(
+                        '.cbox[data-id="' + CSS.escape(srcId) + '"] > .cbox-head');
+                    if (srcEl) {
+                        const wRect = world.getBoundingClientRect();
+                        wantY = srcEl.getBoundingClientRect().top - wRect.top;
+                    }
+                }
+                // Never overlap a box already placed above in this column.
+                const y = Math.max(wantY, colNextY[c]);
+                box.style.top = y + 'px';
+                colNextY[c] = y + box.offsetHeight + GAP_Y;
+            });
+    }
+
+    // --- SVG data-flow noodles ---
+    // Drawn between actual box DOM rects so nested children connect correctly.
+    svg.setAttribute('width', '6000');
+    svg.setAttribute('height', '4000');
+
+    const dataEdges = [];
+    modules.forEach(m => {
+        (m.controls || []).forEach(c => {
+            if (c.type === 'text' && c.value && moduleIds.has(c.value)) {
+                dataEdges.push({ from: m.id, to: c.value, label: c.key });
+            }
+        });
+    });
+    window._canvasEdges = dataEdges;
+    drawCanvasNoodles();
+}
+
+// Redraw data-flow noodles from current box DOM positions. Called after
+// render and live during a box drag so wires track the moving box.
+function drawCanvasNoodles() {
+    const world = document.getElementById('canvas-world');
+    const svg   = document.getElementById('canvas-svg');
+    const edges = window._canvasEdges;
+    if (!world || !svg || !edges) return;
+    svg.innerHTML = '';
+
+    function bezier(x1, y1, x2, y2) {
+        const dx = Math.max(40, Math.abs(x2 - x1) / 2);
+        return `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`;
+    }
+
+    const worldBox = world.getBoundingClientRect();
+    function anchor(id, side) {
+        const el = world.querySelector('.cbox[data-id="' + CSS.escape(id) + '"] > .cbox-head');
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return {
+            x: (side === 'left' ? r.left : r.right) - worldBox.left,
+            y: (r.top + r.height / 2) - worldBox.top
+        };
+    }
+
+    edges.forEach(({ from, to, label }) => {
+        const a = anchor(to, 'right');     // source (data origin) right edge
+        const b = anchor(from, 'left');    // consumer left edge
+        if (!a || !b) return;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', bezier(a.x, a.y, b.x, b.y));
+        path.setAttribute('class', 'noodle-data');
+        path.setAttribute('title', label);
+        svg.appendChild(path);
+    });
+}
+
+function showCanvasSidebar(mod, modules, sidebar) {
+    sidebar.innerHTML = '';
+    sidebar.style.display = 'block';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'csb-close';
+    closeBtn.textContent = '✕';
+    closeBtn.onclick = () => { sidebar.style.display = 'none'; };
+    sidebar.appendChild(closeBtn);
+
+    // Minimal info: id, type, parent
+    const info = document.createElement('div');
+    info.className = 'csb-info';
+    info.innerHTML = '<strong>' + esc(mod.id) + '</strong>'
+        + '<span class="csb-type">' + esc(mod.type || '') + '</span>'
+        + (mod.parent_id ? '<span class="csb-parent">⬆ ' + esc(mod.parent_id) + '</span>' : '');
+    sidebar.appendChild(info);
+
+    // Controls list
+    (mod.controls || []).forEach(c => {
+        const row = document.createElement('div');
+        row.className = 'csb-ctrl';
+        row.textContent = c.key + ': ' + (c.value !== undefined ? c.value : '');
+        sidebar.appendChild(row);
+    });
+}
+
+function initCanvasEvents() {
+    const viewport = document.getElementById('canvas-viewport');
+    if (!viewport) return;
+
+    // Pan on background mousedown
+    viewport.addEventListener('mousedown', e => {
+        if (e.button === 0 && e.target === viewport) {
+            canvasDrag = { type: 'pan', ox: e.clientX - canvasPan.x, oy: e.clientY - canvasPan.y };
+        }
+    });
+
+    window.addEventListener('mousemove', e => {
+        if (!canvasDrag) return;
+        if (canvasDrag.type === 'pan') {
+            canvasPan.x = e.clientX - canvasDrag.ox;
+            canvasPan.y = e.clientY - canvasDrag.oy;
+            const world = document.getElementById('canvas-world');
+            const svg   = document.getElementById('canvas-svg');
+            if (world) world.style.transform = `translate(${canvasPan.x}px,${canvasPan.y}px)`;
+            if (svg)   svg.style.transform   = `translate(${canvasPan.x}px,${canvasPan.y}px)`;
+        } else if (canvasDrag.type === 'box') {
+            const x = e.clientX - canvasDrag.ox;
+            const y = e.clientY - canvasDrag.oy;
+            const box = document.querySelector('.cbox[data-id="' + CSS.escape(canvasDrag.id) + '"]');
+            if (box) { box.style.left = x + 'px'; box.style.top = y + 'px'; drawCanvasNoodles(); }
+        }
+    });
+
+    window.addEventListener('mouseup', e => {
+        if (!canvasDrag) return;
+        if (canvasDrag.type === 'box') {
+            const box = document.querySelector('.cbox[data-id="' + CSS.escape(canvasDrag.id) + '"]');
+            if (box) {
+                saveCanvasPos(canvasDrag.id, parseInt(box.style.left), parseInt(box.style.top));
+                drawCanvasNoodles();
+            }
+        }
+        canvasDrag = null;
+    });
+
+    // Zoom with wheel
+    viewport.addEventListener('wheel', e => {
+        e.preventDefault();
+        // simple pan-only on wheel (zoom kept for future sprint)
+        canvasPan.x -= e.deltaX * 0.5;
+        canvasPan.y -= e.deltaY * 0.5;
+        const world = document.getElementById('canvas-world');
+        const svg   = document.getElementById('canvas-svg');
+        if (world) world.style.transform = `translate(${canvasPan.x}px,${canvasPan.y}px)`;
+        if (svg)   svg.style.transform   = `translate(${canvasPan.x}px,${canvasPan.y}px)`;
+    }, { passive: false });
+}
+
+function toggleView(toCanvas) {
+    canvasView = toCanvas;
+    document.getElementById('modules').style.display    = toCanvas ? 'none' : '';
+    document.getElementById('canvas-view').style.display = toCanvas ? '' : 'none';
+    document.getElementById('view-tree-btn').classList.toggle('active', !toCanvas);
+    document.getElementById('view-canvas-btn').classList.toggle('active', toCanvas);
+    if (toCanvas && window._lastModules) renderCanvas(window._lastModules);
+}
+
+/* ============================================================
    Init
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -1637,6 +2098,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('hamburger').onclick = openNav;
     document.getElementById('nav-overlay').onclick = closeNav;
+
+    document.getElementById('view-tree-btn').onclick = () => toggleView(false);
+    document.getElementById('view-canvas-btn').onclick = () => toggleView(true);
+    initCanvasEvents();
 
     document.getElementById('reconnect-btn').onclick = () => {
         wsRetryDelay = 500;
