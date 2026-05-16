@@ -2,90 +2,98 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/architecture/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/architecture/process/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/architecture/system/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/developer-guide/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/developer-guide/backend/</loc>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/developer-guide/deploy/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/developer-guide/frontend/</loc>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/developer-guide/pal/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/developer-guide/adr/0001-vendor-cpp-httplib/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/developer-guide/adr/0002-arduinojson-lib-deps/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/developer-guide/adr/0003-dataring-dataregistry-in-core/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/development/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/development/backlog/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/development/release-01/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/user-guide/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/user-guide/lights/artnet-out/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/user-guide/lights/preview/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/user-guide/lights/ripples-effect/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/user-guide/network/http-server/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/user-guide/network/web-socket/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/user-guide/system/state-store/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/user-guide/system/system-status/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/user-guide/system/wifi-sta/</loc>
-         <lastmod>2026-05-14</lastmod>
+         <lastmod>2026-05-16</lastmod>
     </url>
 </urlset>

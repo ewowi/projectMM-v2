@@ -1228,6 +1228,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../developer-guide/backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer-guide/frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../developer-guide/pal/" class="md-nav__link">
         
   
@@ -1269,10 +1325,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
         
           
-          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
             
   
   
@@ -1290,8 +1346,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_4">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1344,6 +1400,34 @@
     
   
     0002 — ArduinoJson via lib_deps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer-guide/adr/0003-dataring-dataregistry-in-core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0003 — DataRing + DataRegistry in core
   
 
     
@@ -1584,7 +1668,7 @@
 
 
 <h1 id="artnetoutmodule">ArtnetOutModule<a class="headerlink" href="#artnetoutmodule" title="Permanent link">&para;</a></h1>
-<p>Packs the current pixel frame from a named source into Art-Net OpDmx packets and sends them via UDP. 510 DMX bytes (= 170 RGB pixels) per packet → multi-universe at large geometries (e.g. 128×128×1 = 49 152 RGB bytes = 97 universes per frame, ~6 Mbps at 50 fps). Runs on core 1 (set via constructor <code>setCoreAffinity(1)</code>); reads frames cross-core from the source's <code>FrameRing</code> so there's no per-frame copy on the consumer side.</p>
+<p>Packs the current pixel frame from a named source into Art-Net OpDmx packets and sends them via UDP. 510 DMX bytes (= 170 RGB pixels) per packet → multi-universe at large geometries (e.g. 128×128×1 = 49 152 RGB bytes = 97 universes per frame, ~6 Mbps at 50 fps). Runs on core 1 (set via constructor <code>setCoreAffinity(1)</code>); reads frames cross-core from the source's <a href="../../../developer-guide/backend/#databuffert-the-shared-slot-primitive"><code>DataBuffer&lt;RGB&gt;</code></a> via a single acquire/release pair — no per-frame copy on the consumer side.</p>
 <p><strong>Wire format</strong> (one Art-Net OpDmx packet per universe, sent to <code>dest_ip:6454</code>):</p>
 <div class="highlight"><pre><span></span><code>&quot;Art-Net\0&quot;          8 bytes  ID
 0x00 0x50            2 bytes  OpCode (OpDmx, little-endian)
@@ -1616,7 +1700,7 @@ len_hi len_lo        2 bytes  DMX byte count (big-endian)
 <td><code>source</code></td>
 <td>text</td>
 <td><code>ripples-0</code></td>
-<td>Module id whose frame to send (any <code>PixelSource</code>)</td>
+<td>Module id whose frame to send (resolved via <code>DataRegistry</code>)</td>
 </tr>
 <tr>
 <td><code>dest_ip</code></td>
@@ -1635,9 +1719,9 @@ len_hi len_lo        2 bytes  DMX byte count (big-endian)
 <h2 id="developer-reference">Developer reference<a class="headerlink" href="#developer-reference" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Constructor: <code>setCoreAffinity(1)</code> — runs on APP_CPU so the consumer doesn't share core 0 with the producer.</li>
-<li><code>setup()</code> — <code>udp_.begin()</code> (bind ephemeral source port), <code>resolve_source_()</code> (PixelRegistry lookup).</li>
-<li><code>onUpdate(key)</code> — for <code>source</code> edits, re-call <code>resolve_source_()</code>.</li>
-<li><code>loop20ms()</code> — read the most-recently-published frame from <code>source_-&gt;frameRing()</code> via <code>try_acquire_read()</code> (cross-core SPSC, release/acquire ordering); fall back to <code>pixelBuffer()</code> if the source has no ring. Pack one Art-Net OpDmx packet per 510-byte universe slice via <code>pack_header()</code>, send via <code>udp_.send()</code>, release the ring read.</li>
+<li><code>setup()</code> — <code>udp_.begin()</code> (bind ephemeral source port), <code>resolve_buf_()</code> (<code>DataRegistry</code> lookup by <code>source</code> id).</li>
+<li><code>onUpdate(key)</code> — for <code>source</code> edits, re-call <code>resolve_buf_()</code>.</li>
+<li><code>loop20ms()</code> — <code>buf_-&gt;try_acquire_read()</code> (cross-core SPSC, release/acquire ordering); if null (no new frame), return early. Pack one Art-Net OpDmx packet per 510-byte universe slice via <code>pack_header()</code>, send via <code>udp_.send()</code>, <code>buf_-&gt;release_read()</code>.</li>
 <li><code>pack_header()</code> — public static helper exposed for <a href="https://github.com/ewowi/projectMM-v2/blob/main/test/test_pc/test_artnet_packing.cpp"><code>test_artnet_packing.cpp</code></a>.</li>
 </ul>
 

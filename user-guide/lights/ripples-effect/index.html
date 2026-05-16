@@ -1245,6 +1245,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../developer-guide/backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer-guide/frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../developer-guide/pal/" class="md-nav__link">
         
   
@@ -1286,10 +1342,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
         
           
-          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
             
   
   
@@ -1307,8 +1363,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_4">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1361,6 +1417,34 @@
     
   
     0002 — ArduinoJson via lib_deps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../developer-guide/adr/0003-dataring-dataregistry-in-core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0003 — DataRing + DataRegistry in core
   
 
     
@@ -1670,16 +1754,14 @@
 </table>
 <h2 id="developer-reference">Developer reference<a class="headerlink" href="#developer-reference" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>setup()</code> — publish <code>this</code> to <code>PixelRegistry</code> so consumers can find it by id.</li>
-<li><code>onAllocateMemory()</code> — call <code>allocate_()</code> which <code>psram_alloc</code>s three buffers: pixel buffer (<code>w·h·d</code>), phase-offset Q16 table (<code>w·h</code>), base-color full-bright RGB table (<code>w·h</code>). Allocates the <code>FrameRing</code> slots (two more pixel-buffer-sized chunks for the cross-core consumer). Bumps <code>revision_</code>.</li>
+<li><code>onAllocateMemory()</code> — call <code>allocate_()</code> which <code>psram_alloc</code>s three buffers: working pixel buffer (<code>w·h·d</code>), phase-offset Q16 table (<code>w·h</code>), base-color full-bright RGB table (<code>w·h</code>). Allocates one <a href="../../../developer-guide/backend/#databuffert-the-shared-slot-primitive"><code>DataBuffer&lt;RGB&gt;</code></a> slot (one pixel-buffer-sized chunk); declares it in <code>DataRegistry</code> under <code>id()</code>.</li>
 <li><code>onUpdate(key)</code> — <code>width</code> / <code>height</code> / <code>depth</code> re-call <code>allocate_()</code>; <code>hue_base</code> re-calls <code>rebuild_color_table_()</code> (skips the phase table — only color changes).</li>
-<li><code>loop20ms()</code> — compute one frame using the precomputed tables + cos LUT. Publish a copy into the cross-core SPSC <code>FrameRing</code> for <a href="../artnet-out/">ArtnetOutModule</a>. Same-core consumers (<a href="../preview/">PreviewModule</a>) read <code>pixels_</code> directly via <code>pixelBuffer()</code>.</li>
-<li><code>teardown()</code> — unpublish from <code>PixelRegistry</code>, free pixel + table buffers.</li>
-<li><code>pixelBuffer()</code> / <code>frameRing()</code> — <code>PixelSource</code> interface methods consumers use to read the frame.</li>
+<li><code>loop20ms()</code> — compute one frame into the working pixel buffer using the precomputed tables + cos LUT; then <code>buf_-&gt;acquire_write()</code> + memcpy + <code>buf_-&gt;publish()</code> so consumers (<a href="../artnet-out/">ArtnetOutModule</a>, <a href="../preview/">PreviewModule</a>) can read it cross-core.</li>
+<li><code>teardown()</code> — <code>DataRegistry::instance().undeclare(buf_)</code>, free pixel + table buffers.</li>
 </ul>
 <h3 id="pixel-buffer-sharing-why-a-registry-not-dynamic_cast">Pixel-buffer sharing — why a registry, not <code>dynamic_cast</code><a class="headerlink" href="#pixel-buffer-sharing-why-a-registry-not-dynamic_cast" title="Permanent link">&para;</a></h3>
-<p>The natural shape for a consumer to grab a producer's frame would be <code>dynamic_cast&lt;PixelSource*&gt;(manager_-&gt;find(id))</code>. That does not work on hardware: arduino-esp32 builds with <code>-fno-rtti</code>. Adding <code>-frtti</code> is a hammer (binary size, framework-wide); adding a virtual <code>asPixelSource()</code> to <code>MoonModule</code> would put light-domain knowledge in core. The minimal answer is a publish-on-setup / find-by-id registry that lives entirely in <code>modules/lights/</code> (<a href="https://github.com/ewowi/projectMM-v2/blob/main/src/modules/lights/PixelRegistry.h"><code>PixelRegistry.h</code></a>, ~40 LOC).</p>
-<p>This is publish/subscribe — just the cheap version. Publish happens once in <code>setup()</code>, subscribe (<code>find</code>) happens in <code>setup()</code> and on <code>onUpdate("source")</code>, with a fallback in <code>loop20ms</code> to tolerate consumers that load before producers. The hot path is a cached pointer + one virtual call + one <code>uint32</code> revision compare. No event bus, no per-tick dispatch, no allocation. Same-core consumers (PreviewModule) read <code>pixels_</code> directly via <code>pixelBuffer()</code>. Cross-core consumers (ArtnetOutModule on core 1) read via the depth-2 SPSC <code>FrameRing</code> with release/acquire ordering — producer never waits; on full it overwrites, dropping the older frame.</p>
+<p>The natural shape for a consumer to grab a producer's frame would be <code>dynamic_cast&lt;RipplesEffect*&gt;(manager_-&gt;find(id))</code>. That does not work on hardware: arduino-esp32 builds with <code>-fno-rtti</code>. Adding <code>-frtti</code> is a hammer (binary size, framework-wide); putting a type-specific accessor on <code>MoonModule</code> would put light-domain knowledge in core. The minimal answer is <code>DataRegistry</code> — a publish-on-<code>onAllocateMemory</code> / resolve-by-id registry in <code>src/core/</code> that is domain-neutral (see <a href="../../../developer-guide/adr/0003-dataring-dataregistry-in-core/">ADR 0003</a>).</p>
+<p>This is publish/subscribe — just the cheap version. Declare happens once in <code>onAllocateMemory()</code>; resolve (<code>DataRegistry::resolve</code>) happens in consumer <code>setup()</code> and on <code>onUpdate("source")</code>, with a fallback in <code>loop20ms</code> to tolerate late producers. The hot path is a cached pointer + one atomic load + one <code>uint32</code> revision compare. No event bus, no per-tick dispatch, no allocation. See <a href="../../../architecture/system/#hot-path-data-sharing-between-modules">architecture — hot-path data sharing</a> and <a href="../../../developer-guide/backend/#data-sharing">backend — data sharing</a>.</p>
 
 
 

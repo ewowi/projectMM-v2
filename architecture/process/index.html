@@ -1239,6 +1239,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../developer-guide/backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer-guide/frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../developer-guide/pal/" class="md-nav__link">
         
   
@@ -1280,10 +1336,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
         
           
-          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
             
   
   
@@ -1301,8 +1357,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_4">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1355,6 +1411,34 @@
     
   
     0002 — ArduinoJson via lib_deps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../developer-guide/adr/0003-dataring-dataregistry-in-core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0003 — DataRing + DataRegistry in core
   
 
     
@@ -1639,7 +1723,7 @@
 <p>Minimalism is a property that erodes silently. Guardrails make the erosion mechanical to detect. They land in Sprint 1 of Release 1, before any module exists; no commit in v2 is ever written without them running against it.</p>
 <p>Three enforcement tiers, in order of when they fire:</p>
 <ul>
-<li><strong>Pre-commit</strong> — fires before the diff is finished. Catches violations of the hot-path rules (no allocations, no blocking calls, no logging in any <code>loop*()</code> body), architectural fitness functions (pin numbers trace to typed board config — <code>pinMode(5, ...)</code> is rejected, <code>pinMode(BoardPins::WS2812_DATA, ...)</code> is the correct form), and the platform-isolation rule (<code>#ifdef ARDUINO</code>, <code>#include &lt;Arduino.h&gt;</code>, ESP-IDF headers, and similar platform-identity gates appear only in <code>src/pal/</code> files — see <a href="../system/#pal-the-only-place-platform-conditionals-appear">system architecture</a>).</li>
+<li><strong>Pre-commit</strong> — fires before the diff is finished. Catches violations of the hot-path rules (no allocations, no blocking calls, no logging in any <code>loop*()</code> body — see <a href="../system/#hot-path-data-sharing-between-modules">system architecture — hot-path data sharing</a> and <a href="../../developer-guide/backend/#module-lifecycle">backend — module lifecycle</a>), architectural fitness functions (pin numbers trace to typed board config — <code>pinMode(5, ...)</code> is rejected, <code>pinMode(BoardPins::WS2812_DATA, ...)</code> is the correct form), and the platform-isolation rule (<code>#ifdef ARDUINO</code>, <code>#include &lt;Arduino.h&gt;</code>, ESP-IDF headers, and similar platform-identity gates appear only in <code>src/pal/</code> files — see <a href="../system/#pal-the-only-place-platform-conditionals-appear">system architecture</a>).</li>
 <li><strong>CI gates</strong> — block PR merge. Enforce LOC budgets per surface, footprint baselines per module, and a doc-growth budget per release. Overshoot fails; a bump requires an explicit signed-off line in the release plan. Test infrastructure — frameworks, helpers, metrics, baseline files — obeys the same minimalism rule as source code: a new test file, helper, or CI metric must answer "what drift does this catch that the existing guardrails miss?"</li>
 <li><strong>Structural additions</strong> — block additions that bypass the design. A new top-level directory requires an ADR. A new file under <code>scripts/</code>, <code>tests/</code>, or <code>docs/</code> requires an inline justification of what existing surface was insufficient.</li>
 <li><strong>Process visibility</strong> — every developer-facing process (build, test, checks, doc-serve, future flash/upload/log-tail) is a card in <code>scripts/moondeck.py</code>. The UI is the process layer's census: adding a script is visible work; removing one is visible work. v1 reached 20+ <code>deploy/</code> scripts partly because the surface was never rendered in one place; v2 renders it from day one.</li>

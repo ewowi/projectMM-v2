@@ -12,13 +12,13 @@
         <meta name="author" content="MoonModules">
       
       
-        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/developer-guide/pal/">
+        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/developer-guide/backend/">
       
       
-        <link rel="prev" href="../frontend/">
+        <link rel="prev" href="../deploy/">
       
       
-        <link rel="next" href="../adr/0001-vendor-cpp-httplib/">
+        <link rel="next" href="../frontend/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Pal inventory - projectMM v2</title>
+        <title>Backend - projectMM v2</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#pal-files-budgets-who-uses-what" class="md-skip">
+        <a href="#backend" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Pal inventory
+              Backend
             
           </span>
         </div>
@@ -1145,10 +1145,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../backend/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1164,6 +1191,109 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#data-sharing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data sharing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data sharing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#databuffert-the-shared-slot-primitive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DataBuffer&lt;T&gt; — the shared-slot primitive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dataregistry-the-name-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DataRegistry — the name directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layering
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module lifecycle
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#control-field-types-and-addcontrol-overloads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control field types and addControl overloads
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1201,37 +1331,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Pal inventory
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../pal/" class="md-nav__link">
         
   
   
@@ -1247,70 +1350,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#current-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Current files
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#module-pal-dependency" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Module ↔ pal dependency
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#deferred-pal-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deferred pal files
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#adding-a-new-pal-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Adding a new pal file
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1640,10 +1679,71 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#current-files" class="md-nav__link">
+  <a href="#data-sharing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Current files
+        Data sharing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Data sharing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#databuffert-the-shared-slot-primitive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DataBuffer&lt;T&gt; — the shared-slot primitive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dataregistry-the-name-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DataRegistry — the name directory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#layering" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Layering
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#module-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Module lifecycle
       
     </span>
   </a>
@@ -1651,32 +1751,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#module-pal-dependency" class="md-nav__link">
+  <a href="#control-field-types-and-addcontrol-overloads" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Module ↔ pal dependency
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#deferred-pal-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deferred pal files
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#adding-a-new-pal-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Adding a new pal file
+        Control field types and addControl overloads
       
     </span>
   </a>
@@ -1703,127 +1781,134 @@
   
 
 
-<h1 id="pal-files-budgets-who-uses-what">Pal — files, budgets, who uses what<a class="headerlink" href="#pal-files-budgets-who-uses-what" title="Permanent link">&para;</a></h1>
-<p>The architectural rule for Pal (one place for platform conditionals, partitioned by concern) lives in <a href="../../architecture/system/#pal-the-only-place-platform-conditionals-appear">system.md</a>. This page is the inventory: the current files, their LOC budgets, and which modules depend on which pal.</p>
-<h2 id="current-files">Current files<a class="headerlink" href="#current-files" title="Permanent link">&para;</a></h2>
-<p>Each file has its own <a href="../../architecture/process/#2-guardrails-minimalism-enforced-mechanically">LOC budget</a> enforced by <code>scripts/check_loc.py</code>.</p>
+<h1 id="backend">Backend<a class="headerlink" href="#backend" title="Permanent link">&para;</a></h1>
+<p>Implementation detail for the C++ runtime. Read <a href="../../architecture/system/">architecture/system.md</a> first for the constraints and the model; this page covers the how.</p>
+<hr />
+<h2 id="data-sharing">Data sharing<a class="headerlink" href="#data-sharing" title="Permanent link">&para;</a></h2>
+<p>The architecture principle is in <a href="../../architecture/system/#hot-path-data-sharing-between-modules">system.md — Hot-path data sharing between modules</a>. This section covers the two primitives that implement it.</p>
+<h3 id="databuffert-the-shared-slot-primitive"><code>DataBuffer&lt;T&gt;</code> — the shared-slot primitive<a class="headerlink" href="#databuffert-the-shared-slot-primitive" title="Permanent link">&para;</a></h3>
+<p><code>src/core/DataBuffer.h</code>. One pre-allocated slot of <code>T[]</code>, synchronised with a single atomic publish/acquire pair.</p>
+<div class="highlight"><pre><span></span><code><span class="n">T</span><span class="o">*</span><span class="w">       </span><span class="nf">acquire_write</span><span class="p">();</span><span class="w">     </span><span class="c1">// writer: pointer to the single slot; no alloc</span>
+<span class="kt">void</span><span class="w">     </span><span class="nf">publish</span><span class="p">();</span><span class="w">           </span><span class="c1">// writer: one atomic store (memory_order_release)</span>
+<span class="k">const</span><span class="w"> </span><span class="n">T</span><span class="o">*</span><span class="w"> </span><span class="nf">try_acquire_read</span><span class="p">();</span><span class="w">  </span><span class="c1">// reader: two atomic loads; nullptr if no new frame</span>
+<span class="kt">void</span><span class="w">     </span><span class="nf">release_read</span><span class="p">();</span><span class="w">      </span><span class="c1">// reader: one atomic store (memory_order_release)</span>
+<span class="kt">uint32_t</span><span class="w"> </span><span class="nf">revision</span><span class="p">();</span><span class="w">          </span><span class="c1">// monotonically increasing; detects geometry changes</span>
+</code></pre></div>
+<p><strong>Allocation.</strong> Call <code>allocate(count)</code> in <code>setup()</code> or <code>onAllocateMemory()</code>. The hot path never touches the heap.</p>
+<p><strong>Synchronisation.</strong> <code>publish()</code> pairs with <code>try_acquire_read()</code> via release/acquire ordering. This is the minimum to make a write visible on a second core without a lock. On Xtensa LX6/LX7 (ESP32) both are single-instruction 32-bit atomics.</p>
+<p><strong>Torn-frame detection.</strong> On a single core, producer and consumer share a slot without double-buffering. The consumer reads <code>revision()</code> before and after its work; if it changed, the producer wrote concurrently and the frame is discarded.</p>
+<p><strong>Multiple readers.</strong> Each reader calls <code>try_acquire_read()</code> and <code>release_read()</code> independently. <code>consumed_</code> tracks per-instance state so readers do not interfere with each other.</p>
+<h3 id="dataregistry-the-name-directory"><code>DataRegistry</code> — the name directory<a class="headerlink" href="#dataregistry-the-name-directory" title="Permanent link">&para;</a></h3>
+<p><code>src/core/DataRegistry.h</code>. A flat array (up to 16 entries) mapping string ids to <code>DataBuffer</code> instances and their geometry.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// Producer — called once from onAllocateMemory():</span>
+<span class="n">DataRegistry</span><span class="o">::</span><span class="n">instance</span><span class="p">().</span><span class="n">declare</span><span class="p">(</span><span class="n">id</span><span class="p">(),</span><span class="w"> </span><span class="n">buf_</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">T</span><span class="p">),</span><span class="w"> </span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">);</span>
+
+<span class="c1">// Consumer — called from setup(), cached thereafter:</span>
+<span class="k">const</span><span class="w"> </span><span class="n">DataBufferEntry</span><span class="o">*</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DataRegistry</span><span class="o">::</span><span class="n">instance</span><span class="p">().</span><span class="n">resolve</span><span class="p">(</span><span class="s">&quot;ripples-0&quot;</span><span class="p">);</span>
+<span class="n">buf_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">DataBuffer</span><span class="o">&lt;</span><span class="n">RGB</span><span class="o">&gt;*&gt;</span><span class="p">(</span><span class="n">e</span><span class="o">-&gt;</span><span class="n">buf_ptr</span><span class="p">);</span>
+</code></pre></div>
+<p><code>declare</code> and <code>undeclare</code> run on module-management paths (serialised by <code>ModuleManager</code>). <code>resolve</code> is read-only and safe to call from <code>loop20ms()</code> as a lazy fallback, though caching the pointer in <code>setup()</code> is preferred.</p>
+<p>The <code>DataBufferEntry</code> carries <code>dim[3]</code> — a generic <code>{width, height, depth}</code> triplet set by the producer and read by consumers (e.g. <code>PreviewModule</code> uses it to size the WebSocket frame header).</p>
+<h3 id="usage-pattern">Usage pattern<a class="headerlink" href="#usage-pattern" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// Producer (e.g. RipplesEffect):</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">onAllocateMemory</span><span class="p">()</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">buf_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">DataBuffer</span><span class="o">&lt;</span><span class="n">RGB</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="w">    </span><span class="n">buf_</span><span class="o">-&gt;</span><span class="n">allocate</span><span class="p">(</span><span class="n">w</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">h</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">d</span><span class="p">);</span>
+<span class="w">    </span><span class="n">DataRegistry</span><span class="o">::</span><span class="n">instance</span><span class="p">().</span><span class="n">declare</span><span class="p">(</span><span class="n">id</span><span class="p">(),</span><span class="w"> </span><span class="n">buf_</span><span class="p">,</span><span class="w"> </span><span class="n">w</span><span class="o">*</span><span class="n">h</span><span class="o">*</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">RGB</span><span class="p">),</span><span class="w"> </span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="n">h</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">loop20ms</span><span class="p">()</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">RGB</span><span class="o">*</span><span class="w"> </span><span class="n">dst</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buf_</span><span class="o">-&gt;</span><span class="n">acquire_write</span><span class="p">();</span>
+<span class="w">    </span><span class="c1">// ... fill dst ...</span>
+<span class="w">    </span><span class="n">buf_</span><span class="o">-&gt;</span><span class="n">publish</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">teardown</span><span class="p">()</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">DataRegistry</span><span class="o">::</span><span class="n">instance</span><span class="p">().</span><span class="n">undeclare</span><span class="p">(</span><span class="n">buf_</span><span class="p">);</span>
+<span class="w">    </span><span class="k">delete</span><span class="w"> </span><span class="n">buf_</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// Consumer (e.g. ArtnetOutModule):</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">setup</span><span class="p">()</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">resolve_buf_</span><span class="p">();</span><span class="w"> </span><span class="p">}</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">loop20ms</span><span class="p">()</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">buf_</span><span class="p">)</span><span class="w"> </span><span class="n">resolve_buf_</span><span class="p">();</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">RGB</span><span class="o">*</span><span class="w"> </span><span class="n">src</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buf_</span><span class="o">-&gt;</span><span class="n">try_acquire_read</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">src</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// ... map src into own buffer or wire format ...</span>
+<span class="w">    </span><span class="n">buf_</span><span class="o">-&gt;</span><span class="n">release_read</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">resolve_buf_</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">DataBufferEntry</span><span class="o">*</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DataRegistry</span><span class="o">::</span><span class="n">instance</span><span class="p">().</span><span class="n">resolve</span><span class="p">(</span><span class="n">source_id_</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="n">buf_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">DataBuffer</span><span class="o">&lt;</span><span class="n">RGB</span><span class="o">&gt;*&gt;</span><span class="p">(</span><span class="n">e</span><span class="o">-&gt;</span><span class="n">buf_ptr</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="layering">Layering<a class="headerlink" href="#layering" title="Permanent link">&para;</a></h3>
+<p>Each <strong>EffectLayer</strong> owns a <code>PixelMap[]</code> array that maps virtual pixel indices (the coordinate space the effect writes into) to physical pixel indices in the EffectLayer's output buffer. The table encodes both the LayoutLayer's wiring map (<code>map(logical_idx) → physical_idx</code>) and any geometric modifiers (mirror, rotate, transpose) attached to the layer.</p>
+<div class="highlight"><pre><span></span><code><span class="k">struct</span><span class="w"> </span><span class="nc">PixelMap</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">src_idx</span><span class="p">;</span><span class="w">   </span><span class="c1">// index into the EffectLayer&#39;s virtual pixel buffer</span>
+<span class="w">  </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">dst_idx</span><span class="p">;</span><span class="w">   </span><span class="c1">// index into the EffectLayer&#39;s physical output buffer</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>The <strong>DriverLayer</strong> reads each linked EffectLayer's buffer and applies that layer's <code>PixelMap[]</code> during a single copy pass into its own output buffer. Multiple EffectLayers are blended (blend mode per layer) in that same pass — no intermediate buffers.</p>
+<div class="highlight"><pre><span></span><code>EffectLayer.vbuf ──(PixelMap[])──→ EffectLayer.buf ──(DataBufferReader)──→ DriverLayer.buf
+</code></pre></div>
+<p><code>PixelMap[]</code> is built cold-path in <code>onAllocateMemory</code> and rebuilt in <code>onUpdate</code> whenever the LayoutLayer or modifier set changes. Hot path: one table walk per EffectLayer, no branching, no function calls.</p>
+<p>No change to <code>DataBuffer</code> or <code>DataRegistry</code> is required; the registry already handles multiple producers and each module owns exactly one slot. See <a href="../../development/backlog/#light-domain-architecture">backlog — Light domain architecture</a> for the three-step implementation plan.</p>
+<hr />
+<h2 id="module-lifecycle">Module lifecycle<a class="headerlink" href="#module-lifecycle" title="Permanent link">&para;</a></h2>
+<p>See <a href="../../architecture/system/#moonmodule-the-contract">architecture/system.md — MoonModule</a> for the contract. The sequence the runtime drives:</p>
+<div class="highlight"><pre><span></span><code>setup()
+  → onBuildControls()     load controls, seed from persisted state
+    → (recurse children)
+  → onChildrenReady()
+  → onAllocateMemory()    size and allocate buffers from final control values
+loop*() ...               hot path — no alloc, no block
+teardown()                free everything allocated in setup / onAllocateMemory
+</code></pre></div>
+<p><code>onAllocateMemory</code> runs after controls are seeded so a module sizing its buffer from a control value (e.g. <code>RipplesEffect</code> allocating <code>w·h·d</code> RGB from its width/height/depth sliders) sees the correct value on the first allocation.</p>
+<hr />
+<h2 id="control-field-types-and-addcontrol-overloads">Control field types and <code>addControl</code> overloads<a class="headerlink" href="#control-field-types-and-addcontrol-overloads" title="Permanent link">&para;</a></h2>
+<p><code>addControl(field, key, uiType, lo, hi)</code> resolves to the overload matching the <strong>exact type of the backing field</strong>. The overload set is:</p>
 <table>
 <thead>
 <tr>
-<th>File</th>
-<th>Budget</th>
-<th>Concern</th>
+<th>Field type</th>
+<th><code>CtrlType</code> tag</th>
+<th>Use for</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>src/pal/Pal.h</code></td>
-<td>100</td>
-<td><code>millis</code>, <code>micros</code>, <code>sleep</code>, <code>yield</code>, <code>log_init</code>, <code>on_interrupt</code>; <code>default_http_port</code>, <code>default_scheduler_cores</code></td>
+<td><code>float</code></td>
+<td><code>Float</code></td>
+<td>fractional values (speed, hue, brightness)</td>
 </tr>
 <tr>
-<td><code>src/pal/PalFs.h</code></td>
-<td>150</td>
-<td><code>fs_exists</code>, <code>fs_read_text</code>, <code>fs_write_text</code> (LittleFS on ESP32; <code>std::filesystem</code> under a <code>state/</code> sandbox on PC)</td>
+<td><code>uint8_t</code></td>
+<td><code>Uint8</code></td>
+<td>small counts, per-channel values (0–255)</td>
 </tr>
 <tr>
-<td><code>src/pal/PalRtos.h</code></td>
-<td>100</td>
-<td><code>task_create_pinned</code> (<code>xTaskCreatePinnedToCore</code> on ESP32 with an explicit stack size; <code>std::thread</code> on PC, <code>core_id</code> ignored)</td>
+<td><code>uint16_t</code></td>
+<td><code>Uint16</code></td>
+<td>panel dimensions: width, height, depth (up to 65535)</td>
 </tr>
 <tr>
-<td><code>src/pal/PalHeap.h</code></td>
-<td>100</td>
-<td><code>psram_alloc</code> / <code>psram_free</code>; PSRAM preferred (esp32s3), DRAM fallback (esp32dev / no-PSRAM). Both paths pin <code>MALLOC_CAP_8BIT</code> to guarantee byte-addressable memory — without it the allocator can hand back an IRAM-region buffer that faults on the first byte-wide write (LoadStoreError). See <a href="https://github.com/ewowi/projectMM-v2/blob/main/src/pal/PalHeap.h"><code>PalHeap.h</code></a>'s inline comment</td>
+<td><code>uint32_t</code></td>
+<td><code>Uint32</code></td>
+<td>total pixel counts (w × h × d, up to ~4 M)</td>
 </tr>
 <tr>
-<td><code>src/pal/PalWifi.h</code></td>
-<td>100</td>
-<td><code>wifi_begin</code> / <code>_is_connected</code> / <code>_disconnect</code>, <code>_local_ip</code>, <code>_rssi</code>, <code>_tx_power_dbm</code> / <code>_set_tx_power</code></td>
-</tr>
-<tr>
-<td><code>src/pal/PalUdp.h</code></td>
-<td>150</td>
-<td><code>Udp { begin, send }</code> (<code>WiFiUDP</code> on ESP32; BSD <code>SOCK_DGRAM</code> + <code>SO_BROADCAST</code> on PC). Send-only today — receive lands when ArtNet-in does (Release 2)</td>
-</tr>
-<tr>
-<td><code>src/pal/PalHttp.h</code></td>
-<td>350</td>
-<td>HTTP server (<code>cpp-httplib</code> on PC, <code>ESPAsyncWebServer</code> on ESP32)</td>
-</tr>
-<tr>
-<td><code>src/pal/PalWs.h</code></td>
-<td>450</td>
-<td>WebSocket (POSIX sockets on PC, <code>AsyncWebSocket</code> on ESP32)</td>
-</tr>
-<tr>
-<td><code>src/pal/PalSystemInfo.h</code></td>
-<td>250</td>
-<td><code>chip_model</code>, <code>mac_address</code>, <code>reset_reason_str</code>; heap / psram / fs queries; <code>sketch_kb</code>, <code>build_info</code>, <code>core_temp</code>, <code>platform_version</code></td>
+<td><code>bool</code></td>
+<td><code>Bool</code></td>
+<td>toggles (enabled, serpentine)</td>
 </tr>
 </tbody>
 </table>
-<p>Two shapes coexist: small platform <em>primitives</em> (<code>Pal</code>, <code>PalFs</code>, <code>PalRtos</code>, <code>PalHeap</code>, <code>PalWifi</code>, <code>PalUdp</code>) and larger <em>wrappers</em> around platform libraries or query surfaces (<code>PalHttp</code> / <code>PalWs</code> / <code>PalSystemInfo</code>). Both are "platform conditionals consolidated in one place" — that is what <code>pal/</code> means in v2, not "small enough to fit in one header."</p>
-<h2 id="module-pal-dependency">Module ↔ pal dependency<a class="headerlink" href="#module-pal-dependency" title="Permanent link">&para;</a></h2>
-<p><code>Pal.h</code> (timing) is used everywhere — too pervasive to list per module. The table below covers the rest. Modules that share pixel data between cores do so through <code>DataBuffer&lt;T&gt;</code> / <code>DataRegistry</code> (in <code>src/core/</code>) rather than through any pal file — see <a href="../backend/#data-sharing">backend.md — Data sharing</a>.</p>
-<table>
-<thead>
-<tr>
-<th>Module</th>
-<th>Pal files used</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>core/MoonModule</code></td>
-<td><code>Pal</code> (timing, <code>check_alloc</code>, <code>free_heap_bytes</code>)</td>
-</tr>
-<tr>
-<td><code>core/Scheduler</code></td>
-<td><code>Pal</code> (timing, <code>yield</code>), <code>PalRtos</code> (<code>task_create_pinned</code>)</td>
-</tr>
-<tr>
-<td><code>modules/system/[SystemStatusModule](../user-guide/system/system-status.md)</code></td>
-<td><code>PalSystemInfo</code> (chip / heap / fs / build info, all queries)</td>
-</tr>
-<tr>
-<td><code>modules/system/[WifiStaModule](../user-guide/system/wifi-sta.md)</code></td>
-<td><code>PalWifi</code> (the whole <code>wifi_*</code> surface), <code>PalFs</code> (<code>/wifi.json</code> read/write)</td>
-</tr>
-<tr>
-<td><code>modules/system/[StateStoreModule](../user-guide/system/state-store.md)</code></td>
-<td><code>PalFs</code> (<code>/modules.json</code> + per-module state files)</td>
-</tr>
-<tr>
-<td><code>modules/system/MemTracker</code></td>
-<td><code>PalSystemInfo</code> (<code>free_heap_kb</code>, <code>free_psram_kb</code>, <code>max_alloc_kb</code>)</td>
-</tr>
-<tr>
-<td><code>modules/network/[HttpServerModule](../user-guide/network/http-server.md)</code></td>
-<td><code>PalHttp</code></td>
-</tr>
-<tr>
-<td><code>modules/network/[WebSocketModule](../user-guide/network/web-socket.md)</code></td>
-<td><code>PalWs</code></td>
-</tr>
-<tr>
-<td><code>modules/lights/[RipplesEffect](../user-guide/lights/ripples-effect.md)</code></td>
-<td><code>PalHeap</code> (<code>psram_alloc</code> for <code>w·h·d</code> RGB into its <a href="../backend/#databuffert-the-shared-slot-primitive"><code>DataBuffer&lt;RGB&gt;</code></a>)</td>
-</tr>
-<tr>
-<td><code>modules/lights/[ArtnetOutModule](../user-guide/lights/artnet-out.md)</code></td>
-<td><code>PalUdp</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="deferred-pal-files">Deferred pal files<a class="headerlink" href="#deferred-pal-files" title="Permanent link">&para;</a></h2>
-<p>These pal headers will be added as the modules that need them land. Each addition requires a <code>BUDGETS</code> entry in <code>scripts/check_loc.py</code> and the rationale documented in <a href="../../development/backlog/">backlog.md</a>.</p>
+<p><strong>Convention for geometry fields:</strong></p>
 <ul>
-<li><strong><code>PalGpio.h</code></strong> — lands when the FastLED / WS2812 driver does. Will host pin-mode, digital-write, and platform-specific RMT / I2S setup.</li>
-<li><strong>Receive-side UDP</strong> (added to <code>PalUdp.h</code>) — lands with the ArtNet-in module in Release 2.</li>
+<li><code>width_</code>, <code>height_</code>, <code>depth_</code> — <code>uint16_t</code>. All three axes uniform; supports up to 65535 per axis; two bytes each on ESP32.</li>
+<li>Total pixel count (<code>w * h * d</code>, buffers, loop indices) — <code>uint32_t</code>. Required on PC for large screens; promotes cleanly from <code>uint16_t</code> dimensions.</li>
 </ul>
-<h2 id="adding-a-new-pal-file">Adding a new pal file<a class="headerlink" href="#adding-a-new-pal-file" title="Permanent link">&para;</a></h2>
-<p>A new pal file is a <em>structural addition</em> and follows the same rule as adding a new top-level path: paired ADR under <a href="../adr/0001-vendor-cpp-httplib/"><code>docs/developer-guide/adr/</code></a>, entry in <code>scripts/check_loc.py</code> <code>BUDGETS</code>, and a line above in the "Current files" table. The bar is "this concern cannot be expressed by reusing an existing pal file" — see <a href="../../architecture/process/">process architecture → anti-drift</a>.</p>
+<p><strong>Why the type must match exactly:</strong> if the field type has no lvalue-ref overload (e.g. a hypothetical <code>uint16_t</code> field before the <code>Uint16</code> overload was added), the compiler promotes the field to an rvalue and falls through to a <code>FloatConst</code> display-only overload — silently making the control read-only. Always declare backing fields as one of the types in the table above.</p>
 
 
 

@@ -12,13 +12,13 @@
         <meta name="author" content="MoonModules">
       
       
-        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/developer-guide/pal/">
+        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/developer-guide/frontend/">
       
       
-        <link rel="prev" href="../frontend/">
+        <link rel="prev" href="../backend/">
       
       
-        <link rel="next" href="../adr/0001-vendor-cpp-httplib/">
+        <link rel="next" href="../pal/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Pal inventory - projectMM v2</title>
+        <title>Frontend - projectMM v2</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#pal-files-budgets-who-uses-what" class="md-skip">
+        <a href="#frontend" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Pal inventory
+              Frontend
             
           </span>
         </div>
@@ -1173,34 +1173,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../frontend/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Frontend
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -1220,7 +1192,7 @@
   <span class="md-ellipsis">
     
   
-    Pal inventory
+    Frontend
   
 
     
@@ -1238,7 +1210,7 @@
   <span class="md-ellipsis">
     
   
-    Pal inventory
+    Frontend
   
 
     
@@ -1264,10 +1236,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#current-files" class="md-nav__link">
+  <a href="#what-the-frontend-renders" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Current files
+        What the frontend renders
       
     </span>
   </a>
@@ -1275,10 +1247,159 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#module-pal-dependency" class="md-nav__link">
+  <a href="#appjs-section-by-section" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Module ↔ pal dependency
+        app.js — section by section
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="app.js — section by section">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#webgl-previewer-lines-1205" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebGL previewer (lines 1–205)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#websocket-lines-207288" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebSocket (lines 207–288)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#state-update-drag-guard-lines-323435" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State update + drag guard (lines 323–435)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rest-api-lines-470491" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API (lines 470–491)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tree-builder-lines-496515" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tree builder (lines 496–515)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#navigation-lines-518600" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation (lines 518–600)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#render-card-builder-lines-602784" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Render + card builder (lines 602–784)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-picker-lines-786986" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type picker (lines 786–986)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#control-builder-lines-10411213" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control builder (lines 1041–1213)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ota-firmware-update-lines-12871544" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OTA / firmware update (lines 1287–1544)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-status-health-lines-15461595" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System status + health (lines 1546–1595)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#init-lines-15991712" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Init (lines 1599–1712)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stylecss-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        style.css — structure
       
     </span>
   </a>
@@ -1286,21 +1407,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#deferred-pal-files" class="md-nav__link">
+  <a href="#architectural-fit" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Deferred pal files
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#adding-a-new-pal-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Adding a new pal file
+        Architectural fit
       
     </span>
   </a>
@@ -1311,6 +1421,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pal inventory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1640,10 +1778,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#current-files" class="md-nav__link">
+  <a href="#what-the-frontend-renders" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Current files
+        What the frontend renders
       
     </span>
   </a>
@@ -1651,10 +1789,159 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#module-pal-dependency" class="md-nav__link">
+  <a href="#appjs-section-by-section" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Module ↔ pal dependency
+        app.js — section by section
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="app.js — section by section">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#webgl-previewer-lines-1205" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebGL previewer (lines 1–205)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#websocket-lines-207288" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WebSocket (lines 207–288)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#state-update-drag-guard-lines-323435" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        State update + drag guard (lines 323–435)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rest-api-lines-470491" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST API (lines 470–491)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tree-builder-lines-496515" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tree builder (lines 496–515)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#navigation-lines-518600" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation (lines 518–600)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#render-card-builder-lines-602784" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Render + card builder (lines 602–784)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#type-picker-lines-786986" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Type picker (lines 786–986)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#control-builder-lines-10411213" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control builder (lines 1041–1213)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ota-firmware-update-lines-12871544" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OTA / firmware update (lines 1287–1544)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-status-health-lines-15461595" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System status + health (lines 1546–1595)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#init-lines-15991712" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Init (lines 1599–1712)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#stylecss-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        style.css — structure
       
     </span>
   </a>
@@ -1662,21 +1949,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#deferred-pal-files" class="md-nav__link">
+  <a href="#architectural-fit" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Deferred pal files
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#adding-a-new-pal-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Adding a new pal file
+        Architectural fit
       
     </span>
   </a>
@@ -1703,127 +1979,189 @@
   
 
 
-<h1 id="pal-files-budgets-who-uses-what">Pal — files, budgets, who uses what<a class="headerlink" href="#pal-files-budgets-who-uses-what" title="Permanent link">&para;</a></h1>
-<p>The architectural rule for Pal (one place for platform conditionals, partitioned by concern) lives in <a href="../../architecture/system/#pal-the-only-place-platform-conditionals-appear">system.md</a>. This page is the inventory: the current files, their LOC budgets, and which modules depend on which pal.</p>
-<h2 id="current-files">Current files<a class="headerlink" href="#current-files" title="Permanent link">&para;</a></h2>
-<p>Each file has its own <a href="../../architecture/process/#2-guardrails-minimalism-enforced-mechanically">LOC budget</a> enforced by <code>scripts/check_loc.py</code>.</p>
-<table>
-<thead>
-<tr>
-<th>File</th>
-<th>Budget</th>
-<th>Concern</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>src/pal/Pal.h</code></td>
-<td>100</td>
-<td><code>millis</code>, <code>micros</code>, <code>sleep</code>, <code>yield</code>, <code>log_init</code>, <code>on_interrupt</code>; <code>default_http_port</code>, <code>default_scheduler_cores</code></td>
-</tr>
-<tr>
-<td><code>src/pal/PalFs.h</code></td>
-<td>150</td>
-<td><code>fs_exists</code>, <code>fs_read_text</code>, <code>fs_write_text</code> (LittleFS on ESP32; <code>std::filesystem</code> under a <code>state/</code> sandbox on PC)</td>
-</tr>
-<tr>
-<td><code>src/pal/PalRtos.h</code></td>
-<td>100</td>
-<td><code>task_create_pinned</code> (<code>xTaskCreatePinnedToCore</code> on ESP32 with an explicit stack size; <code>std::thread</code> on PC, <code>core_id</code> ignored)</td>
-</tr>
-<tr>
-<td><code>src/pal/PalHeap.h</code></td>
-<td>100</td>
-<td><code>psram_alloc</code> / <code>psram_free</code>; PSRAM preferred (esp32s3), DRAM fallback (esp32dev / no-PSRAM). Both paths pin <code>MALLOC_CAP_8BIT</code> to guarantee byte-addressable memory — without it the allocator can hand back an IRAM-region buffer that faults on the first byte-wide write (LoadStoreError). See <a href="https://github.com/ewowi/projectMM-v2/blob/main/src/pal/PalHeap.h"><code>PalHeap.h</code></a>'s inline comment</td>
-</tr>
-<tr>
-<td><code>src/pal/PalWifi.h</code></td>
-<td>100</td>
-<td><code>wifi_begin</code> / <code>_is_connected</code> / <code>_disconnect</code>, <code>_local_ip</code>, <code>_rssi</code>, <code>_tx_power_dbm</code> / <code>_set_tx_power</code></td>
-</tr>
-<tr>
-<td><code>src/pal/PalUdp.h</code></td>
-<td>150</td>
-<td><code>Udp { begin, send }</code> (<code>WiFiUDP</code> on ESP32; BSD <code>SOCK_DGRAM</code> + <code>SO_BROADCAST</code> on PC). Send-only today — receive lands when ArtNet-in does (Release 2)</td>
-</tr>
-<tr>
-<td><code>src/pal/PalHttp.h</code></td>
-<td>350</td>
-<td>HTTP server (<code>cpp-httplib</code> on PC, <code>ESPAsyncWebServer</code> on ESP32)</td>
-</tr>
-<tr>
-<td><code>src/pal/PalWs.h</code></td>
-<td>450</td>
-<td>WebSocket (POSIX sockets on PC, <code>AsyncWebSocket</code> on ESP32)</td>
-</tr>
-<tr>
-<td><code>src/pal/PalSystemInfo.h</code></td>
-<td>250</td>
-<td><code>chip_model</code>, <code>mac_address</code>, <code>reset_reason_str</code>; heap / psram / fs queries; <code>sketch_kb</code>, <code>build_info</code>, <code>core_temp</code>, <code>platform_version</code></td>
-</tr>
-</tbody>
-</table>
-<p>Two shapes coexist: small platform <em>primitives</em> (<code>Pal</code>, <code>PalFs</code>, <code>PalRtos</code>, <code>PalHeap</code>, <code>PalWifi</code>, <code>PalUdp</code>) and larger <em>wrappers</em> around platform libraries or query surfaces (<code>PalHttp</code> / <code>PalWs</code> / <code>PalSystemInfo</code>). Both are "platform conditionals consolidated in one place" — that is what <code>pal/</code> means in v2, not "small enough to fit in one header."</p>
-<h2 id="module-pal-dependency">Module ↔ pal dependency<a class="headerlink" href="#module-pal-dependency" title="Permanent link">&para;</a></h2>
-<p><code>Pal.h</code> (timing) is used everywhere — too pervasive to list per module. The table below covers the rest. Modules that share pixel data between cores do so through <code>DataBuffer&lt;T&gt;</code> / <code>DataRegistry</code> (in <code>src/core/</code>) rather than through any pal file — see <a href="../backend/#data-sharing">backend.md — Data sharing</a>.</p>
-<table>
-<thead>
-<tr>
-<th>Module</th>
-<th>Pal files used</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>core/MoonModule</code></td>
-<td><code>Pal</code> (timing, <code>check_alloc</code>, <code>free_heap_bytes</code>)</td>
-</tr>
-<tr>
-<td><code>core/Scheduler</code></td>
-<td><code>Pal</code> (timing, <code>yield</code>), <code>PalRtos</code> (<code>task_create_pinned</code>)</td>
-</tr>
-<tr>
-<td><code>modules/system/[SystemStatusModule](../user-guide/system/system-status.md)</code></td>
-<td><code>PalSystemInfo</code> (chip / heap / fs / build info, all queries)</td>
-</tr>
-<tr>
-<td><code>modules/system/[WifiStaModule](../user-guide/system/wifi-sta.md)</code></td>
-<td><code>PalWifi</code> (the whole <code>wifi_*</code> surface), <code>PalFs</code> (<code>/wifi.json</code> read/write)</td>
-</tr>
-<tr>
-<td><code>modules/system/[StateStoreModule](../user-guide/system/state-store.md)</code></td>
-<td><code>PalFs</code> (<code>/modules.json</code> + per-module state files)</td>
-</tr>
-<tr>
-<td><code>modules/system/MemTracker</code></td>
-<td><code>PalSystemInfo</code> (<code>free_heap_kb</code>, <code>free_psram_kb</code>, <code>max_alloc_kb</code>)</td>
-</tr>
-<tr>
-<td><code>modules/network/[HttpServerModule](../user-guide/network/http-server.md)</code></td>
-<td><code>PalHttp</code></td>
-</tr>
-<tr>
-<td><code>modules/network/[WebSocketModule](../user-guide/network/web-socket.md)</code></td>
-<td><code>PalWs</code></td>
-</tr>
-<tr>
-<td><code>modules/lights/[RipplesEffect](../user-guide/lights/ripples-effect.md)</code></td>
-<td><code>PalHeap</code> (<code>psram_alloc</code> for <code>w·h·d</code> RGB into its <a href="../backend/#databuffert-the-shared-slot-primitive"><code>DataBuffer&lt;RGB&gt;</code></a>)</td>
-</tr>
-<tr>
-<td><code>modules/lights/[ArtnetOutModule](../user-guide/lights/artnet-out.md)</code></td>
-<td><code>PalUdp</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="deferred-pal-files">Deferred pal files<a class="headerlink" href="#deferred-pal-files" title="Permanent link">&para;</a></h2>
-<p>These pal headers will be added as the modules that need them land. Each addition requires a <code>BUDGETS</code> entry in <code>scripts/check_loc.py</code> and the rationale documented in <a href="../../development/backlog/">backlog.md</a>.</p>
+<h1 id="frontend">Frontend<a class="headerlink" href="#frontend" title="Permanent link">&para;</a></h1>
+<p>The frontend is three files baked into the firmware binary as a single gzip-compressed header (<code>src/frontend/frontend_bundle.h</code>). No framework, no build step, no Node.js dependency. The browser gets one HTML page, one JS file, one CSS file — all from the device.</p>
+<div class="highlight"><pre><span></span><code>src/frontend/
+  index.html          — static shell: DOM skeleton, no logic
+  app.js              — all behaviour: WebSocket, REST, rendering
+  style.css           — all presentation: layout, theming, control widgets
+  frontend_bundle.h   — gzip of the three above, generated by scripts/gen_frontend_bundle.py
+</code></pre></div>
+<p><code>gen_frontend_bundle.py</code> concatenates the three files into one gzip blob and writes a C array. The firmware includes the header; <code>HttpServerModule</code> serves it from RODATA with <code>Content-Encoding: gzip</code> and <code>Cache-Control: no-cache</code>. The browser decompresses transparently.</p>
+<hr />
+<h2 id="what-the-frontend-renders">What the frontend renders<a class="headerlink" href="#what-the-frontend-renders" title="Permanent link">&para;</a></h2>
+<p>The frontend is a <strong>generic renderer of the module model</strong> described in <a href="../../architecture/system/">system.md</a>. It does not know about lights, effects, or any specific module type. Everything it displays comes from two JSON wire formats the backend sends:</p>
+<p><strong>Schema</strong> (<code>{"t":"schema", "modules":[…]}</code>): structure of the module tree. Each module entry carries <code>id</code>, <code>type</code>, <code>category</code>, <code>core</code>, memory sizes, and a <code>controls</code> array. Each control carries <code>key</code>, <code>type</code> (the UI kind), <code>value</code>, and optional <code>min</code>/<code>max</code>/<code>default</code>/<code>options</code>. The frontend rebuilds or patches the DOM from this.</p>
+<p><strong>State</strong> (<code>[{id, controls:{key:value,…}, timing:{…}}, …]</code>): current values of all controls plus per-module timing. The frontend patches existing DOM elements in-place — no rebuild.</p>
+<p><strong>Binary frame</strong> (<code>ArrayBuffer</code>, magic byte <code>0x02</code>): a pixel blob from <code>PreviewModule</code>. <code>PreviewModule</code> reads <code>RipplesEffect</code>'s <a href="../backend/#databuffert-the-shared-slot-primitive"><code>DataBuffer&lt;RGB&gt;</code></a> and streams it over WebSocket. The frontend renders it into the WebGL canvas. This is the only domain-specific thing in the frontend, and it is isolated to <code>renderPixelFrame()</code> / the GL functions at the top of <code>app.js</code>.</p>
+<hr />
+<h2 id="appjs-section-by-section">app.js — section by section<a class="headerlink" href="#appjs-section-by-section" title="Permanent link">&para;</a></h2>
+<h3 id="webgl-previewer-lines-1205">WebGL previewer (lines 1–205)<a class="headerlink" href="#webgl-previewer-lines-1205" title="Permanent link">&para;</a></h3>
+<p>Renders binary pixel frames as a 3-D point cloud. The wire format is <code>[0x02][w lo][w hi][h lo][h hi][d lo][d hi][R G B …]</code> — one RGB triplet per pixel, row-major, depth-last. The renderer:</p>
 <ul>
-<li><strong><code>PalGpio.h</code></strong> — lands when the FastLED / WS2812 driver does. Will host pin-mode, digital-write, and platform-specific RMT / I2S setup.</li>
-<li><strong>Receive-side UDP</strong> (added to <code>PalUdp.h</code>) — lands with the ArtNet-in module in Release 2.</li>
+<li>initialises a WebGL context on <code>&lt;canvas id="preview"&gt;</code> lazily on first binary frame</li>
+<li>builds interleaved <code>[x, y, z, r, g, b]</code> vertex data, normalised to <code>[−0.5, 0.5]</code>, skipping black pixels</li>
+<li>uploads to a single <code>DYNAMIC_DRAW</code> buffer and draws with <code>gl.POINTS</code></li>
+<li>supports mouse-drag orbit, scroll-zoom, and touch-orbit</li>
+<li>shrinks the canvas as the user scrolls down (scroll listener in the Init section)</li>
 </ul>
-<h2 id="adding-a-new-pal-file">Adding a new pal file<a class="headerlink" href="#adding-a-new-pal-file" title="Permanent link">&para;</a></h2>
-<p>A new pal file is a <em>structural addition</em> and follows the same rule as adding a new top-level path: paired ADR under <a href="../adr/0001-vendor-cpp-httplib/"><code>docs/developer-guide/adr/</code></a>, entry in <code>scripts/check_loc.py</code> <code>BUDGETS</code>, and a line above in the "Current files" table. The bar is "this concern cannot be expressed by reusing an existing pal file" — see <a href="../../architecture/process/">process architecture → anti-drift</a>.</p>
+<p><strong>Minimalism note</strong>: the WebGL code is self-contained and purely presentational. It has no knowledge of what the pixels represent — it accepts any <code>w × h × d</code> RGB blob. Adding a 2-D canvas fallback or a different effect type does not require touching this section.</p>
+<h3 id="websocket-lines-207288">WebSocket (lines 207–288)<a class="headerlink" href="#websocket-lines-207288" title="Permanent link">&para;</a></h3>
+<p><code>connectWs()</code> opens <code>ws://&lt;hostname&gt;:81</code>. Three message paths:</p>
+<table>
+<thead>
+<tr>
+<th>Message</th>
+<th>Condition</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ArrayBuffer</code></td>
+<td><code>evt.data instanceof ArrayBuffer</code></td>
+<td><code>renderPixelFrame()</code></td>
+</tr>
+<tr>
+<td><code>{t:"schema"}</code></td>
+<td>JSON with <code>t</code> field</td>
+<td><code>schemaStructureChanged_()</code> → full <code>render()</code> or <code>patchControlSchema_()</code></td>
+</tr>
+<tr>
+<td>array (no <code>t</code>)</td>
+<td>default</td>
+<td><code>handleStateUpdate()</code></td>
+</tr>
+<tr>
+<td><code>{t:"log"}</code></td>
+<td>JSON with <code>t:"log"</code></td>
+<td><code>appendLogLine()</code></td>
+</tr>
+</tbody>
+</table>
+<p>Auto-reconnect with exponential backoff (500 ms → 5 s cap). 25 s heartbeat ping to keep Safari from killing idle connections. Pauses rendering when the tab is hidden (<code>visibilitychange</code>) to avoid processing frames that will never be shown.</p>
+<h3 id="state-update-drag-guard-lines-323435">State update + drag guard (lines 323–435)<a class="headerlink" href="#state-update-drag-guard-lines-323435" title="Permanent link">&para;</a></h3>
+<p><code>handleStateUpdate(state)</code> iterates the state array and patches each control's DOM element by <code>data-mid</code> + <code>data-key</code> attribute lookup. The <strong>drag guard</strong> prevents the 1 Hz backend push from overwriting a slider the user is actively dragging:</p>
+<ul>
+<li><code>dragTs[moduleId + ':' + key]</code> stores the timestamp of the last <code>pointerdown</code> or <code>input</code> event on each control</li>
+<li>updates are skipped if <code>Date.now() − lastDrag ≤ 2000 ms</code> or if the input is the <code>document.activeElement</code></li>
+<li>2000 ms is deliberately wider than the 1 s push cadence to absorb the race at the boundary</li>
+</ul>
+<p><code>schemaStructureChanged_()</code> compares the incoming module id list against <code>lastSchemaIds_</code>. If only control values changed (geometry resize, schemaDirty from a slider), it calls <code>patchControlSchema_()</code> to update <code>min</code>/<code>max</code>/<code>value</code> in-place. If the module list itself changed, it calls <code>render()</code> for a full DOM rebuild.</p>
+<h3 id="rest-api-lines-470491">REST API (lines 470–491)<a class="headerlink" href="#rest-api-lines-470491" title="Permanent link">&para;</a></h3>
+<p>Two REST calls at startup:</p>
+<ul>
+<li><code>GET /api/types</code> → <code>knownTypes[]</code> — the registered type registry, used by the type picker</li>
+<li><code>GET /api/modules</code> → initial <code>render()</code> — first paint before any WS schema arrives</li>
+</ul>
+<p>After that, all live updates come via WebSocket. REST is used only for mutations (add, delete, replace, reorder, postControl, reboot, OTA upload).</p>
+<h3 id="tree-builder-lines-496515">Tree builder (lines 496–515)<a class="headerlink" href="#tree-builder-lines-496515" title="Permanent link">&para;</a></h3>
+<p><code>buildTree(modules)</code> converts the flat module array from the API into a parent-child tree using <code>parent_id</code>. Core affinity is propagated down to children so the badge always shows the root core the child runs inside.</p>
+<h3 id="navigation-lines-518600">Navigation (lines 518–600)<a class="headerlink" href="#navigation-lines-518600" title="Permanent link">&para;</a></h3>
+<p>The side nav shows one button per root module. Clicking selects it; <code>renderSelected()</code> renders only that root's card. Order is persisted via <code>POST /api/modules/reorder</code> — drag and drop on the nav buttons. Selection is persisted in <code>localStorage</code> (<code>pmm_selectedRoot</code>).</p>
+<h3 id="render-card-builder-lines-602784">Render + card builder (lines 602–784)<a class="headerlink" href="#render-card-builder-lines-602784" title="Permanent link">&para;</a></h3>
+<p><code>render(modules)</code> → <code>buildTree()</code> → <code>updateNav()</code> + <code>renderSelected()</code> → <code>buildCard()</code>.</p>
+<p><code>buildCard(mod)</code> builds one module card:
+- header: setup-ok dot, name, replace button, id, category badge, core badge, timing (fps/ms toggle)
+- controls: one row per control, delegated to <code>buildControl()</code>
+- children: recursively nested cards with drag-to-reorder
+- actions: <code>+ add child</code>, <code>✕ delete</code></p>
+<p>The <code>TYPE_TO_DOC</code> map (lines 620–635) is the only place in the frontend that names specific module types — it maps type names to documentation URLs. This is presentational metadata, not logic. Everything else in <code>buildCard</code> is driven by the schema fields (<code>category</code>, <code>core</code>, <code>controls</code>) and is completely generic.</p>
+<h3 id="type-picker-lines-786986">Type picker (lines 786–986)<a class="headerlink" href="#type-picker-lines-786986" title="Permanent link">&para;</a></h3>
+<p>Context-aware module type picker: emoji chip filter + text search. Filters by <code>allowedChildCategories</code> from the parent's type metadata when adding a child. Replace mode restricts to the same category. Double-click or Enter to confirm. All state is local to the closure; no global side effects.</p>
+<h3 id="control-builder-lines-10411213">Control builder (lines 1041–1213)<a class="headerlink" href="#control-builder-lines-10411213" title="Permanent link">&para;</a></h3>
+<p><code>buildControl(moduleId, ctrl)</code> maps <code>ctrl.type</code> to a DOM widget:</p>
+<table>
+<thead>
+<tr>
+<th><code>ctrl.type</code></th>
+<th>Widget</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>slider</code></td>
+<td><code>&lt;input type="range"&gt;</code></td>
+<td>pointerdown + input → dragTs; 150 ms debounce → postControl</td>
+</tr>
+<tr>
+<td><code>display</code></td>
+<td><code>&lt;span&gt;</code></td>
+<td>read-only; updated by handleStateUpdate</td>
+</tr>
+<tr>
+<td><code>time</code></td>
+<td><code>&lt;span&gt;</code></td>
+<td>formatted as d/h/m/s by fmtTime</td>
+</tr>
+<tr>
+<td><code>progress</code></td>
+<td><code>&lt;progress&gt;</code> + text</td>
+<td>read-only bar with value/max display</td>
+</tr>
+<tr>
+<td><code>button</code></td>
+<td><code>&lt;button&gt;</code></td>
+<td>sends value=1 on click</td>
+</tr>
+<tr>
+<td><code>text</code></td>
+<td><code>&lt;input type="text"&gt;</code></td>
+<td>500 ms debounce → postControl</td>
+</tr>
+<tr>
+<td><code>password</code></td>
+<td><code>&lt;input type="password"&gt;</code></td>
+<td>hold-to-peek button; never shows current value</td>
+</tr>
+<tr>
+<td><code>toggle</code></td>
+<td><code>&lt;input type="checkbox"&gt;</code></td>
+<td>immediate postControl on change</td>
+</tr>
+<tr>
+<td><code>select</code></td>
+<td><code>&lt;select&gt;</code></td>
+<td>options from schema; immediate postControl on change</td>
+</tr>
+</tbody>
+</table>
+<p>Every interactive widget stamps <code>data-mid</code> and <code>data-key</code> attributes so <code>handleStateUpdate</code> and <code>patchControlSchema_</code> can locate it with a single <code>querySelector</code>.</p>
+<h3 id="ota-firmware-update-lines-12871544">OTA / firmware update (lines 1287–1544)<a class="headerlink" href="#ota-firmware-update-lines-12871544" title="Permanent link">&para;</a></h3>
+<p><code>buildOtaPanel()</code> is injected into any card whose <code>mod.type === 'FirmwareUpdateModule'</code>. Two tabs: file upload (<code>POST /api/firmware</code> with XHR for upload-progress events) and GitHub releases (fetches <code>api.github.com/repos/ewowi/projectMM/releases</code>, finds the <code>projectMM-&lt;env&gt;.bin</code> asset, sends the URL to the device for on-device download via <code>POST /api/firmware/url</code>). The OTA panel is the only place that checks <code>mod.type</code> for behaviour, not presentation.</p>
+<h3 id="system-status-health-lines-15461595">System status + health (lines 1546–1595)<a class="headerlink" href="#system-status-health-lines-15461595" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>loadSystemStatus()</code>: <code>GET /api/system</code> every 2 s → status bar (uptime, heap, temperature)</li>
+<li><code>checkForUpdate()</code>: compares <code>firmware_version</code> from <code>/api/system</code> against GitHub releases; shows update badge if a newer non-prerelease exists with a matching <code>projectMM-&lt;env&gt;.bin</code> asset</li>
+<li><code>loadHealth()</code>: <code>GET /api/test</code> every 30 s → health panel (pass/fail count + per-case table)</li>
+</ul>
+<h3 id="init-lines-15991712">Init (lines 1599–1712)<a class="headerlink" href="#init-lines-15991712" title="Permanent link">&para;</a></h3>
+<p><code>DOMContentLoaded</code> wires all the above: <code>initGL()</code>, <code>loadTypes()</code>, <code>loadModules()</code>, <code>connectWs()</code>, <code>loadHealth()</code>, then event listeners for theme toggle, nav hamburger, reboot, reconnect, scroll-shrink, visibility change, and Safari <code>pageshow</code> (bfcache resume).</p>
+<hr />
+<h2 id="stylecss-structure">style.css — structure<a class="headerlink" href="#stylecss-structure" title="Permanent link">&para;</a></h2>
+<p>Seven logical sections (matching the HTML skeleton):</p>
+<ol>
+<li><strong>CSS custom properties + reset</strong> — <code>--bg</code>, <code>--fg</code>, <code>--accent</code>, <code>--border</code> for light/dark theming via <code>[data-theme]</code> attribute on <code>&lt;body&gt;</code></li>
+<li><strong>Status bar</strong> — fixed top strip: brand, device name, WS dot, action buttons</li>
+<li><strong>Side nav</strong> — slide-in drawer on narrow viewports, always-visible sidebar on wide; drag-handle for reorder; footer with community links</li>
+<li><strong>Preview canvas</strong> — full-width WebGL canvas, square aspect ratio, shrinks on scroll</li>
+<li><strong>Module cards</strong> — <code>.module-card</code>, <code>.module-header</code>, <code>.control-row</code>, <code>.children</code> nesting; core-badge colour by core number; category emoji badge</li>
+<li><strong>Control widgets</strong> — <code>input[type=range]</code>, <code>.progress-bar</code>, <code>.select-input</code>, <code>.text-input</code>, <code>.toggle-input</code>, <code>.reset-btn</code>, <code>.action-btn</code>; reset button turns accent-coloured when value differs from default</li>
+<li><strong>Panels</strong> — log, health, OTA; <code>&lt;details&gt;</code> for collapsible sections</li>
+</ol>
+<p>No classes encode domain semantics. <code>.module-card</code> is generic; it renders the same for a <code>system</code> module or an <code>effect</code> module. The only domain-aware CSS is the <code>CATEGORY_EMOJI</code> map in <code>app.js</code> (<code>app.js:668</code>) which maps category strings to emoji — and that is in JS, not CSS.</p>
+<hr />
+<h2 id="architectural-fit">Architectural fit<a class="headerlink" href="#architectural-fit" title="Permanent link">&para;</a></h2>
+<p>The frontend fits <a href="../../architecture/system/">system.md</a>'s four-piece model as the consumer of the control/schema surface:</p>
+<div class="highlight"><pre><span></span><code>Browser
+  ├── schema/state WS ──→ renders MoonModule tree generically
+  ├── binary WS ────────→ WebGL point cloud (only domain-specific section)
+  └── REST ─────────────→ mutations (add/delete/reorder/control/reboot/OTA)
+</code></pre></div>
+<p><strong>What is generic</strong>: navigation, card layout, all control widgets, type picker, timing display, health panel, log panel. None of these know about lights.</p>
+<p><strong>What is domain-specific</strong>: <code>renderPixelFrame()</code> (expects RGB pixel blobs) and <code>TYPE_TO_DOC</code> (maps module type names to doc URLs). Both are isolated — replacing the pixel protocol or the doc site requires changing one function each.</p>
+<p><strong>Minimalism invariant</strong>: no framework, no build step, no npm. Adding a new control type means one <code>else if</code> branch in <code>buildControl()</code>. Adding a new module type requires nothing — the schema drives everything. The frontend grows only when the wire protocol grows.</p>
 
 
 

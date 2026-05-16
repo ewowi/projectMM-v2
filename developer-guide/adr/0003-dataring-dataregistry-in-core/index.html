@@ -15,6 +15,10 @@
         <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/developer-guide/adr/0003-dataring-dataregistry-in-core/">
       
       
+        <link rel="prev" href="../0002-arduinojson-lib-deps/">
+      
+      
+        <link rel="next" href="../../../development/">
       
       
         
@@ -25,7 +29,7 @@
     
     
       
-        <title>ADR 0003 — DataRing<T> and DataRegistry in core - projectMM v2</title>
+        <title>0003 — DataRing + DataRegistry in core - projectMM v2</title>
       
     
     
@@ -76,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#adr-0003-dataringt-and-dataregistry-in-core" class="md-skip">
+        <a href="#adr-0003-databuffert-and-dataregistry-in-core" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ADR 0003 — DataRing&lt;T&gt; and DataRegistry in core
+              0003 — DataRing + DataRegistry in core
             
           </span>
         </div>
@@ -280,10 +284,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../../" class="md-tabs__link">
           
   
@@ -1026,26 +1032,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -1063,7 +1074,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1137,6 +1148,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../../backend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../frontend/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Frontend
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../pal/" class="md-nav__link">
         
   
@@ -1162,26 +1229,31 @@
                 
   
   
+    
   
   
+  
     
     
     
     
       
       
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
         
           
-          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="">
             
   
   
@@ -1199,8 +1271,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_4">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_6">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1261,6 +1333,114 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0003 — DataRing + DataRegistry in core
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0003 — DataRing + DataRegistry in core
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1503,9 +1683,9 @@
   
 
 
-<h1 id="adr-0003-dataringt-and-dataregistry-in-core">ADR 0003 — <code>DataRing&lt;T&gt;</code> and <code>DataRegistry</code> in core<a class="headerlink" href="#adr-0003-dataringt-and-dataregistry-in-core" title="Permanent link">&para;</a></h1>
+<h1 id="adr-0003-databuffert-and-dataregistry-in-core">ADR 0003 — <code>DataBuffer&lt;T&gt;</code> and <code>DataRegistry</code> in core<a class="headerlink" href="#adr-0003-databuffert-and-dataregistry-in-core" title="Permanent link">&para;</a></h1>
 <p><strong>Status:</strong> Accepted<br />
-<strong>Sprint:</strong> 13<br />
+<strong>Sprint:</strong> 13 (landed as <code>DataRing&lt;T&gt;</code>); revised same release to <code>DataBuffer&lt;T&gt;</code> (ring concept removed — see note below)<br />
 <strong>Date:</strong> 2026-05-14</p>
 <h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
 <p><code>FrameRing</code> (Sprint 7) and <code>PixelRegistry</code> (Sprint 6) live in <code>src/modules/lights/</code>. Sprint 13 replaces both with generic types. The question is whether those generic types belong in <code>src/core/</code> or stay in <code>src/modules/</code>.</p>
@@ -1515,20 +1695,21 @@
 <strong>Not in core:</strong> networking, HTTP / WebSocket / REST, OTA, NTP, state persistence, lighting.</p>
 </blockquote>
 <h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
-<p><code>DataRing&lt;T&gt;</code> and <code>DataRegistry</code> are placed in <code>src/core/</code>.</p>
+<p><code>DataBuffer&lt;T&gt;</code> and <code>DataRegistry</code> are placed in <code>src/core/</code>.</p>
 <p><strong>Justification:</strong></p>
 <ul>
-<li><code>DataRing&lt;T&gt;</code> is a concurrency primitive — a depth-configurable SPSC ring with acquire/release memory ordering. It is as domain-neutral as <code>std::atomic</code>. It belongs alongside <code>Scheduler</code> which already manages cross-core task dispatch.</li>
-<li><code>DataRegistry</code> is a typed singleton store keyed by string id. It is structurally identical to <code>ModuleManager</code> (owns objects, resolves by name) and belongs in the same layer.</li>
-<li>Neither type references <code>RGB</code>, pixel geometry, lighting, networking, or any other domain. The template parameter <code>T</code> is supplied by the leaf module (<code>RipplesEffect</code> uses <code>DataRing&lt;RGB&gt;</code>); core never sees <code>RGB</code>.</li>
-<li>The alternative — keep them in <code>src/modules/lights/</code> — would mean a future audio or sensor module wanting the same SPSC pattern would either duplicate the ring or take a dependency on the lights module. That is the v1 drift pattern.</li>
+<li><code>DataBuffer&lt;T&gt;</code> is a concurrency primitive — a single-slot SPSC buffer with acquire/release memory ordering. It is as domain-neutral as <code>std::atomic</code>. It belongs alongside <code>Scheduler</code> which already manages cross-core task dispatch.</li>
+<li><code>DataRegistry</code> is a typed singleton store keyed by string id. It is structurally identical to <code>ModuleManager</code> (owns resolution by name) and belongs in the same layer.</li>
+<li>Neither type references <code>RGB</code>, pixel geometry, lighting, networking, or any other domain. The template parameter <code>T</code> is supplied by the leaf module (<code>RipplesEffect</code> uses <code>DataBuffer&lt;RGB&gt;</code>); core never sees <code>RGB</code>.</li>
+<li>The alternative — keep them in <code>src/modules/lights/</code> — would mean a future audio or sensor module wanting the same SPSC pattern would either duplicate the buffer or take a dependency on the lights module. That is the v1 drift pattern.</li>
 </ul>
+<p><strong>Note on ring depth.</strong> The original Sprint 13 design used a depth-configurable ring (<code>DataRing&lt;T&gt;</code>, <code>allocate(count, depth)</code>). This was removed in the same release: a ring with depth &gt; 1 <em>within one module</em> is overdesign — the double-buffer boundary belongs between two separate modules (producer owns one <code>DataBuffer&lt;T&gt;</code> slot, consumer owns its own <code>DataBuffer&lt;T&gt;</code> slot). The file was renamed <code>DataBuffer.h</code> and the depth parameter dropped. See <a href="../../../architecture/system/#hot-path-data-sharing-between-modules">architecture — hot-path data sharing</a> and <a href="../../backend/#data-sharing">backend — data sharing</a> for the rationale.</p>
 <h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>src/core/</code> gains two new files: <code>DataRing.h</code> and <code>DataRegistry.h</code>.</li>
+<li><code>src/core/</code> gains two new files: <code>DataBuffer.h</code> and <code>DataRegistry.h</code>.</li>
 <li><code>src/modules/lights/FrameRing.h</code> and <code>PixelRegistry.h</code> are deleted.</li>
 <li><code>check_loc.py</code> core budget must be bumped to account for the two new files. The bump is explicit and PR-visible, consistent with the minimalism rule.</li>
-<li>Future non-lights modules that need SPSC producer/consumer buffers use <code>DataRing&lt;T&gt;</code> directly from core — no cross-domain dependency.</li>
+<li>Future non-lights modules that need SPSC producer/consumer buffers use <code>DataBuffer&lt;T&gt;</code> directly from core — no cross-domain dependency.</li>
 </ul>
 
 
