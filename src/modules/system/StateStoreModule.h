@@ -13,12 +13,14 @@
 //      `add()`. We do this via `setProps()` (MoonModule contract: stashes
 //      props into pendingProps_ which addControl() then drains).
 //
+// On loop1s: check if the module list ({type,id} array) changed and write
+//   /modules.json immediately if so. 1s cadence so a crash shortly after
+//   add/remove doesn't lose the structural change.
+//
 // On loop10s (cheap cadence — flash wear is real):
-//   1. Walk the current module list. If the {type,id} list changed (add /
-//      remove / reorder), write /modules.json.
-//   2. For each module, ask it to serialise its state into JSON, compare to
+//   1. For each module, ask it to serialise its state into JSON, compare to
 //      the last-written copy. If different, write /state/<id>.json.
-//   3. Delete /state/<id>.json files whose ids are no longer in the list.
+//   2. Delete /state/<id>.json files whose ids are no longer in the list.
 //
 // Why poll-based dirty detection instead of explicit callbacks: the data is
 // small (a few hundred bytes per module), the cadence is 10 seconds, the
@@ -51,20 +53,25 @@ class StateStoreModule : public MoonModule {
     load_modules_from_disk_();
     // Seed the dirty-detection caches with what's on disk now, so the first
     // loop10s pass doesn't immediately rewrite anything we just loaded.
-    snapshot_current_(last_modules_json_, last_state_json_);
+    snapshot_modules_(last_modules_json_);
+    snapshot_state_(last_state_json_);
   }
 
-  void loop10s() override {
+  void loop1s() override {
     if (!manager_) return;
     std::string fresh_modules;
-    std::map<std::string, std::string> fresh_state;
-    snapshot_current_(fresh_modules, fresh_state);
-
+    snapshot_modules_(fresh_modules);
     if (fresh_modules != last_modules_json_) {
       pal::fs_write_text(kModulesPath, fresh_modules);
       log("[state] saved %s (%u bytes)\n", kModulesPath, (unsigned)fresh_modules.size());
       last_modules_json_ = std::move(fresh_modules);
     }
+  }
+
+  void loop10s() override {
+    if (!manager_) return;
+    std::map<std::string, std::string> fresh_state;
+    snapshot_state_(fresh_state);
 
     for (const auto& kv : fresh_state) {
       auto it = last_state_json_.find(kv.first);
@@ -96,18 +103,26 @@ class StateStoreModule : public MoonModule {
 
   // Serialise the current module list as JSON; serialise each module's state
   // into `state_map`. Lock the manager throughout so the snapshot is consistent.
-  void snapshot_current_(std::string& modules_out,
-                         std::map<std::string, std::string>& state_out) const {
+  void snapshot_modules_(std::string& modules_out) const {
     JsonDocument list;
     JsonArray arr = list.to<JsonArray>();
     std::lock_guard<std::recursive_mutex> lk(manager_->mutex());
     for (size_t i = 0; i < manager_->size(); ++i) {
       MoonModule* m = manager_->at(i);
-      if (std::strcmp(m->type(), "state-store") == 0) continue;  // don't persist self
+      if (std::strcmp(m->type(), "state-store") == 0) continue;
       JsonObject e = arr.add<JsonObject>();
       e["type"] = m->type();
       e["id"]   = m->id();
+    }
+    modules_out.reserve(measureJson(list) + 1);
+    serializeJson(list, modules_out);
+  }
 
+  void snapshot_state_(std::map<std::string, std::string>& state_out) const {
+    std::lock_guard<std::recursive_mutex> lk(manager_->mutex());
+    for (size_t i = 0; i < manager_->size(); ++i) {
+      MoonModule* m = manager_->at(i);
+      if (std::strcmp(m->type(), "state-store") == 0) continue;
       JsonDocument st;
       JsonObject root = st.to<JsonObject>();
       m->saveBaseState(root);
@@ -117,8 +132,6 @@ class StateStoreModule : public MoonModule {
       serializeJson(st, body);
       state_out.emplace(std::string(m->id()), std::move(body));
     }
-    modules_out.reserve(measureJson(list) + 1);
-    serializeJson(list, modules_out);
   }
 
   void load_modules_from_disk_() {

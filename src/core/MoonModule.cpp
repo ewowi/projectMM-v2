@@ -107,6 +107,7 @@ void MoonModule::saveState(JsonObject state) const {
     switch (d.type) {
       case CtrlType::Float:      state[d.key] = *reinterpret_cast<const float*>(d.ptr); break;
       case CtrlType::Uint8:      state[d.key] = (int)*reinterpret_cast<const uint8_t*>(d.ptr); break;
+      case CtrlType::Uint16:     state[d.key] = (int)*reinterpret_cast<const uint16_t*>(d.ptr); break;
       case CtrlType::Uint32:     state[d.key] = *reinterpret_cast<const uint32_t*>(d.ptr); break;
       case CtrlType::Bool:       state[d.key] = *reinterpret_cast<const bool*>(d.ptr); break;
       case CtrlType::EditStr:    state[d.key] = reinterpret_cast<const char*>(d.ptr); break;
@@ -128,6 +129,12 @@ void MoonModule::addControl(float& v, const char* k, const char* u, float lo, fl
 void MoonModule::addControl(uint8_t& v, const char* k, const char* u, uint8_t lo, uint8_t hi) {
   ensureCapacity_();
   controls_[controlCount_++] = {k, u, CtrlType::Uint8, reinterpret_cast<uintptr_t>(&v), (float)lo, (float)hi, (float)v, nullptr, 0, false, false};
+  applyPending_(controls_[controlCount_ - 1]);
+}
+
+void MoonModule::addControl(uint16_t& v, const char* k, const char* u, uint16_t lo, uint16_t hi) {
+  ensureCapacity_();
+  controls_[controlCount_++] = {k, u, CtrlType::Uint16, reinterpret_cast<uintptr_t>(&v), (float)lo, (float)hi, (float)v, nullptr, 0, false, false};
   applyPending_(controls_[controlCount_ - 1]);
 }
 
@@ -267,25 +274,21 @@ void MoonModule::getSchema(JsonObject out) const {
     switch (d.type) {
       case CtrlType::Float:
         c["min"] = d.minVal; c["max"] = d.maxVal; c["default"] = d.defVal;
-        c["value"] = *reinterpret_cast<const float*>(d.ptr);
-        break;
+        c["value"] = *reinterpret_cast<const float*>(d.ptr); break;
       case CtrlType::Uint8:
         c["min"] = d.minVal; c["max"] = d.maxVal; c["default"] = d.defVal;
-        c["value"] = *reinterpret_cast<const uint8_t*>(d.ptr);
-        c["integer"] = true;
-        break;
+        c["value"] = *reinterpret_cast<const uint8_t*>(d.ptr); c["integer"] = true; break;
+      case CtrlType::Uint16:
+        c["min"] = d.minVal; c["max"] = d.maxVal; c["default"] = d.defVal;
+        c["value"] = *reinterpret_cast<const uint16_t*>(d.ptr); c["integer"] = true; break;
       case CtrlType::Uint32:
         c["min"] = d.minVal; c["max"] = d.maxVal; c["default"] = d.defVal;
-        c["value"] = *reinterpret_cast<const uint32_t*>(d.ptr);
-        c["integer"] = true;
-        break;
+        c["value"] = *reinterpret_cast<const uint32_t*>(d.ptr); c["integer"] = true; break;
       case CtrlType::Bool:
         c["min"] = d.minVal; c["max"] = d.maxVal; c["default"] = d.defVal;
-        c["value"] = *reinterpret_cast<const bool*>(d.ptr);
-        break;
+        c["value"] = *reinterpret_cast<const bool*>(d.ptr); break;
       case CtrlType::FloatConst:
-        c["min"] = d.minVal; c["max"] = d.maxVal; c["value"] = d.defVal;
-        break;
+        c["min"] = d.minVal; c["max"] = d.maxVal; c["value"] = d.defVal; break;
       case CtrlType::String:
         c["value"] = reinterpret_cast<const char*>(d.ptr);
         break;
@@ -310,6 +313,7 @@ void MoonModule::getControlValues(JsonObject out) const {
     switch (d.type) {
       case CtrlType::Float:      out[d.key] = *reinterpret_cast<const float*>(d.ptr); break;
       case CtrlType::Uint8:      out[d.key] = *reinterpret_cast<const uint8_t*>(d.ptr); break;
+      case CtrlType::Uint16:     out[d.key] = *reinterpret_cast<const uint16_t*>(d.ptr); break;
       case CtrlType::Uint32:     out[d.key] = *reinterpret_cast<const uint32_t*>(d.ptr); break;
       case CtrlType::Bool:       out[d.key] = *reinterpret_cast<const bool*>(d.ptr); break;
       case CtrlType::FloatConst: out[d.key] = d.defVal; break;
@@ -331,6 +335,7 @@ void MoonModule::clearControls() {
     switch (d.type) {
       case CtrlType::Float:   (*pendingProps_)[d.key] = *reinterpret_cast<float*>(d.ptr); break;
       case CtrlType::Uint8:   (*pendingProps_)[d.key] = *reinterpret_cast<uint8_t*>(d.ptr); break;
+      case CtrlType::Uint16:  (*pendingProps_)[d.key] = *reinterpret_cast<uint16_t*>(d.ptr); break;
       case CtrlType::Select:  (*pendingProps_)[d.key] = *reinterpret_cast<uint8_t*>(d.ptr); break;
       case CtrlType::Uint32:  (*pendingProps_)[d.key] = *reinterpret_cast<uint32_t*>(d.ptr); break;
       case CtrlType::Bool:    (*pendingProps_)[d.key] = *reinterpret_cast<bool*>(d.ptr); break;
@@ -392,6 +397,7 @@ void MoonModule::applyPending_(const ControlDescriptor& d) {
     case CtrlType::Float:   *reinterpret_cast<float*>(d.ptr) = v.as<float>(); break;
     case CtrlType::Uint8:
     case CtrlType::Select:  *reinterpret_cast<uint8_t*>(d.ptr) = v.as<uint8_t>(); break;
+    case CtrlType::Uint16:  *reinterpret_cast<uint16_t*>(d.ptr) = v.as<uint16_t>(); break;
     case CtrlType::Uint32:  *reinterpret_cast<uint32_t*>(d.ptr) = v.as<uint32_t>(); break;
     case CtrlType::Bool:    *reinterpret_cast<bool*>(d.ptr) = v.as<bool>(); break;
     case CtrlType::EditStr: {
@@ -431,6 +437,7 @@ void MoonModule::writeThrough_(const ControlDescriptor& d, float value) {
     case CtrlType::Float:   *reinterpret_cast<float*>(d.ptr) = value; break;
     case CtrlType::Uint8:
     case CtrlType::Select:  *reinterpret_cast<uint8_t*>(d.ptr) = (uint8_t)value; break;
+    case CtrlType::Uint16:  *reinterpret_cast<uint16_t*>(d.ptr) = (uint16_t)value; break;
     case CtrlType::Uint32:  *reinterpret_cast<uint32_t*>(d.ptr) = (uint32_t)value; break;
     case CtrlType::Bool:    *reinterpret_cast<bool*>(d.ptr) = (value != 0.0f); break;
     case CtrlType::FloatConst:

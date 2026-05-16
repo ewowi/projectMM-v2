@@ -32,6 +32,7 @@ Sprint 2 and Sprint 3 were initially attempted as greenfield rewrites of v1's HT
 | [12](#sprint-12) | Minimalism pass: MoonModule field reorder (136B→96B), `type_` as `const char*`, typed `addControl` overloads, PSRAM-backed PreviewModule, RingBuffer heap accounting, class-size checker, `max_alloc_kb` in status bar | `src/core/`, `src/modules/`, `scripts/check_class_sizes.py` |
 | [13](#sprint-13) | Shared data ring: `DataRing<T>` + `DataRegistry` in core; zero-copy producer/consumer pixel pipeline; removes `FrameRing`, `PixelRegistry`, and `PreviewModule` staging buffer; depth 1 on esp32dev, 2 on S3 | `src/core/DataRing.h`, `src/core/DataRegistry.h`, `src/modules/lights/` |
 | [14](#sprint-14) | Ring → single-slot buffer; PATCH: convention; script LOC budgets; `frontend.md`; doc crosslink pass | `src/core/DataBuffer.h`, `scripts/check_patches.py`, `docs/developer-guide/` |
+| [15](#sprint-15) | GridLayoutModule: geometry flow + serpentine wiring; effects become geometry-agnostic | `modules/lights/GridLayoutModule.h`, `RipplesEffect` geometry controls removed |
 
 The v1 → v2 cutover (rename + final stable tag) closes [Release 2](backlog.md#release-2-v1-parity-cutover), which adds ArtNet **in**, OTA, NTP, and any remaining v1 parity bits.
 
@@ -303,3 +304,53 @@ Two independent workstreams landed together.
 - [x] ADR 0003 updated to reflect `DataBuffer<T>` and the ring-depth removal rationale.
 - [x] Build green on `pc`. ESP32 build not re-verified this sprint (no hardware change beyond renaming; structural equivalence confirmed by test suite).
 
+---
+
+## Sprint 15 — GridLayoutModule: geometry flow + serpentine wiring {#sprint-15}
+
+First step of the light domain architecture. Effects stop hard-coding geometry; a `GridLayoutModule` becomes the single authority on panel dimensions and physical wiring.
+
+**Phase 1 — geometry flow.**
+
+`RipplesEffect` currently allocates `w·h·d` from its own width/height/depth controls. After this sprint those controls are removed; the effect receives its virtual dimensions from whatever is linked to it. Two paths:
+
+- **With a `GridLayoutModule` linked**: the effect resolves the layout module by ID (a `layout` control, text field), calls `physical_count()` to size its buffer, and calls `width()` / `height()` / `depth()` to know its virtual coordinate space.
+- **With no layout linked** (default / fallback): the effect defaults to 16×16×1 and allocates accordingly.
+
+The effect links directly to a `GridLayoutModule` by ID — no `EffectLayer` parent is required yet. This keeps the first-effect path as simple as possible; `EffectLayer` grouping comes in a later sprint.
+
+`GridLayoutModule` exposes:
+- `width`, `height`, `depth` — slider/number controls (panel bounding box)
+- `physical_count()` — explicit pixel count (for Phase 1: `width × height`; sparse layouts come later)
+- `map(logical_idx) → physical_idx` — serpentine / zigzag remapping (controlled by a `serpentine` toggle)
+
+`PreviewModule` and `ArtnetOutModule` continue to resolve `RipplesEffect`'s `DataBuffer<RGB>` directly by ID. Because the effect's buffer is now sized from the layout, they automatically get the correctly-sized frame — no source change required.
+
+**Phase 2 — UI.**
+
+The frontend already renders all controls from schema. Phase 2 verifies the UI shows the full wiring correctly:
+- `GridLayoutModule` card with `width`, `height`, `serpentine` controls visible and editable.
+- `RipplesEffect` card shows the `layout` source control (text field pointing at the layout module's ID).
+- Changing `width` or `height` in the UI triggers `onUpdate` → `onAllocateMemory` on `RipplesEffect` → Preview and ArtNet display the new geometry immediately.
+- No layout linked: effect defaults to 16×16 and UI reflects that.
+
+### Definition of Done
+
+- [x] `GridLayoutModule` (`modules/lights/GridLayoutModule.h`) — `width`, `height`, `depth`, `serpentine` controls; implements `physical_count()` and `map(logical_idx)`; resolved by consumers via direct manager lookup.
+- [x] `RipplesEffect` geometry controls (`width`, `height`, `depth`) removed; replaced by a `layout` source control (text, ID of a linked `GridLayoutModule`). Fallback: 16×16×1 when no layout linked.
+- [x] `RipplesEffect.onUpdate("layout")` resolves the linked `GridLayoutModule` and triggers `allocate_()` to resize.
+- [x] `RipplesEffect.loop1s()` polls layout dimensions; calls `allocate_()` on geometry mismatch — live resize without reboot.
+- [x] `RipplesEffect` buffer sized from `GridLayoutModule::physical_count()` (or 16×16×1 fallback).
+- [x] `PreviewModule.loop1s()` polls `DataRegistry` for geometry change; calls `resolve_buf_()` on mismatch — preview updates live.
+- [x] `PreviewModule` and `ArtnetOutModule` unchanged interface — still resolve `RipplesEffect` buffer by ID; frame header reflects new geometry automatically.
+- [x] `CtrlType::Uint16` added; `addControl(uint16_t& v, …)` overload wired through all 6 switch sites — `width_`, `height_`, `depth_` register as mutable sliders, not read-only FloatConst.
+- [x] PC build green; 37 tests pass.
+- [x] UI: `GridLayoutModule` card visible; `width`/`height`/`depth`/`serpentine` editable; `RipplesEffect` card shows `layout` control; geometry change in UI resizes preview and ArtNet output live (HIL verified on esp32dev).
+- [x] `backlog.md` Step 1 unlock condition updated.
+
+### Additional fixes landed with Sprint 15
+
+- **`PalWs.h` race fix** — `broadcastText`/`broadcastBinary` switched from manual `getClients()` iteration (no lock) to `ws_.textAll()`/`ws_.binaryAll()` which acquire `_ws_clients_lock` internally. Eliminated a `LoadProhibited` crash when the async_tcp task on core 0 cleaned up a disconnecting client while core 1 was iterating the client list in `broadcastBinary`.
+- **`StateStoreModule` lost-module fix** — `/modules.json` write moved from `loop10s` to `loop1s`. A crash within 10 s of adding a module no longer loses the module list. Per-module state files remain on `loop10s` (larger, change frequently).
+- **`WebSocketModule` static output buffers** — `broadcast_schema_()` and `broadcast_state_()` serialize into `static char buf[]` (4 KB + 2 KB in `.bss`) instead of heap-allocated `std::string`. Eliminates one heap allocation per 1 Hz broadcast cycle.
+- **OOM crash logged to backlog** — remaining crash path (ArduinoJson `JsonDocument` DOM heap allocation under extreme memory pressure) recorded in `backlog.md` with root cause, investigated approaches, and unlock conditions.

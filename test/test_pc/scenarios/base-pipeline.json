@@ -1,14 +1,17 @@
 {
   "name": "base-pipeline",
-  "description": "Default v2 light pipeline: RipplesEffect produces RGB, PreviewModule ships it over WS, ArtnetOutModule packs UDP. Matches the modules a user adds via the UI in Sprint 6/7. Geometry scales 16 → 32 to exercise reallocation.",
+  "description": "Default v2 light pipeline: LayoutModule sets geometry, RipplesEffect links to it, PreviewModule and ArtnetOutModule read the result. Exercises layout add, effect-layout link, and hue control.",
   "steps": [
+    { "name": "add-layout",    "op": "add_module",  "id": "layout-0",     "type": "layout",     "measure": true },
     { "name": "add-ripples",   "op": "add_module",  "id": "ripples-0",    "type": "ripples",    "measure": true },
     { "name": "add-preview",   "op": "add_module",  "id": "preview-0",    "type": "preview",    "measure": true },
     { "name": "add-artnet",    "op": "add_module",  "id": "artnet-out-0", "type": "artnet-out", "measure": true,
-      "bounds": { "module_count": { "min": 3 } } },
-    { "name": "scale-width",   "op": "set_control", "id": "ripples-0",    "key": "width",       "value": 32,
+      "bounds": { "module_count": { "min": 4 } } },
+    { "name": "link-layout",   "op": "set_control", "id": "ripples-0",    "key": "layout",      "value": "layout-0",
       "measure": true },
-    { "name": "scale-height",  "op": "set_control", "id": "ripples-0",    "key": "height",      "value": 32,
+    { "name": "scale-width",   "op": "set_control", "id": "layout-0",     "key": "width",       "value": 32,
+      "measure": true },
+    { "name": "scale-height",  "op": "set_control", "id": "layout-0",     "key": "height",      "value": 32,
       "measure": true },
     { "name": "set-hue",       "op": "set_control", "id": "ripples-0",    "key": "hue_base",    "value": 0.25,
       "measure": true }

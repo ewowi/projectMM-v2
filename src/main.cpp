@@ -3,6 +3,7 @@
 #include "core/ModuleManager.h"
 #include "core/Scheduler.h"
 #include "modules/lights/ArtnetOutModule.h"
+#include "modules/lights/GridLayoutModule.h"
 #include "modules/lights/PreviewModule.h"
 #include "modules/lights/RipplesEffect.h"
 #include "modules/network/HttpServerModule.h"
@@ -38,6 +39,7 @@ void setup() {
   mm.register_type<pmm::HttpServerModule>("http", pal::default_http_port());
   mm.register_type<pmm::WebSocketModule>("ws");
   mm.register_type<pmm::StateStoreModule>("state-store");
+  mm.register_type<pmm::GridLayoutModule>("layout");
   mm.register_type<pmm::RipplesEffect>("ripples");
   mm.register_type<pmm::PreviewModule>("preview");
   mm.register_type<pmm::ArtnetOutModule>("artnet-out");

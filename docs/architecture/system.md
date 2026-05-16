@@ -51,6 +51,10 @@ The contract is the entire module-facing API of the runtime. Six lifecycle virtu
 
 **Multi-core.** The runtime is built to exploit every core the platform offers. Several `loop()` instances run in parallel, connected as a DAG. The scheduler pins a separate task per core and arranges the topology declared at wire time.
 
+**Grouping modules (layer pattern).** A module may act as a group — owning the `DataBuffer` on behalf of its children, and driving `onAllocateMemory` top-down so children receive geometry from the parent rather than sizing it themselves. A lone child with no parent layer falls back to owning its own buffer (valid starting point; add a layer later without changing the effect). Grouping is a lights-domain pattern (EffectLayer, DriverLayer) but the mechanism — parent calls `onAllocateMemory` on children after allocating its own buffer — is generic and lives in `MoonModule` / `ModuleManager`. See [backlog — Light domain architecture](../development/backlog.md#light-domain-architecture).
+
+**Multiple inputs.** A module may declare more than one source — for example a driver that reads from an effect layer and a layout. Each source is resolved independently via `DataRegistry` or direct manager lookup; the module owns a `DataBufferReader<T>` per source. This is already the case for `ArtnetOutModule` (one source) and will extend naturally to two or more. No core change is required; it is a module-level wiring decision.
+
 `MoonModule` total target: ≤ 600 LOC. v1's `Module` + `StatefulModule` together is ~996 LOC; v2's minimized merger lands smaller.
 
 ---
@@ -115,15 +119,25 @@ Both modules run on separate cores in parallel. The direct-read path (no consume
 
 ### Layering
 
-The same model scales to N effect layers: each effect owns one `DataBuffer<RGB>`; a driver module blends them into its own buffer and sends the result to the strip.
+The same model scales to N effect layers. Each EffectLayer owns one `DataBuffer<RGB>`; a DriverLayer reads from one or more EffectLayers (via `DataBufferReader`) and writes the result into its own output buffer using each EffectLayer's pixel map table.
 
 ```
-EffectA.buf  ──┐
-EffectB.buf  ──┤── map_blend(…) ──→ Driver.buf ──→ LED strip
-EffectC.buf  ──┘
+LayoutLayer  ──────────────────────────────────────────────────┐
+                                                               ▼
+EffectLayerA.buf (PixelMap[]) ──┐                        Driver.buf ──→ LED strip / ArtNet / Preview
+EffectLayerB.buf (PixelMap[]) ──┤── per-layer map pass ──┘
+EffectLayerC.buf (PixelMap[]) ──┘       ↑
+                                  (tables rebuilt on config change;
+                                   hot path is pure table walk)
 ```
 
-No change to `DataBuffer` or `DataRegistry` is required — the registry already handles multiple producers. See [developer-guide/backend.md — Layering](../developer-guide/backend.md#layering) for the `map_blend` design.
+**LayoutLayer** is the sole authority on geometry: `width()`, `height()`, `depth()` (3D bounding box), `physical_count()` (explicit pixel count — not necessarily `w×h×d`, e.g. a ring in 3D space), and `map(logical_idx) → physical_idx`. When no LayoutLayer is wired the default is 16×16×1 with 1:1 mapping. Effects carry no geometry themselves.
+
+**Each EffectLayer** owns its own `PixelMap[]` array, built from the linked LayoutLayer's mapping and the layer's modifier set, rebuilt cold-path on `onUpdate`. Modifiers are geometric transforms applied to the effect's virtual coordinate space — mirror, rotate, transpose — that change how many virtual pixels the effect needs to produce (e.g. mirror halves the virtual width; the map fans each virtual pixel to two physical positions). Hot path: one table walk per EffectLayer, no branching, no function calls.
+
+The **DriverLayer** owns the output `DataBuffer<RGB>` sized to `physical_count()`. It has two modes: **own buffer** (default — enables parallelism, layout remapping, modifier chain, multi-core) or **direct-read** (optimisation — no copy, no transform, single-core, 1:1 only).
+
+No change to `DataBuffer` or `DataRegistry` is required — the registry already handles multiple producers. See [developer-guide/backend.md — Layering](../developer-guide/backend.md#layering) for the `PixelMap` design and [backlog — Light domain architecture](../development/backlog.md#light-domain-architecture) for the step-by-step implementation plan.
 
 ---
 

@@ -1,6 +1,6 @@
 # ArtnetOutModule
 
-Packs the current pixel frame from a named source into Art-Net OpDmx packets and sends them via UDP. 510 DMX bytes (= 170 RGB pixels) per packet → multi-universe at large geometries (e.g. 128×128×1 = 49 152 RGB bytes = 97 universes per frame, ~6 Mbps at 50 fps). Runs on core 1 (set via constructor `setCoreAffinity(1)`); reads frames cross-core from the source's [`DataBuffer<RGB>`](../../developer-guide/backend.md#databuffert--the-shared-slot-primitive) via a single acquire/release pair — no per-frame copy on the consumer side.
+Packs the current pixel frame from a named source into Art-Net OpDmx packets and sends them via UDP. 510 DMX bytes (= 170 RGB pixels) per packet → multi-universe at large geometries (e.g. 128×128×1 = 49 152 RGB bytes = 97 universes per frame, ~6 Mbps at 50 fps). Runs on core 1 (set via constructor `setCoreAffinity(1)`); reads frames cross-core from the source's [`DataBuffer<RGB>`](../../developer-guide/backend.md#databuffert-the-shared-slot-primitive) via a single acquire/release pair — no per-frame copy on the consumer side.
 
 **Wire format** (one Art-Net OpDmx packet per universe, sent to `dest_ip:6454`):
 

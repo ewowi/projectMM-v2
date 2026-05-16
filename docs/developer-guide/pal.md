@@ -34,7 +34,7 @@ Two shapes coexist: small platform *primitives* (`Pal`, `PalFs`, `PalRtos`, `Pal
 | `modules/system/MemTracker` | `PalSystemInfo` (`free_heap_kb`, `free_psram_kb`, `max_alloc_kb`) |
 | `modules/network/[HttpServerModule](../user-guide/network/http-server.md)` | `PalHttp` |
 | `modules/network/[WebSocketModule](../user-guide/network/web-socket.md)` | `PalWs` |
-| `modules/lights/[RipplesEffect](../user-guide/lights/ripples-effect.md)` | `PalHeap` (`psram_alloc` for `w·h·d` RGB into its [`DataBuffer<RGB>`](backend.md#databuffert--the-shared-slot-primitive)) |
+| `modules/lights/[RipplesEffect](../user-guide/lights/ripples-effect.md)` | `PalHeap` (`psram_alloc` for `w·h·d` RGB into its [`DataBuffer<RGB>`](backend.md#databuffert-the-shared-slot-primitive)) |
 | `modules/lights/[ArtnetOutModule](../user-guide/lights/artnet-out.md)` | `PalUdp` |
 
 ## Deferred pal files

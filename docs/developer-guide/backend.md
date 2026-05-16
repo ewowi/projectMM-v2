@@ -81,15 +81,24 @@ void resolve_buf_() {
 
 ### Layering
 
-`map_blend` is a hot-path free function in `core/`: it takes an array of source buffer pointers, a count, a destination buffer, and a blend function argument.
+Each **EffectLayer** owns a `PixelMap[]` array that maps virtual pixel indices (the coordinate space the effect writes into) to physical pixel indices in the EffectLayer's output buffer. The table encodes both the LayoutLayer's wiring map (`map(logical_idx) → physical_idx`) and any geometric modifiers (mirror, rotate, transpose) attached to the layer.
 
 ```cpp
-map_blend(src[], n, dst, blend_fn);   // n effect buffers → one driver buffer
+struct PixelMap {
+  uint32_t src_idx;   // index into the EffectLayer's virtual pixel buffer
+  uint32_t dst_idx;   // index into the EffectLayer's physical output buffer
+};
 ```
 
-The blend function is domain-specific (`modules/lights/`); `map_blend` itself is generic. At minimum — one effect layer, one driver layer — this gives two buffers and true 2-core parallelism on any device where both fit in memory.
+The **DriverLayer** reads each linked EffectLayer's buffer and applies that layer's `PixelMap[]` during a single copy pass into its own output buffer. Multiple EffectLayers are blended (blend mode per layer) in that same pass — no intermediate buffers.
 
-No change to `DataBuffer` or `DataRegistry` is required; the registry already handles multiple producers and each module already owns exactly one slot.
+```
+EffectLayer.vbuf ──(PixelMap[])──→ EffectLayer.buf ──(DataBufferReader)──→ DriverLayer.buf
+```
+
+`PixelMap[]` is built cold-path in `onAllocateMemory` and rebuilt in `onUpdate` whenever the LayoutLayer or modifier set changes. Hot path: one table walk per EffectLayer, no branching, no function calls.
+
+No change to `DataBuffer` or `DataRegistry` is required; the registry already handles multiple producers and each module owns exactly one slot. See [backlog — Light domain architecture](../development/backlog.md#light-domain-architecture) for the three-step implementation plan.
 
 ---
 
@@ -108,3 +117,24 @@ teardown()                free everything allocated in setup / onAllocateMemory
 ```
 
 `onAllocateMemory` runs after controls are seeded so a module sizing its buffer from a control value (e.g. `RipplesEffect` allocating `w·h·d` RGB from its width/height/depth sliders) sees the correct value on the first allocation.
+
+---
+
+## Control field types and `addControl` overloads
+
+`addControl(field, key, uiType, lo, hi)` resolves to the overload matching the **exact type of the backing field**. The overload set is:
+
+| Field type   | `CtrlType` tag | Use for                                      |
+|--------------|----------------|----------------------------------------------|
+| `float`      | `Float`        | fractional values (speed, hue, brightness)   |
+| `uint8_t`    | `Uint8`        | small counts, per-channel values (0–255)     |
+| `uint16_t`   | `Uint16`       | panel dimensions: width, height, depth (up to 65535) |
+| `uint32_t`   | `Uint32`       | total pixel counts (w × h × d, up to ~4 M)  |
+| `bool`       | `Bool`         | toggles (enabled, serpentine)                |
+
+**Convention for geometry fields:**
+
+- `width_`, `height_`, `depth_` — `uint16_t`. All three axes uniform; supports up to 65535 per axis; two bytes each on ESP32.
+- Total pixel count (`w * h * d`, buffers, loop indices) — `uint32_t`. Required on PC for large screens; promotes cleanly from `uint16_t` dimensions.
+
+**Why the type must match exactly:** if the field type has no lvalue-ref overload (e.g. a hypothetical `uint16_t` field before the `Uint16` overload was added), the compiler promotes the field to an rvalue and falls through to a `FloatConst` display-only overload — silently making the control read-only. Always declare backing fields as one of the types in the table above.

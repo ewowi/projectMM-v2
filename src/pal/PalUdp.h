@@ -1,19 +1,13 @@
 #pragma once
 //
-// PalUdp — minimal UDP send abstraction. ESP32: wraps WiFiUDP. PC: BSD
-// SOCK_DGRAM. No receive support yet — its first caller (Sprint 6's
-// ArtnetOutModule) is send-only. Receive lands when ArtNet-in does in
-// Sprint 8 (same pattern as PalHttp: grow capabilities with callers).
+// PalUdp — minimal UDP send abstraction. ESP32: AsyncUDP::writeTo —
+// fire-and-forget, no EHOSTUNREACH log spam on unreachable destinations.
+// PC: BSD SOCK_DGRAM. No receive support yet — ArtNet-in (Release 2) adds it.
 //
 // API:
 //   pal::Udp udp;
-//   udp.begin();                                  // bind ephemeral source port
+//   udp.begin();                                  // no-op on ESP32, bind on PC
 //   udp.send("192.168.1.255", 6454, data, len);   // best-effort, broadcast OK
-//
-// `send` returns true on a successful enqueue (kernel accepted the packet),
-// false if the socket isn't initialised or the OS refused. Broadcast is
-// allowed by default on both branches — Art-Net's discovery and the Sprint 6
-// default of 255.255.255.255 need it.
 //
 
 #include <cstddef>
@@ -22,8 +16,8 @@
 
 #ifdef ARDUINO
 
+  #include <AsyncUDP.h>
   #include <WiFi.h>
-  #include <WiFiUdp.h>
 
   #include "PalWifi.h"
 
@@ -31,27 +25,17 @@ namespace pal {
 
 class Udp {
  public:
-  bool begin() {
-    if (started_) return true;
-    // begin(uint16_t) binds a local port for receiving; we pass 0 to let the
-    // stack pick. Returns 1 on success.
-    started_ = (udp_.begin((uint16_t)0) == 1);
-    return started_;
-  }
+  bool begin() { return true; }  // AsyncUDP needs no bind for send-only use
 
   bool send(const char* ip, uint16_t port, const uint8_t* data, size_t len) {
-    // PATCH: wifi-guard + WiFiUDP — guards against pre-WiFi sends and hides
-    // EHOSTUNREACH spam from WiFiUDP::endPacket(). Remove when AsyncUDP lands
-    // (ArtNet-in, Release 2): AsyncUDP::writeTo() is fire-and-forget, never blocks.
-    if (!started_ || !pal::wifi_is_connected()) return false;
-    if (!udp_.beginPacket(ip, port)) return false;
-    udp_.write(data, len);
-    return udp_.endPacket() == 1;
+    if (!pal::wifi_is_connected()) return false;  // PATCH: wifi-guard
+    IPAddress addr;
+    if (!addr.fromString(ip)) return false;
+    return udp_.writeTo(data, len, addr, port) == len;
   }
 
  private:
-  WiFiUDP udp_;
-  bool    started_ = false;
+  AsyncUDP udp_;
 };
 
 }  // namespace pal

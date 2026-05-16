@@ -1,6 +1,6 @@
 # PreviewModule
 
-Pushes the current pixel frame from a named source to the frontend over WebSocket at 50 fps. Reads the source's [`DataBuffer<RGB>`](../../developer-guide/backend.md#databuffert--the-shared-slot-primitive) via `DataRegistry`. Skips the memcpy when no clients are connected.
+Pushes the current pixel frame from a named source to the frontend over WebSocket at 50 fps. Reads the source's [`DataBuffer<RGB>`](../../developer-guide/backend.md#databuffert-the-shared-slot-primitive) via `DataRegistry`. Skips the memcpy when no clients are connected.
 
 **Wire format** (binary WS frame):
 

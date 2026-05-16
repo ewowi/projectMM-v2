@@ -158,7 +158,7 @@ Live tab. Replays every JSON under `test/test_pc/scenarios/` through `ModuleMana
 
 ### Run scenarios (live, all enabled devices) {#live-scenarios-devices}
 
-Live tab. For each device in `moondeck.json` with `enabled: true`, probes `/api/system`, then replays every JSON under `test/test_pc/scenarios/` against the device via REST (`POST /api/modules` for add, `POST /api/control` for set_control, `DELETE /api/modules/<id>` for cleanup). After each `"measure": true` step, samples `/api/system` for `system_fps` + `heap_free_kb` + `psram_free_kb` and `/api/modules` for the module count; bounds in the JSON (currently `module_count.{min,max}`) are asserted. Cleanup deletes every non-head module before and after each scenario so the next run starts clean. Source: `scripts/scenario.py`. Promoted from Sprint 8 deferred — see [Artefact promotions](../development/release-01.md#artefact-promotions).
+Live tab. For each device in `moondeck.json` with `enabled: true`, probes `/api/system`, then replays every JSON under `test/test_pc/scenarios/` against the device via REST (`POST /api/modules` for add, `POST /api/control` for set_control, `DELETE /api/modules/<id>` for cleanup). After each `"measure": true` step, samples `/api/system` for `system_fps` + `heap_free_kb` + `psram_free_kb` and `/api/modules` for the module count; bounds in the JSON (currently `module_count.{min,max}`) are asserted. Cleanup deletes every non-head module before and after each scenario so the next run starts clean. Source: `scripts/scenario.py`. Promoted from Sprint 8 deferred — see [Sprint 10](../development/release-01.md#sprint-10).
 
 ### Run all checks {#all-checks}
 
@@ -166,7 +166,7 @@ Runs all `check_*` scripts (LOC budgets, hot-path bans, raw-GPIO ban, structure,
 
 ### Patch inventory {#check-patches}
 
-Scans `src/` and `scripts/` for `// PATCH:` (C++) and `# PATCH:` (Python) comments and lists them with their names. Each patch has a removal condition; the scan is informational — exit 0 always — but makes all outstanding patches visible in one place. Cross-reference: [backlog — Known patches](../development/backlog.md#known-patches--tracked-for-removal). Source: `scripts/check_patches.py`.
+Scans `src/` and `scripts/` for `// PATCH:` (C++) and `# PATCH:` (Python) comments and lists them with their names. Each patch has a removal condition; the scan is informational — exit 0 always — but makes all outstanding patches visible in one place. Cross-reference: [backlog — Known patches](../development/backlog.md#known-patches-tracked-for-removal). Source: `scripts/check_patches.py`.
 
 ### LOC budgets {#check-loc}
 

@@ -22,7 +22,7 @@ The frontend is a **generic renderer of the module model** described in [system.
 
 **State** (`[{id, controls:{key:value,…}, timing:{…}}, …]`): current values of all controls plus per-module timing. The frontend patches existing DOM elements in-place — no rebuild.
 
-**Binary frame** (`ArrayBuffer`, magic byte `0x02`): a pixel blob from `PreviewModule`. `PreviewModule` reads `RipplesEffect`'s [`DataBuffer<RGB>`](backend.md#databuffert--the-shared-slot-primitive) and streams it over WebSocket. The frontend renders it into the WebGL canvas. This is the only domain-specific thing in the frontend, and it is isolated to `renderPixelFrame()` / the GL functions at the top of `app.js`.
+**Binary frame** (`ArrayBuffer`, magic byte `0x02`): a pixel blob from `PreviewModule`. `PreviewModule` reads `RipplesEffect`'s [`DataBuffer<RGB>`](backend.md#databuffert-the-shared-slot-primitive) and streams it over WebSocket. The frontend renders it into the WebGL canvas. This is the only domain-specific thing in the frontend, and it is isolated to `renderPixelFrame()` / the GL functions at the top of `app.js`.
 
 ---
 

@@ -17,7 +17,7 @@ The boundary: if it has an unlock condition with a realistic trigger, it's Plann
 
 Release 2 closes the v1 → v2 transition: the v1 features that didn't make Release 1, plus the rename of this repo from `projectMM-v2` to `projectMM` with the first stable `v2.0.0` tag. Order is deliberate — ArtNet-in lets the device be driven from real DMX consoles before OTA changes how firmware gets onto it; NTP comes free with the WiFi stack already running; OTA needs filesystem persistence + WiFi (both ready since Release 1). Per-module budget ≤ 300 LOC.
 
-- **ArtNet-in module + UDP receive + AsyncUDP migration.** `modules/lights/ArtnetInModule.h` listens on UDP 6454 and exposes received DMX as a `DataBuffer<RGB>` in the registry. Adds `receive` to `pal::Udp` (today's send-only API landed minimally; the second caller justifies it). At the same point, migrate `pal::Udp::send` from `WiFiUDP::endPacket` to `AsyncUDP::writeTo` — fire-and-forget, no lwIP blocking on the calling task, eliminates the `endPacket(): could not send data` error spam when the ArtNet destination is unreachable (confirmed in Sprint 13 HIL: `WiFiUDP` with a bad `dest_ip` floods the WiFi task with EHOSTUNREACH at 50 fps). MoonLight and WLED-MM both use `AsyncUDP` for this reason. Unlocks when a host running QLC+ is available for HIL.
+- **ArtNet-in module + UDP receive.** `modules/lights/ArtnetInModule.h` listens on UDP 6454 and exposes received DMX as a `DataBuffer<RGB>` in the registry. Adds `receive` to `pal::Udp` (today's send-only API landed minimally; the second caller justifies it). `pal::Udp::send` already uses `AsyncUDP::writeTo`. Unlocks when a host running QLC+ is available for HIL.
 - **NtpModule.** `modules/system/NtpModule.h` syncs via SNTP (arduino-esp32 has `configTime`; PC uses `chrono::system_clock`). Exposes `synced` / `last_sync_ts` controls; `pal::PalSystemInfo::local_time_str` already reads `std::time` — once `configTime` runs, that reports real wall-clock time. Lands together with ArtNet-in.
 - **FirmwareUpdateModule (OTA).** `modules/system/FirmwareUpdateModule.h` accepts `POST /api/firmware` (binary upload) via `PalHttp::onPostBinary` (in place since [Sprint 2](release-01.md#sprint-2)); streams chunks to `esp_ota_*`, verifies on completion, sets boot partition, reboots. Includes a GitHub-release flow (control `release_url` → downloads asset → same OTA path). HIL: build firmware locally → upload via UI → device reboots into the new image → `SystemStatusModule.sketch_kb` shows the new size.
 - **v1 → v2 cutover.** Visual + metrics parity check between v2 (this repo) and v1 (legacy) on the same `esp32dev`: 30 s capture (preview screenshot + Art-Net packet dump + `/api/system` heap/fps timeline) per side. Diff target: frames look the same (within rendering noise), Art-Net wire bytes match for the same effect at the same settings, heap within 20 %, fps within 10 %. Anything outside that range is a parity bug to fix or to document as an intentional v2 change. v1 (`projectMM`) gets final freeze + tag `v1.8.x-legacy` + README pointing to v2; this repo renames to `projectMM` (TBD path — see Open questions) and tags `v2.0.0`.
@@ -29,13 +29,72 @@ Release 2 closes the v1 → v2 transition: the v1 features that didn't make Rele
 - Cutover path — rename `projectMM-v2` → `projectMM` (preserving v1 history under a `legacy/v1` branch in the new repo) or merge into the existing `projectMM` repo as `main` (preserving the rewrite history)? Decide before the cutover sprint.
 - Should Release 3 exist? Candidates: layering / scenes / MIDI / DDP. None currently scoped.
 
-### Light domain
+### Light domain architecture
 
-- **Parent modules + child trees (`addChild`).** From [Sprint 6 deferred](release-01.md#sprint-6). Unlocks when effect-on-effect composition arrives (Effect layering depends on this).
-- **DataBufferModule — buffer as a named module.** From [Sprint 13](release-01.md#sprint-13). Today the producer module (e.g. RipplesEffect) owns its `DataBuffer`: buffer lifecycle is tied to effect lifecycle, which is the right default. A dedicated `DataBufferModule` would own the buffer independently — enabling multiple effects writing into it (layering) and resizing geometry without touching the effect. Unlocks when effect layering is on the roadmap; `DataRegistry` is already the indirection layer needed to make it clean. See [architecture/system.md — Layering](../architecture/system.md#layering) and [developer-guide/backend.md — Layering](../developer-guide/backend.md#layering).
+The architecture below describes the full light pipeline. It is a practical application of the module-grouping and multiple-input patterns described in [architecture/system.md — MoonModule](../architecture/system.md#moonmodule-the-contract) and [architecture/system.md — Layering](../architecture/system.md#layering). The current code (Sprint 14) is the degenerate single-effect case: `RipplesEffect` owns its own `DataBuffer<RGB>`; `PreviewModule` and `ArtnetOutModule` each hold a `DataBufferReader` pointing at it. That fallback remains valid until the LayoutLayer step lands.
+
+#### Layer types
+
+**EffectLayer** — groups one or more effect modules. The EffectLayer owns one shared `DataBuffer<RGB>`; all child effects write into that same full buffer in the order they are listed (each effect overwrites or blends on top of the previous). A lone effect owns its own buffer as today (easy starting point; add a layer later without touching the effect). When the EffectLayer is present, it drives `onAllocateMemory` top-down so children receive geometry from the layer rather than sizing it themselves. To composite two effects with independent tuning, use two separate EffectLayers — each with its own buffer — and let the DriverLayer blend across them.
+
+**LayoutLayer** — stateless; owns no buffer. The sole authority on geometry and physical wiring. Provides:
+- `width()`, `height()`, `depth()` — the 3D bounding box of the installation. Pixel positions are 3D; not every point in the box has a pixel (e.g. a ring in space, a sparse grid).
+- `physical_count()` — explicit count of physical pixels; not necessarily `width × height × depth`.
+- `map(logical_idx) → physical_idx` — index remapping for serpentine wiring, zigzag panels, non-rectangular arrangements.
+
+When no LayoutLayer is wired, the system defaults to a 16×16×1 grid with 1:1 mapping. Effects never carry geometry themselves; geometry is always the LayoutLayer's job.
+
+**DriverLayer** — owns one `DataBuffer<RGB>` sized from the LayoutLayer's `physical_count()`. Links to one or more EffectLayers. Each tick it initiates a read from each linked EffectLayer's buffer and applies that EffectLayer's pixel map table to write mapped pixels into its own output buffer. Enables multi-core parallelism (driver on core 1, effects on core 0); the output buffer is what `ArtnetOutModule`, `PreviewModule`, and the WS2812 driver read from.
+
+Direct-read optimisation (no own buffer, no transform) remains available as a degenerate case when only one effect is linked and layout is 1:1 — but own buffer is the default.
+
+#### Pixel map table
+
+Each **EffectLayer** owns a `PixelMap[]` array. The DriverLayer does not hold the table; it asks each EffectLayer to apply its own mapping during the copy pass.
+
+```cpp
+struct PixelMap {
+  uint32_t src_idx;   // index into the EffectLayer's virtual pixel buffer
+  uint32_t dst_idx;   // index into the DriverLayer's physical output buffer
+};
+```
+
+Built once in `onAllocateMemory` and rebuilt on `onUpdate` whenever the linked LayoutLayer or modifier set changes. Hot path: one table walk per EffectLayer, pure array iteration, no branching, no function calls.
+
+#### Modifiers
+
+Modifiers are per-EffectLayer and change the *virtual* geometry seen by the effect — not colour post-processing. Examples: **mirror** (effect runs at half width; one virtual pixel maps to two physical pixels side-by-side), **rotate** (effect runs in a rotated coordinate frame), **transpose** (swap axes). The modifier's geometric transformation is pre-computed into the pixel map table at rebuild time: if a mirror modifier halves the virtual width, the EffectLayer allocates a half-sized buffer and the map table fans each entry out to two destination indices. Hot path cost is zero — the table already encodes the result.
+
+#### Implementation plan
+
+Three steps, each shippable independently:
+
+**Step 1 — LayoutLayer + geometry flow** (next sprint scope). Add `GridLayoutModule` implementing `width()`, `height()`, `depth()`, `physical_count()`, `map()`. Add `addChild()` to `MoonModule` / `ModuleManager`; parent calls `onAllocateMemory` on children after sizing its own buffer. Effects stop hard-coding geometry and receive it from their parent EffectLayer, which receives it from the linked LayoutLayer. Default when no LayoutLayer is wired: 16×16×1. Unlocks: geometry flows top-down; effects are geometry-agnostic; layout changes resize everything in one cold-path rebuild.
+
+**Step 2 — EffectLayer grouping**. EffectLayer gains `addChild()` support: it owns one shared `DataBuffer<RGB>` and all child effects write into that same full buffer in the order they are listed. Each effect overwrites or blends on top of what the previous wrote. To composite two effects independently with different tuning, use two separate EffectLayers. EffectLayer builds and owns its own `PixelMap[]` (1:1 at this step; modifiers come later). Unlocks: multiple effects layered within one EffectLayer before the DriverLayer sees the result.
+
+**Step 3 — DriverLayer**. DriverLayer module links to one or more EffectLayers and a LayoutLayer. Owns its own `DataBuffer<RGB>` sized to `physical_count()`. Each tick: for each linked EffectLayer, reads its buffer and applies its `PixelMap[]` to write into the output buffer. Multiple EffectLayers are blended (blend mode per layer). `ArtnetOutModule` and `PreviewModule` point their `source` at the DriverLayer's registry entry instead of directly at an effect. Modifier support: EffectLayer rebuilds its `PixelMap[]` to encode geometric transforms when modifiers change.
+
+#### Design decisions
+
+**`PixelMap.dst_idx` ownership.** The table lives on the EffectLayer but `dst_idx` points into the DriverLayer's output buffer, creating a coupling. This is intentional: the performance benefit (single flat array walk in the hot path, no second indirection) justifies it. The rebuild trigger is layout-driven, not driver-driven — whenever the LayoutLayer changes it triggers a rebuild of all dependent EffectLayer `PixelMap[]` tables; the DriverLayer itself does not trigger rebuilds.
+
+**Effect geometry controls replaced by LayoutLayer.** Once a LayoutLayer is wired, it is the sole authority on geometry. Any width/height/depth controls on individual effects (e.g. `RipplesEffect`) are removed at Step 1; the effect receives its virtual dimensions top-down from its parent EffectLayer, which receives them from the LayoutLayer. There is no negotiation between effect controls and layout.
+
+#### Deferred entries consolidated here
+
+The following backlog entries from earlier sprints are superseded by this plan and are not tracked separately:
+
+- *Parent modules + child trees* (Sprint 6) — covered by Step 1 (`addChild`) and Step 2 (EffectLayer grouping).
+- *DataBufferModule — buffer as a named module* (Sprint 13) — EffectLayer is the right owner; a standalone `DataBufferModule` is not needed.
+- *Effect layering / blending* (Sprint 6) — covered by Step 2 (within one EffectLayer) and Step 3 (across EffectLayers in DriverLayer).
+
+**Step 1 landed in Sprint 15.** `GridLayoutModule` is the geometry authority; `RipplesEffect` receives dimensions top-down; `PreviewModule` and `ArtnetOutModule` update automatically. Step 2 (EffectLayer grouping) unlocks when multiple effects need to composite into one buffer.
+
+---
+
 - **Per-module core affinity via UI control.** From [Sprint 7 deferred](release-01.md#sprint-7). `core_` is hardcoded per module class; making it a settable schema control lands when there's user demand for runtime remapping.
 - **FastLED / WS2812 GPIO driver** (and `PalGpio.h` + typed board-config codegen). From Sprint 6 + 7 deferreds. Lands when a board with a strip is on the bench.
-- **Effect layering / blending.** From [Sprint 6 deferred](release-01.md#sprint-6). Comes with parent modules.
 - **Pub/sub event bus.** From [Sprint 6 deferred](release-01.md#sprint-6). Registry + ring is enough today; revisit when many-to-many fan-out + selective updates demand it.
 
 ### Test infrastructure
@@ -52,6 +111,16 @@ Release 2 closes the v1 → v2 transition: the v1 features that didn't make Rele
 - **End-user flash path via WebSerial** (ESP Web Tools / ESPConnect). From [Tools investigation](#tools-investigation-orchestration-alternatives-to-moondeck). Land when external contributors arrive (likely Release 2 cutover). Default reference is ESP Web Tools (Espressif-blessed `<esp-web-install-button>` component); ESPConnect is the polished bespoke version if more than flash is needed.
 - **Firmware-in-WASM via Emscripten.** From [Tools investigation](#tools-investigation-orchestration-alternatives-to-moondeck). Land when shareable effect-demo URLs become a felt need (Wokwi-style). Not Release 1 scope.
 
+### WebSocket OOM crash on large displays
+
+`WebSocketModule::broadcast_schema_()` and `broadcast_state_()` serialize JSON into static char buffers (Sprint 15 partial fix: `std::string` double-allocation removed). The remaining crash path: `JsonDocument` itself heap-allocates its DOM; on a large display with many modules, with the heap at ~37 KB free after the WiFi + lwIP stack takes its share, `operator new` inside ArduinoJson's pool allocator throws and `std::terminate` is called. `try/catch(std::bad_alloc)` in `PalWs.h` does not help because the throw happens before `broadcastText` is called.
+
+**Root cause:** ArduinoJson 7's `JsonDocument` always heap-allocates; no stack-allocated alternative exists in v7. With 37 KB free and the largest contiguous block at 37 KB, the combined WiFi-stack churn + ArduinoJson pool allocation exceeds available contiguous memory.
+
+**Unlock condition:** Either (a) replace `JsonDocument` with hand-rolled JSON serialization directly into the static output buffer (no intermediate DOM), or (b) reduce the number of modules / controls enough that the DOM fits in available memory at steady state, or (c) investigate ArduinoJson 6 `StaticJsonDocument<N>` as a stack-allocated alternative.
+
+**Investigated and reverted:** Pre-allocated `std::string` members in `WebSocketModule`, `AsyncWebSocketSharedBuffer` persistent members in `PalWs.h` — both caused crashes on UI refresh (multiple simultaneous frame queues sharing one buffer, use-count race).
+
 ### Known patches — tracked for removal
 
 Workarounds annotated `// PATCH:` in source. Each has a stated unlock condition; when the condition is met the patch and its comment are deleted together.
@@ -59,7 +128,7 @@ Workarounds annotated `// PATCH:` in source. Each has a stated unlock condition;
 - **`PATCH: drag-guard` (`src/frontend/app.js`).** 2000 ms client-side guard prevents the 1 Hz backend push from overwriting a control the user is actively editing. Root cause: the WS push protocol has no "client owns this control" signal. Unlock: backend sends a client-lock or optimistic-update frame type, making the guard redundant.
 - **`PATCH: schema-diff` (`src/frontend/app.js`).** Frontend diffs incoming schema to distinguish structural changes from value-only changes, avoiding a 1 Hz full DOM rebuild (which resets focus and flickers cards). Root cause: backend sends one `t:"schema"` event for both structure and value changes. Unlock: backend sends separate `schema-structure` vs `schema-values` event types.
 - **`PATCH: queue-headroom` (`src/pal/PalWs.h`).** `canBroadcastBinary()` skips a pixel frame when the AsyncWebSocket queue is near-full, preventing 50 fps binary from starving 1 fps text messages. Root cause: AsyncWebSocket uses a single per-client queue for all frame types. Unlock: AsyncWebSocket separates binary/text queues, or the preview stream moves to a dedicated WebSocket endpoint.
-- **`PATCH: wifi-guard + WiFiUDP` (`src/pal/PalUdp.h`).** Guards against pre-WiFi sends and EHOSTUNREACH spam from `WiFiUDP::endPacket()` when the destination is unreachable. Root cause: `WiFiUDP` is blocking and logs errors on every failed send (50 fps × bad `dest_ip` = log flood). Unlock: AsyncUDP migration (Release 2 — ArtNet-in).
+- **`PATCH: wifi-guard` (`src/pal/PalUdp.h`).** Guards against pre-WiFi sends. Root cause: no lifecycle signal from the module graph when WiFi is up; the guard is a local workaround. Unlock: a WiFi-ready event from `WifiStaModule` removes the need for every caller to poll.
 
 ### Documentation / process
 

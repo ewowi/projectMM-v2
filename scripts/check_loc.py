@@ -49,7 +49,7 @@ BUDGETS = {
     "test/test_pc/test_module.cpp":             65,   # ModuleManager smoke + factory
     "test/test_pc/test_http.cpp":              150,   # HttpServerModule integration (raw TCP probe)
     "test/test_pc/test_pal_heap.cpp":           60,   # pal::psram_alloc / psram_free contract
-    "test/test_pc/test_data_buffer.cpp":        110,   # DataBuffer single-slot SPSC + cross-thread tear test
+    "test/test_pc/test_data_buffer.cpp":        115,   # DataBuffer SPSC + cross-thread tear + two-reader independence (DataBufferReader)
     "test/test_pc/test_ripples_lut.cpp":       125,   # LUT path + revision bump + hue dominance
     "test/test_pc/test_preview_wire.cpp":       70,   # Binary frame header + body byte-for-byte
     "test/test_pc/test_artnet_packing.cpp":     75,   # Art-Net OpDmx 18-byte header per universe

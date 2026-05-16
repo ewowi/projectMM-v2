@@ -66,10 +66,11 @@ void WebSocketModule::broadcast_schema_() {
       manager_->at(i)->getSchema(arr.add<JsonObject>());
     }
   }
-  std::string out;
-  out.reserve(measureJson(doc) + 1);
-  serializeJson(doc, out);
-  ws_->broadcastText(out);
+  // Serialize into a static buffer — no heap allocation for the output string.
+  // 4KB covers ~20 modules × ~180 bytes schema each with headroom.
+  static char buf[4096];
+  size_t len = serializeJson(doc, buf, sizeof(buf));
+  if (len > 0 && len < sizeof(buf)) ws_->broadcastText(buf, len);
 }
 
 void WebSocketModule::broadcast_state_() {
@@ -81,19 +82,17 @@ void WebSocketModule::broadcast_state_() {
       JsonObject entry = arr.add<JsonObject>();
       MoonModule* m = manager_->at(i);
       entry["id"] = m->id();
-      // Per-module timing — frontend's fps/ms toggle reads ms_per_tick.
-      // self_ms_per_tick will diverge from ms_per_tick once Sprint 6 adds
-      // child-recursion accounting; for now they're the same value.
       JsonObject t = entry["timing"].to<JsonObject>();
       t["us_per_tick"]      = m->usPerTick();
       t["self_us_per_tick"] = m->usPerTick();
       m->getControlValues(entry["controls"].to<JsonObject>());
     }
   }
-  std::string out;
-  out.reserve(measureJson(doc) + 1);
-  serializeJson(doc, out);
-  ws_->broadcastText(out);
+  // Serialize into a static buffer — no heap allocation for the output string.
+  // 2KB covers ~20 modules × ~80 bytes state each with headroom.
+  static char buf[2048];
+  size_t len = serializeJson(doc, buf, sizeof(buf));
+  if (len > 0 && len < sizeof(buf)) ws_->broadcastText(buf, len);
 }
 
 }  // namespace pmm

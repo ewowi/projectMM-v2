@@ -90,7 +90,7 @@ class ModuleManager;
 
 // One registered control entry. Stores a typed pointer to a backing class
 // field so setControl() writes through it without per-tick JSON overhead.
-enum class CtrlType : uint8_t { Float, Uint8, Uint32, Bool, String, EditStr, FloatConst, Select };
+enum class CtrlType : uint8_t { Float, Uint8, Uint16, Uint32, Bool, String, EditStr, FloatConst, Select };
 
 struct ControlDescriptor {
   const char* key;       // JSON key used by REST / WS and as UI label
@@ -213,6 +213,7 @@ class MoonModule {
   // pending props/state can apply before the first read.
   void addControl(float& v, const char* k, const char* u, float lo = 0.0f, float hi = 1.0f);
   void addControl(uint8_t&  v, const char* k, const char* u, uint8_t  lo = 0,  uint8_t  hi = 255);
+  void addControl(uint16_t& v, const char* k, const char* u, uint16_t lo = 0,  uint16_t hi = 65535);
   void addControl(uint32_t& v, const char* k, const char* u, uint32_t lo = 0,  uint32_t hi = 0);
   void addControl(bool& v, const char* k, const char* u, float lo = 0.0f, float hi = 1.0f);
   // Read-only string DISPLAY backed by a char[] field (e.g. localTime_).
@@ -246,6 +247,7 @@ class MoonModule {
   void getSchema(JsonObject out) const;
   // Flat {key: value} JSON — lighter alternative for periodic WS state pushes.
   void getControlValues(JsonObject out) const;
+
 
   // -- Mid-lifecycle control rebuild -----------------------------------------
   // Saves non-system control values back into pendingProps_ so addControl()

@@ -100,26 +100,19 @@ class WsServer {
   }
 
   void broadcastText(const char* data, size_t len) {
-    for (auto& c : ws_.getClients())
-      if (c.status() == WS_CONNECTED && !c.queueIsFull()) c.text(data, len);
+    try { ws_.textAll(data, len); } catch (const std::bad_alloc&) {}
   }
   void broadcastText(const std::string& msg) { broadcastText(msg.c_str(), msg.size()); }
 
   void broadcastBinary(const uint8_t* data, size_t len) {
-    for (auto& c : ws_.getClients())
-      if (c.status() == WS_CONNECTED && !c.queueIsFull()) c.binary(data, len);
+    try { ws_.binaryAll(data, len); } catch (const std::bad_alloc&) {}
   }
 
-  // PATCH: queue-headroom — reserves slots so 50fps binary can't starve 1fps
-  // text (state/schema). Remove when AsyncWebSocket separates binary and text
-  // queues, or when the preview stream moves to a dedicated WebSocket endpoint.
-  bool canBroadcastBinary() {
-    static constexpr size_t kBinaryHeadroom = 4;
-    for (auto& c : ws_.getClients())
-      if (c.status() == WS_CONNECTED && c.queueLen() + kBinaryHeadroom >= WS_MAX_QUEUED_MESSAGES)
-        return false;
-    return true;
-  }
+  // PATCH: queue-headroom — simplified to count-only check after getClients()
+  // unsafe-from-core-1 race was fixed by switching broadcast to textAll/binaryAll.
+  // Per-client queueLen() still requires the lock; binaryAll's internal
+  // queueIsFull check handles per-client backpressure safely.
+  bool canBroadcastBinary() { return ws_.count() > 0; }
 
   bool   hasClients() const  { return ws_.count() > 0; }
   size_t clientCount() const { return (size_t)ws_.count(); }

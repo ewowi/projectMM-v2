@@ -28,6 +28,7 @@
 #include "../../core/MoonModule.h"
 #include "../../core/ModuleManager.h"
 #include "../../pal/PalHeap.h"
+#include "../../pal/PalSystemInfo.h"
 #include "../network/WebSocketModule.h"
 #include "../system/Logger.h"
 #include "Pixelable.h"
@@ -52,25 +53,36 @@ class PreviewModule : public MoonModule {
     if (std::strcmp(key, "source") == 0) resolve_buf_();
   }
 
+  void loop1s() override {
+    if (!buf_) return;
+    const DataBufferEntry* e = DataRegistry::instance().resolve(source_buf_);
+    if (!e) return;
+    const size_t need = (size_t)e->dim[0] * e->dim[1] * e->dim[2] * sizeof(RGB);
+    if (need != pixel_bytes_) resolve_buf_();
+  }
+
   void loop20ms() override {
     if (!ws_) resolve_ws_();
     if (!buf_) resolve_buf_();
     if (!buf_ || !ws_ || !frame_buf_) return;
     if (!ws_->hasClients()) return;
     if (!ws_->canBroadcastBinary()) return;  // queue congested — skip frame, text gets priority
+    // AsyncWebSocket::binary() allocates a frame copy on the heap. Skip the
+    // frame if the largest free block is too small to avoid an OOM crash.
+    if (pal::max_alloc_kb() * 1024 < pixel_bytes_ + 7 + 512) return;
 
-    const uint32_t rev_before = buf_->revision();
-    const RGB* src = buf_->try_acquire_read();
+    const uint32_t rev_before = reader_.revision();
+    const RGB* src = reader_.try_acquire_read();
     if (!src) return;
 
     // Torn-frame check: with a single slot the producer may write while we
     // read. If revision changed between try_acquire_read and now, skip frame.
-    if (buf_->revision() != rev_before) { buf_->release_read(); return; }
+    if (reader_.revision() != rev_before) { reader_.release_read(); return; }
 
     // Header is already written in frame_buf_[0..6]; copy pixels after it.
     std::memcpy(frame_buf_ + 7, src, pixel_bytes_);
     ws_->broadcastBinary(frame_buf_, 7 + pixel_bytes_);
-    buf_->release_read();
+    reader_.release_read();
   }
 
   void teardown() override {
@@ -83,17 +95,20 @@ class PreviewModule : public MoonModule {
   }
 
  private:
-  char             source_buf_[24] = "ripples-0";
-  DataBuffer<RGB>* buf_            = nullptr;
-  WebSocketModule* ws_             = nullptr;
-  uint8_t*         frame_buf_      = nullptr;  // header + pixels; grown on resolve
-  size_t           pixel_bytes_    = 0;
+  char                  source_buf_[24] = "ripples-0";
+  DataBuffer<RGB>*      buf_            = nullptr;
+  DataBufferReader<RGB> reader_;
+  WebSocketModule*      ws_             = nullptr;
+  uint8_t*              frame_buf_      = nullptr;  // header + pixels; grown on resolve
+  size_t                pixel_bytes_    = 0;
 
   void resolve_buf_() {
     buf_ = nullptr;
+    reader_.detach();
     const DataBufferEntry* e = DataRegistry::instance().resolve(source_buf_);
     if (!e || !e->buf_ptr) return;
     buf_ = static_cast<DataBuffer<RGB>*>(e->buf_ptr);
+    reader_.attach(buf_);
 
     // Rebuild frame_buf_ if geometry changed.
     const uint16_t w = e->dim[0], h = e->dim[1], d = e->dim[2];

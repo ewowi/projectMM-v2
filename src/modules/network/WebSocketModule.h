@@ -37,9 +37,6 @@ class WebSocketModule : public MoonModule {
   std::unique_ptr<pal::WsServer> ws_;
   // Tracked across loop1s ticks so schema only re-broadcasts when something
   // actually changed (new client, module added/removed, schemaDirty bumped).
-  // Sprint 5 broadcast schema every second, which tore down the frontend's
-  // DOM at 1 Hz — input focus jumped, preview canvas reset, modules card
-  // flickered. Now only state goes out periodically.
   size_t last_client_count_ = 0;
   size_t last_module_count_ = 0;
 

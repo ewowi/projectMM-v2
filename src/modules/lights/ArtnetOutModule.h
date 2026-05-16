@@ -47,7 +47,7 @@ class ArtnetOutModule : public MoonModule {
   void onBuildControls() override {
     addControl(source_buf_,  sizeof(source_buf_),  "source",   "text");
     addControl(dest_ip_buf_, sizeof(dest_ip_buf_),  "dest_ip",  "text");
-    addControl(universe_,                           "universe", "range", 0u, 15u);
+    addControl(universe_,                           "universe", "slider", 0u, 15u);
   }
 
   void onUpdate(const char* key) override {
@@ -58,11 +58,11 @@ class ArtnetOutModule : public MoonModule {
     if (!buf_) resolve_buf_();
     if (!buf_) return;
 
-    const RGB* frame = buf_->try_acquire_read();
+    const RGB* frame = reader_.try_acquire_read();
     if (!frame) return;  // no fresh frame since last tick
 
     const uint8_t* bytes       = reinterpret_cast<const uint8_t*>(frame);
-    const uint32_t total_bytes = (uint32_t)buf_->slot_bytes();
+    const uint32_t total_bytes = (uint32_t)reader_.slot_bytes();
 
     uint32_t offset = 0;
     uint8_t  uni    = (uint8_t)universe_;
@@ -78,7 +78,7 @@ class ArtnetOutModule : public MoonModule {
       ++uni;
     }
 
-    buf_->release_read();
+    reader_.release_read();
   }
 
  public:
@@ -102,18 +102,21 @@ class ArtnetOutModule : public MoonModule {
   }
 
  private:
-  char             source_buf_[24]  = "ripples-0";
-  char             dest_ip_buf_[24] = "255.255.255.255";
-  uint32_t         universe_        = 0;
-  DataBuffer<RGB>* buf_             = nullptr;
-  pal::Udp         udp_;
-  uint8_t          packet_[kHeaderBytes + kDmxPerPacket] = {};
+  char                  source_buf_[24]  = "ripples-0";
+  char                  dest_ip_buf_[24] = "255.255.255.255";
+  uint32_t              universe_        = 0;
+  DataBuffer<RGB>*      buf_             = nullptr;
+  DataBufferReader<RGB> reader_;
+  pal::Udp              udp_;
+  uint8_t               packet_[kHeaderBytes + kDmxPerPacket] = {};
 
   void resolve_buf_() {
     buf_ = nullptr;
+    reader_.detach();
     const DataBufferEntry* e = DataRegistry::instance().resolve(source_buf_);
     if (!e || !e->buf_ptr) return;
     buf_ = static_cast<DataBuffer<RGB>*>(e->buf_ptr);
+    reader_.attach(buf_);
   }
 };
 

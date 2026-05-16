@@ -7,14 +7,18 @@
 // Filesystem sandbox: PalFs maps the firmware paths "/modules.json" and
 // "/state-<id>.json" to ./state/* under CWD. Cleanup happens before and
 // after each TEST_CASE so the suite is order-independent.
+//
+// Geometry is set via a GridLayoutModule linked to RipplesEffect (Sprint 15).
 
 #include <cstdint>
 #include <filesystem>
 #include <system_error>
 
+#include <ArduinoJson.h>
 #include <doctest/doctest.h>
 
 #include "core/ModuleManager.h"
+#include "modules/lights/GridLayoutModule.h"
 #include "modules/lights/Pixelable.h"
 #include "modules/lights/RipplesEffect.h"
 #include "modules/system/StateStoreModule.h"
@@ -37,49 +41,58 @@ TEST_CASE("StateStoreModule round-trip — control survives a simulated reboot")
   // ── Boot 1: configure + persist ─────────────────────────────────────────
   {
     ModuleManager mm;
+    mm.register_type<GridLayoutModule>("layout");
     mm.register_type<RipplesEffect>("ripples");
     mm.register_type<StateStoreModule>("state-store");
 
     MoonModule* store = mm.add("state-store", "state-store-0");
     REQUIRE(store != nullptr);
-    // state-store's setup snapshots an empty list; ripples will appear as
-    // "new" on the next loop10s pass.
+
+    auto* layout = dynamic_cast<GridLayoutModule*>(mm.add("layout", "layout-0"));
+    REQUIRE(layout != nullptr);
+    REQUIRE(layout->setControl("width",  64.0f));
+    REQUIRE(layout->setControl("height", 64.0f));
 
     auto* ripples = dynamic_cast<RipplesEffect*>(mm.add("ripples", "r-roundtrip"));
     REQUIRE(ripples != nullptr);
-    REQUIRE(ripples->setControl("width",  64.0f));
-    REQUIRE(ripples->setControl("height", 64.0f));
+    { JsonDocument d; d.set("layout-0"); REQUIRE(ripples->setControl("layout", JsonVariantConst(d))); }
 
-    store->runLoop10s();   // triggers the snapshot write
+    store->runLoop1s();    // triggers modules.json write (moved from loop10s)
+    store->runLoop10s();   // triggers per-module state write
 
     CHECK(fs::exists("state/modules.json"));
     CHECK(fs::exists("state/state-r-roundtrip.json"));
 
-    // Manual teardown so PixelRegistry stops referencing the about-to-die
-    // RipplesEffect (ModuleManager's default destructor doesn't recurse
-    // into runTeardown — only the explicit remove() path does).
     mm.remove("r-roundtrip");
+    mm.remove("layout-0");
     mm.remove("state-store-0");
   }
 
   // ── Boot 2: fresh manager re-creates from disk ──────────────────────────
   {
     ModuleManager mm;
+    mm.register_type<GridLayoutModule>("layout");
     mm.register_type<RipplesEffect>("ripples");
     mm.register_type<StateStoreModule>("state-store");
 
-    // state-store's setup reads /modules.json and re-adds the persisted
-    // ripples-r-roundtrip with its saved control values pre-applied.
+    // state-store's setup reads /modules.json and re-adds all persisted modules.
     MoonModule* store = mm.add("state-store", "state-store-0");
     REQUIRE(store != nullptr);
 
+    auto* layout   = dynamic_cast<GridLayoutModule*>(mm.find("layout-0"));
     auto* restored = dynamic_cast<RipplesEffect*>(mm.find("r-roundtrip"));
+    REQUIRE(layout   != nullptr);
     REQUIRE(restored != nullptr);
+
+    CHECK(layout->width()  == 64);
+    CHECK(layout->height() == 64);
+
     const PixelBufferRef ref = restored->pixelBuffer();
     CHECK(ref.width  == 64);
     CHECK(ref.height == 64);
 
     mm.remove("r-roundtrip");
+    mm.remove("layout-0");
     mm.remove("state-store-0");
   }
 

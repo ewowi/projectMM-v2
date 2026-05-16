@@ -5,10 +5,13 @@
 // into a DataBuffer<RGB> owned here and declared in DataRegistry so
 // PreviewModule and ArtnetOutModule can read it zero-copy from the same slot.
 //
-// Controls (all 0–255 for DMX compatibility):
-//   width, height: 1..128 (default 16) — buffer geometry
-//   depth: 1..16 (default 1) — repeats the 2D pattern per slice
-//   speed: 0–255 → 0.0–10.0 rad/s (default 26 ≈ 1.0 rad/s)
+// Geometry: comes from a linked GridLayoutModule (resolved by the `layout` control,
+// a text field holding the layout module's id). Fallback when no layout is
+// linked: 16×16×1. The effect carries no geometry controls of its own.
+//
+// Controls:
+//   layout:   id of a GridLayoutModule (text, default "layout-0")
+//   speed:    0–255 → 0.0–10.0 rad/s (default 26 ≈ 1.0 rad/s)
 //   hue_base: 0–255 → 0.0–1.0 hue (default 153 ≈ 0.6)
 //
 // Allocation (onAllocateMemory):
@@ -29,9 +32,11 @@
 #include "../../core/DataBuffer.h"
 #include "../../core/DataRegistry.h"
 #include "../../core/MoonModule.h"
+#include "../../core/ModuleManager.h"
 #include "../../pal/Pal.h"
 #include "../../pal/PalHeap.h"
 #include "../system/Logger.h"
+#include "GridLayoutModule.h"
 #include "Pixelable.h"
 #include "RGB.h"
 
@@ -41,44 +46,53 @@ class RipplesEffect : public MoonModule, public PixelSource {
  public:
   const char* category() const override { return "effect"; }
 
-  void setup() override {}
+  void setup() override {
+    resolve_layout_();
+  }
 
   void onBuildControls() override {
-    addControl(width_,    "width",    "slider", (uint8_t)1, (uint8_t)128);
-    addControl(height_,   "height",   "slider", (uint8_t)1, (uint8_t)128);
-    addControl(depth_,    "depth",    "slider", (uint8_t)1, (uint8_t)16);
-    addControl(speed_,    "speed",    "slider", (uint8_t)0, (uint8_t)255);
-    addControl(hue_base_, "hue_base", "slider", (uint8_t)0, (uint8_t)255);
+    addControl(layout_id_, sizeof(layout_id_), "layout",   "text");
+    addControl(speed_,                         "speed",    "slider", (uint8_t)0, (uint8_t)255);
+    addControl(hue_base_,                      "hue_base", "slider", (uint8_t)0, (uint8_t)255);
   }
 
   void onAllocateMemory() override {
+    resolve_layout_();
     allocate_();
   }
 
   void onUpdate(const char* key) override {
-    if (std::strcmp(key, "width")  == 0 ||
-        std::strcmp(key, "height") == 0 ||
-        std::strcmp(key, "depth")  == 0) {
+    if (std::strcmp(key, "layout") == 0) {
+      resolve_layout_();
       allocate_();
     } else if (std::strcmp(key, "hue_base") == 0) {
       rebuild_color_table_();
     }
   }
 
+  void loop1s() override {
+    if (!layout_) resolve_layout_();
+    if (layout_ && (layout_->width() != w_ || layout_->height() != h_ || layout_->depth() != d_))
+      allocate_();
+  }
+
   void loop20ms() override {
+    // Re-resolve if layout was added after this effect.
+    if (!layout_) resolve_layout_();
+
     if (!pixels_ || !phase_offset_ || !base_color_) return;
     const uint8_t* const bri_lut = cos_bri_lut_();
-    const uint16_t w = (uint16_t)width_;
-    const uint16_t h = (uint16_t)height_;
-    const uint16_t d = (uint16_t)depth_;
-    const uint32_t plane = (uint32_t)w * h;
+    const uint32_t w = w_;
+    const uint32_t h = h_;
+    const uint32_t d = d_;
+    const uint32_t plane = w * h;
 
     const float arg = (float)pal::millis() * 0.001f * (speed_ * (10.0f / 255.0f)) * 2.0f;
     const float wrapped = std::fmod(arg, 2.0f * 3.14159265358979f);
     const uint16_t t_q = (uint16_t)(int32_t)(wrapped * (65536.0f / (2.0f * 3.14159265358979f)));
 
-    for (uint16_t z = 0; z < d; ++z) {
-      RGB* out = pixels_ + (uint32_t)z * plane;
+    for (uint32_t z = 0; z < d; ++z) {
+      RGB* out = pixels_ + z * plane;
       for (uint32_t i = 0; i < plane; ++i) {
         const uint16_t phase = (uint16_t)(phase_offset_[i] - t_q);
         const uint8_t  bri   = bri_lut[phase >> 8];
@@ -89,8 +103,6 @@ class RipplesEffect : public MoonModule, public PixelSource {
       }
     }
 
-    // Publish into the shared DataBuffer — consumers (Preview, ArtNet) read
-    // zero-copy from the same single slot.
     if (buf_ && buf_->valid()) {
       RGB* dst = buf_->acquire_write();
       std::memcpy(dst, pixels_, allocated_count_ * sizeof(RGB));
@@ -106,31 +118,54 @@ class RipplesEffect : public MoonModule, public PixelSource {
       buf_ = nullptr;
     }
     free_pixels_();
+    layout_ = nullptr;
   }
 
   PixelBufferRef pixelBuffer() const override {
     return { pixels_,
-             (uint16_t)width_,
-             (uint16_t)height_,
-             (uint16_t)depth_,
+             (uint16_t)w_,
+             (uint16_t)h_,
+             (uint16_t)d_,
              revision_ };
   }
 
  private:
-  uint8_t width_    = 16;
-  uint8_t height_   = 16;
-  uint8_t depth_    = 1;
-  uint8_t speed_    = 26;
-  uint8_t hue_base_ = 153;
+  char     layout_id_[24] = "layout-0";
+  uint8_t  speed_         = 26;
+  uint8_t  hue_base_      = 153;
 
-  RGB*              pixels_          = nullptr;
-  uint32_t          revision_        = 0;
-  uint32_t          allocated_count_ = 0;
-  DataBuffer<RGB>*  buf_             = nullptr;  // owned here, declared in DataRegistry
+  // Resolved geometry — set from GridLayoutModule or fallback defaults.
+  uint32_t w_ = 16;
+  uint32_t h_ = 16;
+  uint32_t d_ = 1;
+
+  GridLayoutModule*    layout_          = nullptr;
+  RGB*             pixels_          = nullptr;
+  uint32_t         revision_        = 0;
+  uint32_t         allocated_count_ = 0;
+  DataBuffer<RGB>* buf_             = nullptr;
 
   uint16_t* phase_offset_ = nullptr;
   RGB*      base_color_   = nullptr;
   uint32_t  plane_count_  = 0;
+
+  void resolve_layout_() {
+    layout_ = nullptr;
+    if (!manager_) return;
+    MoonModule* m = manager_->find(layout_id_);
+    if (!m) return;
+    layout_ = static_cast<GridLayoutModule*>(m);
+  }
+
+  void geometry_from_layout_() {
+    if (layout_) {
+      w_ = layout_->width();
+      h_ = layout_->height();
+      d_ = layout_->depth();
+    } else {
+      w_ = 16; h_ = 16; d_ = 1;
+    }
+  }
 
   static const uint8_t* cos_bri_lut_() {
     static uint8_t lut[256];
@@ -155,17 +190,12 @@ class RipplesEffect : public MoonModule, public PixelSource {
   }
 
   void allocate_() {
-    const uint32_t want_pixels = (uint32_t)width_ * (uint32_t)height_ * (uint32_t)depth_;
-    const uint32_t want_plane  = (uint32_t)width_ * (uint32_t)height_;
+    geometry_from_layout_();
+    const uint32_t want_pixels = w_ * h_ * d_;
+    const uint32_t want_plane  = w_ * h_;
     if (want_pixels == allocated_count_ && pixels_ && phase_offset_ && base_color_) return;
 
     free_pixels_();
-
-    if (buf_) {
-      DataRegistry::instance().undeclare(buf_);
-      delete buf_;
-      buf_ = nullptr;
-    }
 
     if (want_pixels == 0) { ++revision_; return; }
 
@@ -177,7 +207,7 @@ class RipplesEffect : public MoonModule, public PixelSource {
     base_color_   = (RGB*)     pal::psram_alloc(color_bytes);
     if (!pixels_ || !phase_offset_ || !base_color_) {
       log("[ripples] alloc failed at %ux%ux%u\n",
-          (unsigned)width_, (unsigned)height_, (unsigned)depth_);
+          (unsigned)w_, (unsigned)h_, (unsigned)d_);
       free_pixels_();
       ++revision_;
       return;
@@ -189,19 +219,20 @@ class RipplesEffect : public MoonModule, public PixelSource {
     rebuild_phase_table_();
     rebuild_color_table_();
 
-    // Declare a DataBuffer<RGB> in the registry. Buffer owned by this module;
-    // registry exposes it to consumers (Preview, ArtNet) by id.
-    buf_ = new DataBuffer<RGB>();
+    // Keep buf_ alive across geometry changes — deleting it while a reader holds
+    // the raw slot pointer (from try_acquire_read) causes a use-after-free on
+    // the second core. Instead resize in place: allocate() resets published_ to
+    // kNone so readers get nullptr until the next publish (safe skip).
+    if (!buf_) buf_ = new DataBuffer<RGB>();
     if (!buf_->allocate(want_pixels)) {
       log("[ripples] buf alloc failed at %ux%ux%u\n",
-          (unsigned)width_, (unsigned)height_, (unsigned)depth_);
-      delete buf_;
-      buf_ = nullptr;
+          (unsigned)w_, (unsigned)h_, (unsigned)d_);
     } else {
+      // declare() updates the existing entry if already registered.
       DataRegistry::instance().declare(id(), buf_, want_pixels, sizeof(RGB),
-                                       width_, height_, depth_);
+                                       (uint16_t)w_, (uint16_t)h_, (uint16_t)d_);
       log("[ripples] allocated %ux%ux%u pixels=%uB tables=%uB\n",
-          (unsigned)width_, (unsigned)height_, (unsigned)depth_,
+          (unsigned)w_, (unsigned)h_, (unsigned)d_,
           (unsigned)pixel_bytes, (unsigned)(phase_bytes + color_bytes));
     }
     ++revision_;
@@ -209,16 +240,14 @@ class RipplesEffect : public MoonModule, public PixelSource {
 
   void rebuild_phase_table_() {
     if (!phase_offset_) return;
-    const float cx = (float)width_  * 0.5f - 0.5f;
-    const float cy = (float)height_ * 0.5f - 0.5f;
+    const float cx = (float)w_ * 0.5f - 0.5f;
+    const float cy = (float)h_ * 0.5f - 0.5f;
     constexpr float kPhaseScale = 65536.0f / (2.0f * 3.14159265358979f);
-    const uint16_t w = (uint16_t)width_;
-    const uint16_t h = (uint16_t)height_;
-    for (uint16_t y = 0; y < h; ++y) {
+    for (uint32_t y = 0; y < h_; ++y) {
       const float dy = (float)y - cy;
       const float dy2 = dy * dy;
-      uint16_t* row = phase_offset_ + (uint32_t)y * w;
-      for (uint16_t x = 0; x < w; ++x) {
+      uint16_t* row = phase_offset_ + y * w_;
+      for (uint32_t x = 0; x < w_; ++x) {
         const float dx = (float)x - cx;
         row[x] = (uint16_t)(uint32_t)(std::sqrt(dx * dx + dy2) * 0.6f * kPhaseScale);
       }
@@ -227,15 +256,13 @@ class RipplesEffect : public MoonModule, public PixelSource {
 
   void rebuild_color_table_() {
     if (!base_color_) return;
-    const float cx = (float)width_  * 0.5f - 0.5f;
-    const float cy = (float)height_ * 0.5f - 0.5f;
-    const uint16_t w = (uint16_t)width_;
-    const uint16_t h = (uint16_t)height_;
-    for (uint16_t y = 0; y < h; ++y) {
+    const float cx = (float)w_ * 0.5f - 0.5f;
+    const float cy = (float)h_ * 0.5f - 0.5f;
+    for (uint32_t y = 0; y < h_; ++y) {
       const float dy = (float)y - cy;
       const float dy2 = dy * dy;
-      RGB* row = base_color_ + (uint32_t)y * w;
-      for (uint16_t x = 0; x < w; ++x) {
+      RGB* row = base_color_ + y * w_;
+      for (uint32_t x = 0; x < w_; ++x) {
         const float dx = (float)x - cx;
         row[x] = RGB::fromHsv(hue_base_ * (1.0f / 255.0f) + std::sqrt(dx * dx + dy2) * 0.05f, 1.0f, 1.0f);
       }

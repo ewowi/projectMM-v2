@@ -26,6 +26,7 @@
 #include "core/ModuleManager.h"
 #include "modules/lights/ArtnetOutModule.h"
 #include "modules/lights/PreviewModule.h"
+#include "modules/lights/GridLayoutModule.h"
 #include "modules/lights/RipplesEffect.h"
 #include "modules/system/SystemStatusModule.h"
 
@@ -35,6 +36,7 @@ using namespace pmm;
 namespace {
 
 void register_scenario_types_(ModuleManager& mm) {
+  mm.register_type<GridLayoutModule>("layout");
   mm.register_type<RipplesEffect>("ripples");
   mm.register_type<PreviewModule>("preview");
   mm.register_type<ArtnetOutModule>("artnet-out");

@@ -46,6 +46,8 @@ TYPE_SIZES: dict[str, int] = {
     "RGB":          3,
     "FrameRing":   32,    # 2× pointer + 2× uint32 + mutex-like state; see FrameRing.h
     "JsonDocument": 128,  # ArduinoJson 7 minimum slab
+    # project types (templates — matched by outer name before '<')
+    "DataBufferReader": 16,  # DataBuffer<T>* (8B) + atomic<uint32_t> (4B) + 4B pad = 16B
     # pal types
     "Udp":          4,    # PC: one int fd_; ESP32: WiFiUDP (~52B) — using PC value
 }
