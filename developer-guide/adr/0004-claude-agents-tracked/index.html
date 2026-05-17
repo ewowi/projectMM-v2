@@ -12,13 +12,13 @@
         <meta name="author" content="MoonModules">
       
       
-        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/user-guide/network/http-server/">
+        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/developer-guide/adr/0004-claude-agents-tracked/">
       
       
-        <link rel="prev" href="../../system/state-store/">
+        <link rel="prev" href="../0003-dataring-dataregistry-in-core/">
       
       
-        <link rel="next" href="../web-socket/">
+        <link rel="next" href="../../../development/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>HttpServerModule - projectMM v2</title>
+        <title>0004 — Track .claude/agents/ - projectMM v2</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#httpservermodule" class="md-skip">
+        <a href="#adr-0004-track-claudeagents-as-a-committed-top-level-path" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              HttpServerModule
+              0004 — Track .claude/agents/
             
           </span>
         </div>
@@ -244,13 +244,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../user-guide/" class="md-tabs__link">
           
   
   
@@ -286,11 +284,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../../developer-guide/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
           
   
   
@@ -398,31 +398,26 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
@@ -440,7 +435,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -458,7 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../" class="md-nav__link">
+      <a href="../../../user-guide/" class="md-nav__link">
         
   
   
@@ -492,20 +487,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" >
         
           
-          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
             
   
   
@@ -541,7 +533,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system/system-status/" class="md-nav__link">
+      <a href="../../../user-guide/system/system-status/" class="md-nav__link">
         
   
   
@@ -569,7 +561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system/wifi-sta/" class="md-nav__link">
+      <a href="../../../user-guide/system/wifi-sta/" class="md-nav__link">
         
   
   
@@ -597,7 +589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system/state-store/" class="md-nav__link">
+      <a href="../../../user-guide/system/state-store/" class="md-nav__link">
         
   
   
@@ -630,31 +622,26 @@
                 
   
   
-    
   
   
-  
     
     
     
     
       
       
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
         
           
-          
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
             
   
   
@@ -672,7 +659,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -687,37 +674,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    HttpServerModule
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../user-guide/network/http-server/" class="md-nav__link">
         
   
   
@@ -733,48 +693,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#end-user-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        End-user reference
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#developer-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Developer reference
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -787,7 +705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../web-socket/" class="md-nav__link">
+      <a href="../../../user-guide/network/web-socket/" class="md-nav__link">
         
   
   
@@ -829,20 +747,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
         
           
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
             
   
   
@@ -878,7 +793,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../lights/ripples-effect/" class="md-nav__link">
+      <a href="../../../user-guide/lights/ripples-effect/" class="md-nav__link">
         
   
   
@@ -906,7 +821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../lights/preview/" class="md-nav__link">
+      <a href="../../../user-guide/lights/preview/" class="md-nav__link">
         
   
   
@@ -934,7 +849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../lights/artnet-out/" class="md-nav__link">
+      <a href="../../../user-guide/lights/artnet-out/" class="md-nav__link">
         
   
   
@@ -1117,26 +1032,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -1154,7 +1074,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1172,7 +1092,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/" class="md-nav__link">
+      <a href="../../" class="md-nav__link">
         
   
   
@@ -1200,7 +1120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/deploy/" class="md-nav__link">
+      <a href="../../deploy/" class="md-nav__link">
         
   
   
@@ -1228,7 +1148,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/backend/" class="md-nav__link">
+      <a href="../../backend/" class="md-nav__link">
         
   
   
@@ -1256,7 +1176,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/frontend/" class="md-nav__link">
+      <a href="../../frontend/" class="md-nav__link">
         
   
   
@@ -1284,7 +1204,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/pal/" class="md-nav__link">
+      <a href="../../pal/" class="md-nav__link">
         
   
   
@@ -1309,26 +1229,31 @@
                 
   
   
+    
   
   
+  
     
     
     
     
       
       
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
         
           
-          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="">
             
   
   
@@ -1346,7 +1271,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1364,7 +1289,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0001-vendor-cpp-httplib/" class="md-nav__link">
+      <a href="../0001-vendor-cpp-httplib/" class="md-nav__link">
         
   
   
@@ -1392,7 +1317,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0002-arduinojson-lib-deps/" class="md-nav__link">
+      <a href="../0002-arduinojson-lib-deps/" class="md-nav__link">
         
   
   
@@ -1420,7 +1345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0003-dataring-dataregistry-in-core/" class="md-nav__link">
+      <a href="../0003-dataring-dataregistry-in-core/" class="md-nav__link">
         
   
   
@@ -1445,10 +1370,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0004-claude-agents-tracked/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0004 — Track .claude/agents/
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1464,6 +1416,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1654,10 +1659,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#end-user-reference" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        End-user reference
+        Context
       
     </span>
   </a>
@@ -1665,10 +1670,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#developer-reference" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Developer reference
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
       
     </span>
   </a>
@@ -1695,62 +1711,41 @@
   
 
 
-<h1 id="httpservermodule">HttpServerModule<a class="headerlink" href="#httpservermodule" title="Permanent link">&para;</a></h1>
-<p>Serves the frontend (gzipped SPA bundle at <code>/</code>) and a JSON REST API. Default port 80 on ESP32, 8080 on PC (via <code>pal::default_http_port()</code>). Listener self-starts via <code>loop1s</code> once <code>WifiStaModule</code> brings up a netif — earlier attempts to start in <code>setup()</code> crashed because <code>AsyncServer::begin()</code> asserts on <code>xQueueSemaphoreTake</code> before lwIP is ready.</p>
-<h2 id="end-user-reference">End-user reference<a class="headerlink" href="#end-user-reference" title="Permanent link">&para;</a></h2>
-<p>No user-facing controls beyond <code>enabled</code>. The user-visible surface is the route table:</p>
-<table>
-<thead>
-<tr>
-<th>Route</th>
-<th>Method</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>/</code></td>
-<td>GET</td>
-<td>Frontend SPA (gzipped bundle)</td>
-</tr>
-<tr>
-<td><code>/api/types</code></td>
-<td>GET</td>
-<td>Registered module type names (for the frontend's "Add module" picker)</td>
-</tr>
-<tr>
-<td><code>/api/modules</code></td>
-<td>GET / POST / DELETE / PATCH</td>
-<td>List modules; add / remove / patch one</td>
-</tr>
-<tr>
-<td><code>/api/modules/reorder</code></td>
-<td>POST</td>
-<td>Reorder root-level modules</td>
-</tr>
-<tr>
-<td><code>/api/control</code></td>
-<td>POST</td>
-<td>Single-control update (v1 wire format: <code>{id, key, value}</code>)</td>
-</tr>
-<tr>
-<td><code>/api/system</code></td>
-<td>GET</td>
-<td>Aggregated <a href="../../system/system-status/">SystemStatusModule</a> output</td>
-</tr>
-<tr>
-<td><code>/api/log</code></td>
-<td>GET</td>
-<td>Last 64 lines from <code>pmm::Logger</code>'s ring</td>
-</tr>
-</tbody>
-</table>
-<h2 id="developer-reference">Developer reference<a class="headerlink" href="#developer-reference" title="Permanent link">&para;</a></h2>
+<h1 id="adr-0004-track-claudeagents-as-a-committed-top-level-path">ADR 0004 — Track <code>.claude/agents/</code> as a committed top-level path<a class="headerlink" href="#adr-0004-track-claudeagents-as-a-committed-top-level-path" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Accepted, 2026-05-17.
+<strong>Supersedes:</strong> none.
+<strong>Related:</strong> <a href="../../../architecture/process/">process architecture §2 — guardrails obey their own rules</a>; <a href="https://github.com/ewowi/projectMM-v2/blob/main/CLAUDE.md">CLAUDE.md</a> Rule #1; <a href="https://github.com/ewowi/projectMM-v2/blob/main/scripts/checks/check_structure.py">structure check</a>.</p>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>projectMM v2 is developed with Claude Code as a first-class part of the workflow — the <code>docs/</code> tree is explicitly framed as agent memory, MoonDeck embeds an agent loop, and the release plan is authored with agent assistance. Two project-local agents proved their value during the Sprint 16/17 work and the scripts restructure:</p>
 <ul>
-<li><code>setup()</code> — construct <code>pal::HttpServer</code> on the configured port, register every REST route (<code>/</code>, <code>/api/*</code>). Route handlers acquire <code>manager_-&gt;mutex()</code> before mutating module state. The listener is <strong>not</strong> started here.</li>
-<li><code>loop1s()</code> — call <code>server_-&gt;begin()</code> idempotently. The first call after WiFi brings up a netif actually starts the listener.</li>
-<li><code>~HttpServerModule()</code> — <code>pal::HttpServer</code>'s destructor stops the listener and joins its worker thread (PC side; ESP32 just unregisters the AsyncWebServer).</li>
+<li><strong><code>guardrail-runner</code></strong> — runs the <em>full</em> pre-push verification suite (the pre-commit checks <strong>plus</strong> <code>mkdocs build --strict</code>, <code>test.py</code>, and a <code>pc</code> build). It exists because two CI jobs failed reactively (a zlib-nondeterministic <code>check_bundle</code>, a broken <code>mkdocs --strict</code> link) when local verification only ran the pre-commit subset.</li>
+<li><strong><code>minimalism-reviewer</code></strong> — reviews an uncommitted diff cold against Rule #1 (what was removed, LOC-budget discipline, architecture/ADR fit, hot-path bans, PATCH convention, scope creep).</li>
 </ul>
+<p>These were initially added local-only (gitignored), reasoned as "solo dev, no consumer, an ADR would be ceremony without payoff." That reasoning is now obsolete: the maintainer intends the repo to (a) onboard additional contributors and (b) serve as a <strong>showcase of agentic development</strong>. Under both goals the agents are <em>product</em>, not personal config — they must be versioned with the code they check, visible in the tree, and shared by every clone.</p>
+<p><code>scripts/check_structure.py</code> blocks any tracked top-level path not in its <code>ALLOWED</code> set, and its own rule requires "a v1 carry-over or a paired ADR" for each entry. <code>.claude/</code> is neither a carry-over nor previously allowed. This ADR is that paired justification — the anti-drift guardrail working exactly as designed: a new tracked top-level directory is a deliberate, recorded decision, not a silent one.</p>
+<p>Alternatives considered:</p>
+<ul>
+<li><strong>Keep <code>.claude/</code> local-only (gitignored).</strong> Zero structural cost, but the agents do not travel with the repo, drift out of sync with the <code>scripts/</code> paths they invoke, and contribute nothing to the showcase goal. Rejected once a real consumer (collaborators + showcase) exists.</li>
+<li><strong>Put agents somewhere already allowed (e.g. <code>scripts/agents/</code> or <code>docs/</code>).</strong> Claude Code only discovers agents in <code>.claude/agents/</code> (project) or <code>~/.claude/agents/</code> (user). Relocating them breaks discovery; a non-standard location would need its own shim and confuses the showcase. Rejected — fight the tool's convention, lose the "this is how agentic dev works" clarity.</li>
+</ul>
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p><code>.claude/agents/</code> is a tracked, committed directory. <code>.claude</code> is added to <code>scripts/check_structure.py</code>'s <code>ALLOWED</code> set with this ADR as its justification.</p>
+<p><code>.gitignore</code> is narrowed from <code>.claude/</code> (everything) to host-specific state only: <code>.claude/settings.local.json</code> and <code>.claude/*.local.json</code>. The <code>.local.</code> suffix is the established "personal, not shared" convention (settings.local.json was already untracked); shareable agent definitions are committed.</p>
+<p><code>.claude/</code> is reserved for Claude Code workspace configuration that is <em>intended to be shared</em> — agent definitions today, and (if added later, each with its own justification) slash commands, shared output styles, or hooks. It is <strong>not</strong> a general-purpose top-level dir for v2-authored runtime/tooling code, which lives in <code>src/</code> and <code>scripts/</code> respectively.</p>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<p><strong>Cost.</strong>
+- A new tracked top-level path (<code>.claude/</code>), and the <code>ALLOWED</code> allowlist grows by one entry.
+- Agent prompt files are not LOC-budgeted (<code>check_loc.py</code> inspects <code>.py</code>/<code>.h</code>/<code>.cpp</code> under <code>src/</code>, <code>scripts/</code>, <code>test/</code>). Like <code>docs/</code>, they are prose; discipline is by review, not a mechanical budget. An agent file that bloats is a review finding.
+- Committed agents reference <code>scripts/checks/*</code> and <code>scripts/build/*</code> paths; if those move again, the agents must be updated in the same change (as any path-coupled file is).</p>
+<p><strong>Benefit.</strong>
+- Every clone gets the same verification + review agents — collaborators inherit the project's discipline instead of re-deriving it.
+- The agents are versioned with the code they check; a path change and its agent update land together.
+- The repo demonstrates agentic development concretely: the agents that enforce the project's rules are <em>in</em> the project, readable.
+- <code>guardrail-runner</code> closes the specific gap that caused two reactive CI failures — full-suite verification is now a one-call, shared capability.</p>
+<p><strong>What is <em>not</em> allowed under this ADR.</strong>
+- Committing host-specific or secret state under <code>.claude/</code> (device IPs, tokens, <code>settings.local.json</code>). Those stay gitignored.
+- Using <code>.claude/</code> for v2-authored runtime code, scripts, or docs — it is Claude Code workspace config only. Runtime code → <code>src/</code>; tooling → <code>scripts/</code>; documentation → <code>docs/</code>.
+- Adding further <code>.claude/</code> subtypes (commands, hooks, styles) silently. Each new <em>kind</em> of shared workspace config is a structural addition; note it in this ADR (or a follow-up) with its justification, same bar as a new module.</p>
 
 
 
