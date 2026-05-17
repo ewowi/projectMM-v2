@@ -85,7 +85,9 @@ SCRIPT_BUDGETS = {
     "scripts/checks/check_cppcheck.py":     45,
     "scripts/checks/check_gpio.py":         40,
     "scripts/checks/check_structure.py":    30,
-    "scripts/checks/check_bundle.py":       30,
+    "scripts/checks/check_bundle.py":       45,  # +15: raw-SHA drift contract +
+                                                 # determinism rationale (prevents a
+                                                 # regression back to zlib byte-compare)
     "scripts/checks/check_ruff.py":         15,
     "scripts/checks/check_analysis.py":     15,
     # Build (scripts/build/)

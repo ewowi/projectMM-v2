@@ -13,8 +13,10 @@ __pycache__/
 # macOS
 .DS_Store
 
-# C++ build artefacts (added in v2 Sprint 1)
-build/
+# C++ build artefacts (added in v2 Sprint 1). Anchored to repo root so it
+# does NOT also ignore scripts/build/ (the build-scripts subfolder added
+# when scripts/ was organized by domain).
+/build/
 .pio/
 *.o
 *.obj
