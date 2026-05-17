@@ -491,7 +491,7 @@ Purely additive. Reads the same module list produced by Steps 1 and 2. Touches n
 
 Sprint 16 shipped reparent with two states for one intent: a structural `parent_` pointer **and** the data-flow string controls, kept in sync by `auto_wire_()` (a name-match copy heuristic). The canvas made the redundancy visible — a module nested under a parent *and* showing a noodle to the same parent. The "sometimes a source is not linked right" bug is a direct symptom: two states, copied by a heuristic, drift.
 
-This sprint removes the duplication. **The parent is not a separate concept — it is an input that carries a parent flag.** This is a core architecture change; it is recorded in [architecture/system.md](../architecture/system.md) (§ Inputs, and the parent input), not an ADR — making the model *more* minimal is the system architecture's own job, per [Rule #1](../../CLAUDE.md). This sprint brings the code into line with that page.
+This sprint removes the duplication. **The parent is not a separate concept — it is an input that carries a parent flag.** This is a core architecture change; it is recorded in [architecture/system.md](../architecture/system.md) (§ Inputs, and the parent input), not an ADR — making the model *more* minimal is the system architecture's own job, per [Rule #1](https://github.com/ewowi/projectMM-v2/blob/main/CLAUDE.md). This sprint brings the code into line with that page.
 
 ### What changes conceptually
 
