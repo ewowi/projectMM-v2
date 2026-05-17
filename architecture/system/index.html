@@ -1045,6 +1045,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="MoonModule — the contract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inputs-and-the-parent-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inputs, and the parent input
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1695,6 +1712,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="MoonModule — the contract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inputs-and-the-parent-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inputs, and the parent input
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1837,8 +1871,20 @@ Pal                                 — platform abstraction, nothing more
 <p><strong>Tiered cadences.</strong> <code>loop20ms</code>, <code>loop1s</code>, and <code>loop10s</code> exist to drain less urgent work out of the hot path at progressively lower rates so <code>loop()</code> stays short. A module decides for itself which cadences it needs; the scheduler pays nothing for cadences a module does not override.</p>
 <p><strong>Control system.</strong> <code>addControl(field, name, uiKind)</code> binds a backing field to a named, schema-described control. The <code>WebSocketModule</code> serialises the schema to clients on connect; incoming control updates from clients are dispatched back into the bound field, then <code>onUpdate(key)</code> fires so the owning module can react (re-allocate, rebuild a derived table, persist). UI kinds drive frontend rendering (<code>"display"</code>, <code>"progress"</code>, <code>"toggle"</code>, <code>"slider"</code>, <code>"text"</code>, etc.). The full per-module control list lives in the <a href="../../user-guide/">User Guide</a> — one page per module, end-user + developer reference per page.</p>
 <p><strong>Multi-core.</strong> The runtime is built to exploit every core the platform offers. Several <code>loop()</code> instances run in parallel, connected as a DAG. The scheduler pins a separate task per core and arranges the topology declared at wire time.</p>
-<p><strong>Grouping modules (layer pattern).</strong> A module may act as a group — owning the <code>DataBuffer</code> on behalf of its children, and driving <code>onAllocateMemory</code> top-down so children receive geometry from the parent rather than sizing it themselves. A lone child with no parent layer falls back to owning its own buffer (valid starting point; add a layer later without changing the effect). Grouping is a lights-domain pattern (EffectLayer, DriverLayer) but the mechanism — parent calls <code>onAllocateMemory</code> on children after allocating its own buffer — is generic and lives in <code>MoonModule</code> / <code>ModuleManager</code>. See <a href="../../development/backlog/#light-domain-architecture">backlog — Light domain architecture</a>.</p>
-<p><strong>Multiple inputs.</strong> A module may declare more than one source — for example a driver that reads from an effect layer and a layout. Each source is resolved independently via <code>DataRegistry</code> or direct manager lookup; the module owns a <code>DataBufferReader&lt;T&gt;</code> per source. This is already the case for <code>ArtnetOutModule</code> (one source) and will extend naturally to two or more. No core change is required; it is a module-level wiring decision.</p>
+<h3 id="inputs-and-the-parent-input">Inputs, and the parent input<a class="headerlink" href="#inputs-and-the-parent-input" title="Permanent link">&para;</a></h3>
+<p>A module may declare one or more <strong>inputs</strong>. An input is an ordinary string control whose value is the id of another module the owner reads from — <code>RipplesEffect</code> has a <code>layout</code> input, <code>ArtnetOutModule</code> has a <code>source</code> input, a future effect may have both <code>layout</code> and <code>layer</code>. Each input is resolved independently (via <code>DataRegistry</code> or direct manager lookup); the module owns a <code>DataBufferReader&lt;T&gt;</code> per input it consumes. The input <em>name</em> matters: it is the type of module that input accepts (<code>layout</code> accepts a <code>layout</code>, <code>layer</code> accepts a <code>layer</code>).</p>
+<p><strong>There is no separate parent concept. The parent <em>is</em> an input.</strong> One of a module's inputs may carry a <em>parent flag</em>. The flagged input is the structural parent: it determines tree nesting in the UI and loop execution order (parent ticks, then its children depth-first). Everything else about it is just an input — it still holds an id, still resolves data, still appears in the schema.</p>
+<p>This collapses what would otherwise be two states (a structural <code>parent_</code> pointer <em>and</em> a data-flow control, kept in sync by a copy heuristic) into one. There is exactly one place the relationship lives: the value of the parent-flagged input.</p>
+<p><strong>Reparenting = setting the parent flag, by name match.</strong> Dropping module C onto module P:</p>
+<ul>
+<li>Find C's input that matches P. An input matches if its <strong>name equals P's type</strong> (<code>strcmp(input.name, P.type())</code>) <strong>or</strong> its name is the conventional wildcard <strong><code>source</code></strong> — a type-agnostic "reads from whatever produces data" input (<code>ArtnetOutModule</code>, <code>PreviewModule</code> use it). An effect with inputs <code>layer</code> and <code>layout</code> dropped on a <code>layer</code> module → the <code>layer</code> input is chosen; on a <code>layout</code> module → the <code>layout</code> input. A <code>preview</code> dropped on a <code>ripples</code> → its <code>source</code> input is chosen (no input named <code>ripples</code>, but <code>source</code> is the wildcard). A precise <code>name == type</code> match wins over a generic <code>source</code> if C has both.</li>
+<li>Set that input's value to P's id and raise its parent flag. This is the <em>entire</em> operation — no separate pointer, no value copied anywhere else.</li>
+<li><strong>If no input matches (neither a name==type input nor a <code>source</code> input), the drop is rejected.</strong> A module can only be nested under a parent it has an input for. A module with no inputs can never be a child. This is the logical end of "the parent is an input": no input, no parenting.</li>
+<li>Promoting a child back to root <strong>clears the parent flag but keeps the input value.</strong> The structural nesting becomes a plain data-flow link (a noodle in the canvas, no nesting in the tree). The link survives the move; nothing is silently lost.</li>
+</ul>
+<p>System modules participate by declaring a <code>system</code> input, so a system module can be nested under another system module by the same name-match rule. No universal/implicit parent input exists — that would reintroduce the dual concept this model removes.</p>
+<p><strong>Grouping (layer pattern) is this same mechanism.</strong> A group module owns the <code>DataBuffer</code> on behalf of its children and drives <code>onAllocateMemory</code> top-down so children receive geometry from the parent rather than sizing it themselves. "Group" is not a separate kind of module — it is any module that has children via the parent-input relationship above. A lone child with no parent falls back to owning its own buffer (valid starting point; add a parent later without changing the module). Grouping is exercised by the lights domain (EffectLayer, DriverLayer) but the mechanism — parent-flagged input drives nesting, loop order, and top-down <code>onAllocateMemory</code> — is generic and lives in <code>MoonModule</code> / <code>ModuleManager</code>. See <a href="../../development/backlog/#light-domain-architecture">backlog — Light domain architecture</a>.</p>
+<p><strong>Resolution precedence stays in the module, not the core.</strong> When a module has overlapping inputs (an effect parented by a <code>layer</code> still has its own <code>layout</code> input), how it reconciles them is domain logic local to that module: an effect resolves geometry from the first non-empty source in a fixed precedence — parent <code>layer</code>'s resolved layout → own <code>layout</code> input → 16×16 default — evaluated in <code>onUpdate</code>/<code>onAllocateMemory</code>, never in the hot loop. The core knows only "an input holds an id; a flagged input is the parent." It does not know about resolution chains; that would push domain knowledge into <code>MoonModule</code>.</p>
 <p><code>MoonModule</code> total target: ≤ 600 LOC. v1's <code>Module</code> + <code>StatefulModule</code> together is ~996 LOC; v2's minimized merger lands smaller.</p>
 <hr />
 <h2 id="modulemanager-instance-ownership">ModuleManager — instance ownership<a class="headerlink" href="#modulemanager-instance-ownership" title="Permanent link">&para;</a></h2>

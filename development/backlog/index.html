@@ -1649,6 +1649,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#child-dispatch-timing-design-note-for-step-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Child dispatch timing — design note for Step 2
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1670,6 +1681,28 @@
     <span class="md-ellipsis">
       
         MoonDeck / dev console
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editable-canvas-node-graph-editor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editable canvas (node-graph editor)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-module-grouping-system-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System-module grouping (system input)
       
     </span>
   </a>
@@ -1907,6 +1940,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#child-dispatch-timing-design-note-for-step-2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Child dispatch timing — design note for Step 2
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1928,6 +1972,28 @@
     <span class="md-ellipsis">
       
         MoonDeck / dev console
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editable-canvas-node-graph-editor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editable canvas (node-graph editor)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system-module-grouping-system-input" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System-module grouping (system input)
       
     </span>
   </a>
@@ -2103,6 +2169,15 @@
 <li><em>Effect layering / blending</em> (Sprint 6) — covered by Step 2 (within one EffectLayer) and Step 3 (across EffectLayers in DriverLayer).</li>
 </ul>
 <p><strong>Step 1 landed in Sprint 15.</strong> <code>GridLayoutModule</code> is the geometry authority; <code>RipplesEffect</code> receives dimensions top-down; <code>PreviewModule</code> and <code>ArtnetOutModule</code> update automatically. Step 2 (EffectLayer grouping) unlocks when multiple effects need to composite into one buffer.</p>
+<h4 id="child-dispatch-timing-design-note-for-step-2">Child dispatch timing — design note for Step 2<a class="headerlink" href="#child-dispatch-timing-design-note-for-step-2" title="Permanent link">&para;</a></h4>
+<p><code>MoonModule::runLoop()</code> currently recurses into children automatically after calling <code>loop()</code> (parent-first order). This is correct for geometry flow (parent sets dimensions, children read them) but wrong for compositing (children produce pixels, parent blends them — parent needs to run <em>after</em> children).</p>
+<p><strong>Chosen approach for Step 2:</strong> add <code>runChildren()</code> as a protected helper and a <code>childrenDispatched_</code> bool (fits in existing padding, zero overhead):</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// In runLoop(): after loop(), if (!childrenDispatched_) recurse; reset flag.</span>
+<span class="c1">// In runChildren(): recurse now, set childrenDispatched_ = true.</span>
+</code></pre></div>
+<p>An EffectGroup overrides <code>loop()</code>, calls <code>runChildren()</code> mid-method (between prepare and composite), and the framework skips the automatic pass because <code>childrenDispatched_</code> is already true. Non-overriding modules are unaffected — they never call <code>runChildren()</code>, so the flag stays false and the automatic recursion fires as before.</p>
+<p><strong>Rejected alternative:</strong> <code>loopBeforeChildren()</code> + <code>loopAfterChildren()</code> split — splits one logical operation across two methods, doesn't handle conditional or multi-pass child dispatch. <strong>Also rejected:</strong> removing automatic recursion entirely — every grouping module that doesn't override <code>loop()</code> would silently stop dispatching children; the bug is invisible at compile time.</p>
+<p><strong>Not a Sprint 16 concern.</strong> Land <code>runChildren()</code> + <code>childrenDispatched_</code> in the same sprint as EffectGroup (Step 2).</p>
 <hr />
 <ul>
 <li><strong>Per-module core affinity via UI control.</strong> From <a href="../release-01/#sprint-7">Sprint 7 deferred</a>. <code>core_</code> is hardcoded per module class; making it a settable schema control lands when there's user demand for runtime remapping.</li>
@@ -2123,6 +2198,18 @@
 <li><strong>End-user flash path via WebSerial</strong> (ESP Web Tools / ESPConnect). From <a href="#tools-investigation-orchestration-alternatives-to-moondeck">Tools investigation</a>. Land when external contributors arrive (likely Release 2 cutover). Default reference is ESP Web Tools (Espressif-blessed <code>&lt;esp-web-install-button&gt;</code> component); ESPConnect is the polished bespoke version if more than flash is needed.</li>
 <li><strong>Firmware-in-WASM via Emscripten.</strong> From <a href="#tools-investigation-orchestration-alternatives-to-moondeck">Tools investigation</a>. Land when shareable effect-demo URLs become a felt need (Wokwi-style). Not Release 1 scope.</li>
 </ul>
+<h3 id="editable-canvas-node-graph-editor">Editable canvas (node-graph editor)<a class="headerlink" href="#editable-canvas-node-graph-editor" title="Permanent link">&para;</a></h3>
+<p>Sprint 17 shipped the canvas as <strong>read-only</strong>: it renders the module tree as nested boxes + data-flow noodles, supports pan and a click-to-inspect sidebar, but all mutation (add / delete / reparent / edit controls) happens in the tree view only. The deliberate scope cut (per <a href="../release-01/#sprint-17">Sprint 17 Step 3 DoD</a>) keeps the canvas a visualisation, not an editor.</p>
+<p><strong>Unlock = make the canvas a first-class editor</strong>, matching the tree view's mutation set:
+- Drag a box onto another box → reparent (reuse <code>POST /api/modules/reparent</code>; the parent-input model already backs this).
+- Delete a node from the canvas (reuse the tree's delete path).
+- Add a module on the canvas (the add-module picker, currently tree-only in the side-nav).
+- Draw a noodle to set a data-flow input (write the target id into the source's text control — the inverse of today's read-only noodle rendering).
+- Editable controls in the canvas sidebar (today it shows values as static text; reuse <code>buildControl</code>).</p>
+<p>When this lands, the side-nav's add-module button and the read-only sidebar become redundant for canvas users; revisit whether the tree view stays the default or becomes the "structural projection" companion to the canvas (see <a href="../../architecture/system/">system.md — Inputs, and the parent input</a>). Not Release 1/2 scope; lands when the canvas is wanted as the primary authoring surface.</p>
+<h3 id="system-module-grouping-system-input">System-module grouping (<code>system</code> input)<a class="headerlink" href="#system-module-grouping-system-input" title="Permanent link">&para;</a></h3>
+<p>Sprint 17's parent-input model means a module can only be nested under a parent it has a matching input for (name == parent type, or the wildcard <code>source</code>). Light-domain modules have such inputs (<code>layout</code>, <code>source</code>); <strong>system modules (<code>system-0</code>, <code>wifi-sta-0</code>, <code>http-0</code>, <code>ws-0</code>, <code>state-store-0</code>) have none</strong>, so they cannot currently be grouped under one another. This was an original Sprint 17 DoD item, deferred: there is no current need to nest system modules (they work fine flat), and adding a speculative <code>system</code> input to every system module with no consumer is exactly the kind of just-in-case addition the <a href="https://github.com/ewowi/projectMM-v2/blob/main/CLAUDE.md">minimalism rule</a> rejects.</p>
+<p><strong>Unlock = a real need to group system modules</strong> (e.g. a "network" group owning wifi + http + ws, or per-environment system bundles). Then: add a <code>system</code> input to the system-module base (or the specific modules that should be groupable); the existing match rule handles the rest with zero core change. Until then, system modules stay flat by design — <em>no implicit universal parent input exists</em> (that would re-introduce the dual concept Sprint 17 removed).</p>
 <h3 id="websocket-oom-crash-on-large-displays">WebSocket OOM crash on large displays<a class="headerlink" href="#websocket-oom-crash-on-large-displays" title="Permanent link">&para;</a></h3>
 <p><code>WebSocketModule::broadcast_schema_()</code> and <code>broadcast_state_()</code> serialize JSON into static char buffers (Sprint 15 partial fix: <code>std::string</code> double-allocation removed). The remaining crash path: <code>JsonDocument</code> itself heap-allocates its DOM; on a large display with many modules, with the heap at ~37 KB free after the WiFi + lwIP stack takes its share, <code>operator new</code> inside ArduinoJson's pool allocator throws and <code>std::terminate</code> is called. <code>try/catch(std::bad_alloc)</code> in <code>PalWs.h</code> does not help because the throw happens before <code>broadcastText</code> is called.</p>
 <p><strong>Root cause:</strong> ArduinoJson 7's <code>JsonDocument</code> always heap-allocates; no stack-allocated alternative exists in v7. With 37 KB free and the largest contiguous block at 37 KB, the combined WiFi-stack churn + ArduinoJson pool allocation exceeds available contiguous memory.</p>
@@ -2135,6 +2222,10 @@
 <li><strong><code>PATCH: schema-diff</code> (<code>src/frontend/app.js</code>).</strong> Frontend diffs incoming schema to distinguish structural changes from value-only changes, avoiding a 1 Hz full DOM rebuild (which resets focus and flickers cards). Root cause: backend sends one <code>t:"schema"</code> event for both structure and value changes. Unlock: backend sends separate <code>schema-structure</code> vs <code>schema-values</code> event types.</li>
 <li><strong><code>PATCH: queue-headroom</code> (<code>src/pal/PalWs.h</code>).</strong> <code>canBroadcastBinary()</code> skips a pixel frame when the AsyncWebSocket queue is near-full, preventing 50 fps binary from starving 1 fps text messages. Root cause: AsyncWebSocket uses a single per-client queue for all frame types. Unlock: AsyncWebSocket separates binary/text queues, or the preview stream moves to a dedicated WebSocket endpoint.</li>
 <li><strong><code>PATCH: wifi-guard</code> (<code>src/pal/PalUdp.h</code>).</strong> Guards against pre-WiFi sends. Root cause: no lifecycle signal from the module graph when WiFi is up; the guard is a local workaround. Unlock: a WiFi-ready event from <code>WifiStaModule</code> removes the need for every caller to poll.</li>
+</ul>
+<p><strong>Resolved:</strong></p>
+<ul>
+<li>~~<code>PATCH: moondeck-monolith</code> (<code>scripts/moondeck.py</code>)~~ — <strong>resolved.</strong> The marker existed because the HTTP server, inline HTML/CSS/JS, agent prompts, and device orchestration all lived in one file (stdlib-only, zero-dep, no build step). Its unlock condition ("the file exceeds its budget and a split pays for itself") was met when the one-click light-setup feature pushed it over budget. Split: the UI is now three real static files (<code>scripts/moondeck_ui/{index.html,style.css,app.js}</code>, served from a sandboxed <code>/ui/</code> route with a <code>window.__MOONDECK__</code> bootstrap), device REST orchestration moved to <code>scripts/device/light_setup.py</code>, and the remaining scripts were organised into <code>scripts/{checks,build,device}/</code>. <code>moondeck.py</code> is the server/orchestrator only. The convention worked as designed — it deferred the split until it genuinely paid for itself, then triggered it.</li>
 </ul>
 <h3 id="documentation-process">Documentation / process<a class="headerlink" href="#documentation-process" title="Permanent link">&para;</a></h3>
 <ul>
