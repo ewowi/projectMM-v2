@@ -1021,6 +1021,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/product/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Product
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -1625,6 +1653,34 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What we test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
     
@@ -1642,10 +1698,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
         
           
-          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="">
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="">
             
   
   
@@ -1663,8 +1719,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_6">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1773,6 +1829,118 @@
     
   
     0004 — Track .claude/agents/
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/0005-databuffer-teardown-liveness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0005 — DataBuffer teardown liveness
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/0006-per-effect-loc-budgets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0006 — Per-effect LOC budgets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/0007-parent-input-matches-category/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0007 — Parent-input matches category
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/0008-product-requirements-constraint/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0008 — Product requirements constraint
   
 
     
@@ -2436,7 +2604,7 @@ uv<span class="w"> </span>run<span class="w"> </span>scripts/device/flash.py<spa
 <h3 id="live-scenarios">Run scenarios (in-process)<a class="headerlink" href="#live-scenarios" title="Permanent link">&para;</a></h3>
 <p>Live tab. Replays every JSON under <code>test/test_pc/scenarios/</code> through <code>ModuleManager</code> in-process via <code>pio test -e pc-test</code>. Rail 2's <code>[MemBoot]</code> / <code>[MemLive]</code> events fire during replay; the output panel shows the same memory trail a real boot does. Source: <code>scripts/build/test.py</code>. Doesn't touch the Devices list — purely maintainer-side fast feedback.</p>
 <h3 id="live-scenarios-devices">Run scenarios (live, all enabled devices)<a class="headerlink" href="#live-scenarios-devices" title="Permanent link">&para;</a></h3>
-<p>Live tab. For each device in <code>moondeck.json</code> with <code>enabled: true</code>, probes <code>/api/system</code>, then replays every JSON under <code>test/test_pc/scenarios/</code> against the device via REST (<code>POST /api/modules</code> for add, <code>POST /api/control</code> for set_control, <code>DELETE /api/modules/&lt;id&gt;</code> for cleanup). After each <code>"measure": true</code> step, samples <code>/api/system</code> for <code>system_fps</code> + <code>heap_free_kb</code> + <code>psram_free_kb</code> and <code>/api/modules</code> for the module count; bounds in the JSON (currently <code>module_count.{min,max}</code>) are asserted. Cleanup deletes every non-head module before and after each scenario so the next run starts clean. Source: <code>scripts/device/scenario.py</code>. Promoted from Sprint 8 deferred — see <a href="../../development/release-01/#sprint-10">Sprint 10</a>.</p>
+<p>Live tab. For each device in <code>moondeck.json</code> with <code>enabled: true</code>, probes <code>/api/system</code>, then replays every JSON under <code>test/test_pc/scenarios/</code> against the device via REST (<code>POST /api/modules</code> for <code>add_module</code>, <code>POST /api/control</code> for <code>set_control</code>, <code>POST /api/modules/reparent</code> for <code>reparent</code>, <code>DELETE /api/modules/&lt;id&gt;</code> for cleanup). After each <code>"measure": true</code> step, samples <code>/api/system</code> for <code>system_fps</code> + <code>heap_free_kb</code> + <code>psram_free_kb</code> and <code>/api/modules</code> for the module count; bounds in the JSON (currently <code>module_count.{min,max}</code>) are asserted. Cleanup deletes every non-head module before and after each scenario so the next run starts clean. The "Create reference setup" card uses this same path: it replays <code>reference-setup.json</code> (the canonical <code>layout → ripples → preview/artnet</code> pipeline) — one definition, no separate setup script. Source: <code>scripts/device/scenario.py</code>. Promoted from Sprint 8 deferred — see <a href="../../development/release-01/#sprint-10">Sprint 10</a>.</p>
 <h3 id="all-checks">Run all checks<a class="headerlink" href="#all-checks" title="Permanent link">&para;</a></h3>
 <p>Runs all <code>check_*</code> scripts (LOC budgets, hot-path bans, raw-GPIO ban, structure, platform guards) in sequence and stops at the first failure. Same set the pre-commit hook runs.</p>
 <h3 id="check-patches">Patch inventory<a class="headerlink" href="#check-patches" title="Permanent link">&para;</a></h3>

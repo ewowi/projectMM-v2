@@ -13,6 +13,10 @@
          <lastmod>2026-05-17</lastmod>
     </url>
     <url>
+         <loc>https://ewowi.github.io/projectMM-v2/architecture/product/</loc>
+         <lastmod>2026-05-17</lastmod>
+    </url>
+    <url>
          <loc>https://ewowi.github.io/projectMM-v2/architecture/system/</loc>
          <lastmod>2026-05-17</lastmod>
     </url>
@@ -37,6 +41,10 @@
          <lastmod>2026-05-17</lastmod>
     </url>
     <url>
+         <loc>https://ewowi.github.io/projectMM-v2/developer-guide/tests/</loc>
+         <lastmod>2026-05-17</lastmod>
+    </url>
+    <url>
          <loc>https://ewowi.github.io/projectMM-v2/developer-guide/adr/0001-vendor-cpp-httplib/</loc>
          <lastmod>2026-05-17</lastmod>
     </url>
@@ -50,6 +58,22 @@
     </url>
     <url>
          <loc>https://ewowi.github.io/projectMM-v2/developer-guide/adr/0004-claude-agents-tracked/</loc>
+         <lastmod>2026-05-17</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/developer-guide/adr/0005-databuffer-teardown-liveness/</loc>
+         <lastmod>2026-05-17</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/developer-guide/adr/0006-per-effect-loc-budgets/</loc>
+         <lastmod>2026-05-17</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/developer-guide/adr/0007-parent-input-matches-category/</loc>
+         <lastmod>2026-05-17</lastmod>
+    </url>
+    <url>
+         <loc>https://ewowi.github.io/projectMM-v2/developer-guide/adr/0008-product-requirements-constraint/</loc>
          <lastmod>2026-05-17</lastmod>
     </url>
     <url>

@@ -12,31 +12,31 @@
         <meta name="author" content="MoonModules">
       
       
-        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/user-guide/lights/artnet-out/">
+        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/developer-guide/tests/">
       
       
-        <link rel="prev" href="../preview/">
+        <link rel="prev" href="../pal/">
       
       
-        <link rel="next" href="../../../architecture/">
+        <link rel="next" href="../adr/0001-vendor-cpp-httplib/">
       
       
         
       
       
-      <link rel="icon" href="../../../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>ArtnetOutModule - projectMM v2</title>
+        <title>What we test - projectMM v2</title>
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -55,7 +55,7 @@
       
     
     
-    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#artnetoutmodule" class="md-skip">
+        <a href="#what-we-test" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../.." title="projectMM v2" class="md-header__button md-logo" aria-label="projectMM v2" data-md-component="logo">
+    <a href="../.." title="projectMM v2" class="md-header__button md-logo" aria-label="projectMM v2" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ArtnetOutModule
+              What we test
             
           </span>
         </div>
@@ -227,7 +227,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../.." class="md-tabs__link">
+      <a href="../.." class="md-tabs__link">
         
   
   
@@ -244,13 +244,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../user-guide/" class="md-tabs__link">
           
   
   
@@ -270,7 +268,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../architecture/" class="md-tabs__link">
+        <a href="../../architecture/" class="md-tabs__link">
           
   
   
@@ -286,11 +284,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../../developer-guide/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
   
@@ -310,7 +310,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../../development/" class="md-tabs__link">
+        <a href="../../development/" class="md-tabs__link">
           
   
   
@@ -344,7 +344,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../.." title="projectMM v2" class="md-nav__button md-logo" aria-label="projectMM v2" data-md-component="logo">
+    <a href="../.." title="projectMM v2" class="md-nav__button md-logo" aria-label="projectMM v2" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -374,7 +374,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../.." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -398,31 +398,26 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
@@ -440,7 +435,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -458,7 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../" class="md-nav__link">
+      <a href="../../user-guide/" class="md-nav__link">
         
   
   
@@ -492,20 +487,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" >
         
           
-          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
             
   
   
@@ -541,7 +533,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system/system-status/" class="md-nav__link">
+      <a href="../../user-guide/system/system-status/" class="md-nav__link">
         
   
   
@@ -569,7 +561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system/wifi-sta/" class="md-nav__link">
+      <a href="../../user-guide/system/wifi-sta/" class="md-nav__link">
         
   
   
@@ -597,7 +589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system/state-store/" class="md-nav__link">
+      <a href="../../user-guide/system/state-store/" class="md-nav__link">
         
   
   
@@ -639,20 +631,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
         
           
-          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
             
   
   
@@ -688,7 +677,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/http-server/" class="md-nav__link">
+      <a href="../../user-guide/network/http-server/" class="md-nav__link">
         
   
   
@@ -716,7 +705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/web-socket/" class="md-nav__link">
+      <a href="../../user-guide/network/web-socket/" class="md-nav__link">
         
   
   
@@ -749,31 +738,26 @@
                 
   
   
-    
   
   
-  
     
     
     
     
       
       
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
         
           
-          
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
             
   
   
@@ -791,7 +775,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -809,7 +793,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ripples-effect/" class="md-nav__link">
+      <a href="../../user-guide/lights/ripples-effect/" class="md-nav__link">
         
   
   
@@ -837,7 +821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../preview/" class="md-nav__link">
+      <a href="../../user-guide/lights/preview/" class="md-nav__link">
         
   
   
@@ -862,37 +846,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ArtnetOutModule
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../user-guide/lights/artnet-out/" class="md-nav__link">
         
   
   
@@ -908,48 +865,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#end-user-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        End-user reference
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#developer-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Developer reference
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1029,7 +944,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/" class="md-nav__link">
+      <a href="../../architecture/" class="md-nav__link">
         
   
   
@@ -1057,7 +972,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/system/" class="md-nav__link">
+      <a href="../../architecture/system/" class="md-nav__link">
         
   
   
@@ -1085,7 +1000,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/process/" class="md-nav__link">
+      <a href="../../architecture/process/" class="md-nav__link">
         
   
   
@@ -1113,7 +1028,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/product/" class="md-nav__link">
+      <a href="../../architecture/product/" class="md-nav__link">
         
   
   
@@ -1145,26 +1060,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -1182,7 +1102,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1200,7 +1120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -1228,7 +1148,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/deploy/" class="md-nav__link">
+      <a href="../deploy/" class="md-nav__link">
         
   
   
@@ -1256,7 +1176,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/backend/" class="md-nav__link">
+      <a href="../backend/" class="md-nav__link">
         
   
   
@@ -1284,7 +1204,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/frontend/" class="md-nav__link">
+      <a href="../frontend/" class="md-nav__link">
         
   
   
@@ -1312,7 +1232,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/pal/" class="md-nav__link">
+      <a href="../pal/" class="md-nav__link">
         
   
   
@@ -1337,10 +1257,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../developer-guide/tests/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What we test
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1356,6 +1303,180 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#artnetoutmodule-art-net-opdmx" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ArtnetOutModule (Art-Net OpDmx)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#moonmodule-control-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MoonModule control system
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#databuffer-databufferreader-spsc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DataBuffer / DataBufferReader (SPSC)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#httpservermodule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HttpServerModule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rest-integration-control-module-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST integration (control + module API)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memtracker-classsize-drift" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MemTracker + classSize drift
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modulemanager-systemstatusmodule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ModuleManager + SystemStatusModule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pal-heap-psram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pal — heap / PSRAM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#previewmodule-binary-wire-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PreviewModule (binary wire format)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parent-input-model-reparent-reorder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parent-input model (reparent / reorder)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rippleseffect-pixeleffectbase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RipplesEffect / PixelEffectBase
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenario-replay-whole-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario replay (whole-pipeline)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scheduler-core-affinity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheduler (core affinity)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statestoremodule-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StateStoreModule (persistence)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1374,17 +1495,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
         
           
-          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="">
             
   
   
@@ -1420,7 +1544,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0001-vendor-cpp-httplib/" class="md-nav__link">
+      <a href="../adr/0001-vendor-cpp-httplib/" class="md-nav__link">
         
   
   
@@ -1448,7 +1572,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0002-arduinojson-lib-deps/" class="md-nav__link">
+      <a href="../adr/0002-arduinojson-lib-deps/" class="md-nav__link">
         
   
   
@@ -1476,7 +1600,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0003-dataring-dataregistry-in-core/" class="md-nav__link">
+      <a href="../adr/0003-dataring-dataregistry-in-core/" class="md-nav__link">
         
   
   
@@ -1504,7 +1628,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0004-claude-agents-tracked/" class="md-nav__link">
+      <a href="../adr/0004-claude-agents-tracked/" class="md-nav__link">
         
   
   
@@ -1532,7 +1656,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0005-databuffer-teardown-liveness/" class="md-nav__link">
+      <a href="../adr/0005-databuffer-teardown-liveness/" class="md-nav__link">
         
   
   
@@ -1560,7 +1684,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0006-per-effect-loc-budgets/" class="md-nav__link">
+      <a href="../adr/0006-per-effect-loc-budgets/" class="md-nav__link">
         
   
   
@@ -1588,7 +1712,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0007-parent-input-matches-category/" class="md-nav__link">
+      <a href="../adr/0007-parent-input-matches-category/" class="md-nav__link">
         
   
   
@@ -1616,7 +1740,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0008-product-requirements-constraint/" class="md-nav__link">
+      <a href="../adr/0008-product-requirements-constraint/" class="md-nav__link">
         
   
   
@@ -1711,7 +1835,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/" class="md-nav__link">
+      <a href="../../development/" class="md-nav__link">
         
   
   
@@ -1739,7 +1863,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/release-01/" class="md-nav__link">
+      <a href="../../development/release-01/" class="md-nav__link">
         
   
   
@@ -1767,7 +1891,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../development/backlog/" class="md-nav__link">
+      <a href="../../development/backlog/" class="md-nav__link">
         
   
   
@@ -1822,10 +1946,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#end-user-reference" class="md-nav__link">
+  <a href="#artnetoutmodule-art-net-opdmx" class="md-nav__link">
     <span class="md-ellipsis">
       
-        End-user reference
+        ArtnetOutModule (Art-Net OpDmx)
       
     </span>
   </a>
@@ -1833,10 +1957,142 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#developer-reference" class="md-nav__link">
+  <a href="#moonmodule-control-system" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Developer reference
+        MoonModule control system
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#databuffer-databufferreader-spsc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DataBuffer / DataBufferReader (SPSC)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#httpservermodule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HttpServerModule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rest-integration-control-module-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        REST integration (control + module API)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#memtracker-classsize-drift" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MemTracker + classSize drift
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modulemanager-systemstatusmodule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ModuleManager + SystemStatusModule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pal-heap-psram" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pal — heap / PSRAM
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#previewmodule-binary-wire-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PreviewModule (binary wire format)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parent-input-model-reparent-reorder" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parent-input model (reparent / reorder)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rippleseffect-pixeleffectbase" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RipplesEffect / PixelEffectBase
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenario-replay-whole-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario replay (whole-pipeline)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scheduler-core-affinity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheduler (core affinity)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#statestoremodule-persistence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        StateStoreModule (persistence)
       
     </span>
   </a>
@@ -1863,63 +2119,143 @@
   
 
 
-<h1 id="artnetoutmodule">ArtnetOutModule<a class="headerlink" href="#artnetoutmodule" title="Permanent link">&para;</a></h1>
-<p>Packs the current pixel frame from a named source into Art-Net OpDmx packets and sends them via UDP. 510 DMX bytes (= 170 RGB pixels) per packet → multi-universe at large geometries (e.g. 128×128×1 = 49 152 RGB bytes = 97 universes per frame, ~6 Mbps at 50 fps). Runs on core 1 (set via constructor <code>setCoreAffinity(1)</code>); reads frames cross-core from the source's <a href="../../../developer-guide/backend/#databuffert-the-shared-slot-primitive"><code>DataBuffer&lt;RGB&gt;</code></a> via a single acquire/release pair — no per-frame copy on the consumer side.</p>
-<p><strong>Wire format</strong> (one Art-Net OpDmx packet per universe, sent to <code>dest_ip:6454</code>):</p>
-<div class="highlight"><pre><span></span><code>&quot;Art-Net\0&quot;          8 bytes  ID
-0x00 0x50            2 bytes  OpCode (OpDmx, little-endian)
-0x00 0x0e            2 bytes  ProtVer 14 (big-endian per spec)
-seq                  1 byte   sequence (0 = ignore)
-phys                 1 byte   physical port (0)
-uni_lo uni_hi        2 bytes  universe (little-endian)
-len_hi len_lo        2 bytes  DMX byte count (big-endian)
-&lt;data&gt;               1..510 bytes  RGB triplets
-</code></pre></div>
-<h2 id="end-user-reference">End-user reference<a class="headerlink" href="#end-user-reference" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Control</th>
-<th>Type</th>
-<th>Range / default</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>enabled</code></td>
-<td>toggle</td>
-<td>true</td>
-<td></td>
-</tr>
-<tr>
-<td><code>source</code></td>
-<td>text</td>
-<td><code>ripples-0</code></td>
-<td>Module id whose frame to send (resolved via <code>DataRegistry</code>)</td>
-</tr>
-<tr>
-<td><code>dest_ip</code></td>
-<td>text</td>
-<td><code>255.255.255.255</code></td>
-<td>Receiver IP (broadcast by default; set to a specific Art-Net node)</td>
-</tr>
-<tr>
-<td><code>universe</code></td>
-<td>range</td>
-<td>0..15 / 0</td>
-<td>Starting Art-Net universe number (subsequent packets increment)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="developer-reference">Developer reference<a class="headerlink" href="#developer-reference" title="Permanent link">&para;</a></h2>
+<h1 id="what-we-test">What we test<a class="headerlink" href="#what-we-test" title="Permanent link">&para;</a></h1>
+<p>Every unit test grouped by the module or core surface it verifies. Generated from the <code>TEST_CASE</code> / <code>SUBCASE</code> names in <code>test/test_pc/*.cpp</code> by <code>scripts/build/gen_test_list.py</code> — a static parse, no run. Re-run that script after adding or renaming a test.</p>
+<h2 id="artnetoutmodule-art-net-opdmx">ArtnetOutModule (Art-Net OpDmx)<a class="headerlink" href="#artnetoutmodule-art-net-opdmx" title="Permanent link">&para;</a></h2>
+<p><code>test_artnet_packing.cpp</code> — 4 test case(s)</p>
 <ul>
-<li>Constructor: <code>setCoreAffinity(1)</code> — runs on APP_CPU so the consumer doesn't share core 0 with the producer.</li>
-<li><code>setup()</code> — <code>udp_.begin()</code> (bind ephemeral source port), <code>resolve_buf_()</code> (<code>DataRegistry</code> lookup by <code>source</code> id).</li>
-<li><code>onUpdate(key)</code> — for <code>source</code> edits, re-call <code>resolve_buf_()</code>.</li>
-<li><code>loop20ms()</code> — <code>buf_-&gt;try_acquire_read()</code> (cross-core SPSC, release/acquire ordering); if null (no new frame), return early. Pack one Art-Net OpDmx packet per 510-byte universe slice via <code>pack_header()</code>, send via <code>udp_.send()</code>, <code>buf_-&gt;release_read()</code>.</li>
-<li><code>pack_header()</code> — public static helper exposed for <a href="https://github.com/ewowi/projectMM-v2/blob/main/test/test_pc/test_artnet_packing.cpp"><code>test_artnet_packing.cpp</code></a>.</li>
+<li>ArtNet OpDmx header bytes match the spec for universe 0, 510 DMX</li>
+<li>ArtNet OpDmx header — universe increments fit in the low byte</li>
+<li>ArtNet OpDmx header — partial DMX byte count (e.g. last universe)</li>
+<li>ArtNet OpDmx: 64x64 frame splits into 25 universes (24 full + 1 partial)</li>
 </ul>
+<h2 id="moonmodule-control-system">MoonModule control system<a class="headerlink" href="#moonmodule-control-system" title="Permanent link">&para;</a></h2>
+<p><code>test_controls.cpp</code> — 11 test case(s)</p>
+<ul>
+<li>setControl float writes through and fires onUpdate</li>
+<li>setControl uint8/uint32/bool write through (cast, no clamp)</li>
+<li>setControl unknown key is a no-op returning false</li>
+<li>setControl via JsonVariant takes the REST path</li>
+<li>EditStr control is writable via JsonVariant, not the float path</li>
+<li>getSchema emits id + a control entry per addControl with min/max/default</li>
+<li>select control: getSchema carries the options array + index value</li>
+<li>getControlValues is a flat {key:value} reflecting live fields</li>
+<li>clearControls + rebuild preserves the live value (pending props)</li>
+<li>schemaDirty: clearControls marks dirty, clearSchemaDirty resets it</li>
+<li>defVal is captured from the field initializer, not a later setControl</li>
+</ul>
+<h2 id="databuffer-databufferreader-spsc">DataBuffer / DataBufferReader (SPSC)<a class="headerlink" href="#databuffer-databufferreader-spsc" title="Permanent link">&para;</a></h2>
+<p><code>test_data_buffer.cpp</code> — 8 test case(s)</p>
+<ul>
+<li>DataBuffer: allocate(0) leaves the buffer invalid</li>
+<li>DataBuffer: reader returns nullptr before first publish</li>
+<li>DataBuffer: publish then read returns the filled slot</li>
+<li>DataBuffer: acquire_write returns the same slot every time</li>
+<li>DataBuffer: revision increments on each publish</li>
+<li>DataBuffer: reader returns nullptr after release_read with no new publish</li>
+<li>DataBuffer: two readers are independent — one release does not affect the other</li>
+<li>DataBuffer: SPSC cross-core consumer never tears under paced producer</li>
+</ul>
+<h2 id="httpservermodule">HttpServerModule<a class="headerlink" href="#httpservermodule" title="Permanent link">&para;</a></h2>
+<p><code>test_http.cpp</code> — 3 test case(s)</p>
+<ul>
+<li>HttpServerModule: GET / serves the gzipped frontend bundle</li>
+<li>HttpServerModule: GET /api/modules lists registered modules</li>
+<li>HttpServerModule: unknown route returns 404</li>
+</ul>
+<h2 id="rest-integration-control-module-api">REST integration (control + module API)<a class="headerlink" href="#rest-integration-control-module-api" title="Permanent link">&para;</a></h2>
+<p><code>test_integration.cpp</code> — 1 test case(s)</p>
+<ul>
+<li>REST integration: control mutation + module API contract end-to-end<ul>
+<li>GET /api/types returns the registered type names</li>
+<li>POST /api/control on a valid id+key → 200 ok:true</li>
+<li>POST /api/control unknown module id → 404</li>
+<li>POST /api/control missing id/key → 400</li>
+<li>POST /api/control malformed JSON → 400</li>
+<li>POST /api/modules duplicate id → 409 (the dup-id enforcement point)</li>
+<li>POST /api/modules unknown type → 201 (v2 add() is permissive)</li>
+<li>control change is observable via GET /api/modules afterwards</li>
+</ul>
+</li>
+</ul>
+<h2 id="memtracker-classsize-drift">MemTracker + classSize drift<a class="headerlink" href="#memtracker-classsize-drift" title="Permanent link">&para;</a></h2>
+<p><code>test_memtracker.cpp</code> — 4 test case(s)</p>
+<ul>
+<li>memtracker: snapshot() is callable and internally consistent</li>
+<li>memtracker: frag_pct stays within 0..100 and is 0 on a 0 heap</li>
+<li>techdebt: classSize() == sizeof(T) for every registered module type</li>
+<li>techdebt: an unregistered type is a base MoonModule sized accordingly</li>
+</ul>
+<h2 id="modulemanager-systemstatusmodule">ModuleManager + SystemStatusModule<a class="headerlink" href="#modulemanager-systemstatusmodule" title="Permanent link">&para;</a></h2>
+<p><code>test_module.cpp</code> — 11 test case(s)</p>
+<ul>
+<li>ModuleManager: add base module</li>
+<li>ModuleManager: factory builds concrete type</li>
+<li>ModuleManager: manager pointer set on add</li>
+<li>ModuleManager: remove existing</li>
+<li>ModuleManager: remove non-existent</li>
+<li>ModuleManager: find</li>
+<li>ModuleManager: unknown type yields a base module with a truthful type()</li>
+<li>ModuleManager: remove() erases the whole subtree, not just the root</li>
+<li>SystemStatusModule: setup/loop/teardown lifecycle does not crash</li>
+<li>SystemStatusModule: exposes named controls and classSize == sizeof</li>
+<li>SystemStatusModule: getSchema after loop1s sampling is well-formed</li>
+</ul>
+<h2 id="pal-heap-psram">Pal — heap / PSRAM<a class="headerlink" href="#pal-heap-psram" title="Permanent link">&para;</a></h2>
+<p><code>test_pal_heap.cpp</code> — 4 test case(s)</p>
+<ul>
+<li>PalHeap: psram_alloc(0) returns null without allocating</li>
+<li>PalHeap: psram_free(nullptr) is a no-op</li>
+<li>PalHeap: psram_alloc returns a writable, byte-addressable buffer</li>
+<li>PalHeap: paired alloc/free does not leak across many cycles</li>
+</ul>
+<h2 id="previewmodule-binary-wire-format">PreviewModule (binary wire format)<a class="headerlink" href="#previewmodule-binary-wire-format" title="Permanent link">&para;</a></h2>
+<p><code>test_preview_wire.cpp</code> — 2 test case(s)</p>
+<ul>
+<li>PreviewModule wire format: 4x4 frame header + body bytes</li>
+<li>PreviewModule wire format: width and height LE encoding for 128x128</li>
+</ul>
+<h2 id="parent-input-model-reparent-reorder">Parent-input model (reparent / reorder)<a class="headerlink" href="#parent-input-model-reparent-reorder" title="Permanent link">&para;</a></h2>
+<p><code>test_reparent.cpp</code> — 10 test case(s)</p>
+<ul>
+<li>reparent: parent flag set on the name-matched input</li>
+<li>reparent: rejected when no input is named for the parent type</li>
+<li>reparent: wildcard 'source' input matches any parent type</li>
+<li>reparent: exact name==type wins over generic 'source'</li>
+<li>reparent: promote to root clears the flag but KEEPS the value</li>
+<li>reparent: loop order — parent precedes child after reparent</li>
+<li>reparent: returns false for unknown id</li>
+<li>reorder children: nested reorder changes child order and loop order</li>
+<li>reparent: 'layout' input matches a parent by category, not just type</li>
+<li>reparent: exact name==type wins over a category match</li>
+</ul>
+<h2 id="rippleseffect-pixeleffectbase">RipplesEffect / PixelEffectBase<a class="headerlink" href="#rippleseffect-pixeleffectbase" title="Permanent link">&para;</a></h2>
+<p><code>test_ripples_lut.cpp</code> — 5 test case(s)</p>
+<ul>
+<li>RipplesEffect: lifecycle adds and exposes a valid pixel buffer</li>
+<li>RipplesEffect: geometry change via GridLayoutModule reallocates and bumps revision</li>
+<li>RipplesEffect: loop20ms writes non-trivial pixel output</li>
+<li>RipplesEffect: hue_base change recolours the output</li>
+<li>RipplesEffect: DataRegistry declares buffer for consumers to find</li>
+</ul>
+<h2 id="scenario-replay-whole-pipeline">Scenario replay (whole-pipeline)<a class="headerlink" href="#scenario-replay-whole-pipeline" title="Permanent link">&para;</a></h2>
+<p><code>test_scenarios.cpp</code> — 1 test case(s)</p>
+<ul>
+<li>Scenarios: every JSON in test/test_pc/scenarios/ replays clean</li>
+</ul>
+<h2 id="scheduler-core-affinity">Scheduler (core affinity)<a class="headerlink" href="#scheduler-core-affinity" title="Permanent link">&para;</a></h2>
+<p><code>test_scheduler_affinity.cpp</code> — 2 test case(s)</p>
+<ul>
+<li>Scheduler affinity: two-core scenario ticks both modules</li>
+<li>Scheduler affinity: single-core scenario ignores out-of-range modules</li>
+</ul>
+<h2 id="statestoremodule-persistence">StateStoreModule (persistence)<a class="headerlink" href="#statestoremodule-persistence" title="Permanent link">&para;</a></h2>
+<p><code>test_state_store.cpp</code> — 1 test case(s)</p>
+<ul>
+<li>StateStoreModule round-trip — control survives a simulated reboot</li>
+</ul>
+<hr />
+<p><strong>67 test cases across 14 files.</strong> PC host build (<code>uv run scripts/build/test.py</code>); the same scenario fixtures also replay over REST against a live device via <code>scripts/device/scenario.py</code>.</p>
 
 
 
@@ -1975,10 +2311,10 @@ len_hi len_lo        2 bytes  DMX byte count (big-endian)
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

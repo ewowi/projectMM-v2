@@ -12,13 +12,13 @@
         <meta name="author" content="MoonModules">
       
       
-        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/user-guide/lights/artnet-out/">
+        <link rel="canonical" href="https://ewowi.github.io/projectMM-v2/developer-guide/adr/0006-per-effect-loc-budgets/">
       
       
-        <link rel="prev" href="../preview/">
+        <link rel="prev" href="../0005-databuffer-teardown-liveness/">
       
       
-        <link rel="next" href="../../../architecture/">
+        <link rel="next" href="../0007-parent-input-matches-category/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>ArtnetOutModule - projectMM v2</title>
+        <title>0006 — Per-effect LOC budgets - projectMM v2</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#artnetoutmodule" class="md-skip">
+        <a href="#adr-0006-per-effect-per-layout-loc-budgets" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              ArtnetOutModule
+              0006 — Per-effect LOC budgets
             
           </span>
         </div>
@@ -244,13 +244,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../../user-guide/" class="md-tabs__link">
           
   
   
@@ -286,11 +284,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../../developer-guide/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../" class="md-tabs__link">
           
   
   
@@ -398,31 +398,26 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
-          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
             
   
   
@@ -440,7 +435,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -458,7 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../" class="md-nav__link">
+      <a href="../../../user-guide/" class="md-nav__link">
         
   
   
@@ -492,20 +487,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" >
         
           
-          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
             
   
   
@@ -541,7 +533,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system/system-status/" class="md-nav__link">
+      <a href="../../../user-guide/system/system-status/" class="md-nav__link">
         
   
   
@@ -569,7 +561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system/wifi-sta/" class="md-nav__link">
+      <a href="../../../user-guide/system/wifi-sta/" class="md-nav__link">
         
   
   
@@ -597,7 +589,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../system/state-store/" class="md-nav__link">
+      <a href="../../../user-guide/system/state-store/" class="md-nav__link">
         
   
   
@@ -639,20 +631,17 @@
       
       
         
-          
-          
-        
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
         
           
-          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
             
   
   
@@ -688,7 +677,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/http-server/" class="md-nav__link">
+      <a href="../../../user-guide/network/http-server/" class="md-nav__link">
         
   
   
@@ -716,7 +705,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/web-socket/" class="md-nav__link">
+      <a href="../../../user-guide/network/web-socket/" class="md-nav__link">
         
   
   
@@ -749,31 +738,26 @@
                 
   
   
-    
   
   
-  
     
     
     
     
       
       
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
         
           
-          
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" checked>
-        
-          
-          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
             
   
   
@@ -791,7 +775,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -809,7 +793,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ripples-effect/" class="md-nav__link">
+      <a href="../../../user-guide/lights/ripples-effect/" class="md-nav__link">
         
   
   
@@ -837,7 +821,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../preview/" class="md-nav__link">
+      <a href="../../../user-guide/lights/preview/" class="md-nav__link">
         
   
   
@@ -862,37 +846,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    ArtnetOutModule
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../user-guide/lights/artnet-out/" class="md-nav__link">
         
   
   
@@ -908,48 +865,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#end-user-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        End-user reference
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#developer-reference" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Developer reference
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1145,26 +1060,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -1182,7 +1102,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1200,7 +1120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/" class="md-nav__link">
+      <a href="../../" class="md-nav__link">
         
   
   
@@ -1228,7 +1148,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/deploy/" class="md-nav__link">
+      <a href="../../deploy/" class="md-nav__link">
         
   
   
@@ -1256,7 +1176,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/backend/" class="md-nav__link">
+      <a href="../../backend/" class="md-nav__link">
         
   
   
@@ -1284,7 +1204,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/frontend/" class="md-nav__link">
+      <a href="../../frontend/" class="md-nav__link">
         
   
   
@@ -1312,7 +1232,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/pal/" class="md-nav__link">
+      <a href="../../pal/" class="md-nav__link">
         
   
   
@@ -1340,7 +1260,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/tests/" class="md-nav__link">
+      <a href="../../tests/" class="md-nav__link">
         
   
   
@@ -1365,26 +1285,31 @@
                 
   
   
+    
   
   
+  
     
     
     
     
       
       
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
         
           
-          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="">
             
   
   
@@ -1402,7 +1327,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1420,7 +1345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0001-vendor-cpp-httplib/" class="md-nav__link">
+      <a href="../0001-vendor-cpp-httplib/" class="md-nav__link">
         
   
   
@@ -1448,7 +1373,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0002-arduinojson-lib-deps/" class="md-nav__link">
+      <a href="../0002-arduinojson-lib-deps/" class="md-nav__link">
         
   
   
@@ -1476,7 +1401,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0003-dataring-dataregistry-in-core/" class="md-nav__link">
+      <a href="../0003-dataring-dataregistry-in-core/" class="md-nav__link">
         
   
   
@@ -1504,7 +1429,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0004-claude-agents-tracked/" class="md-nav__link">
+      <a href="../0004-claude-agents-tracked/" class="md-nav__link">
         
   
   
@@ -1532,7 +1457,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0005-databuffer-teardown-liveness/" class="md-nav__link">
+      <a href="../0005-databuffer-teardown-liveness/" class="md-nav__link">
         
   
   
@@ -1557,10 +1482,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0006-per-effect-loc-budgets/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    0006 — Per-effect LOC budgets
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1576,6 +1528,59 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1588,7 +1593,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0007-parent-input-matches-category/" class="md-nav__link">
+      <a href="../0007-parent-input-matches-category/" class="md-nav__link">
         
   
   
@@ -1616,7 +1621,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../developer-guide/adr/0008-product-requirements-constraint/" class="md-nav__link">
+      <a href="../0008-product-requirements-constraint/" class="md-nav__link">
         
   
   
@@ -1822,10 +1827,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#end-user-reference" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        End-user reference
+        Context
       
     </span>
   </a>
@@ -1833,10 +1838,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#developer-reference" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Developer reference
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
       
     </span>
   </a>
@@ -1863,63 +1879,89 @@
   
 
 
-<h1 id="artnetoutmodule">ArtnetOutModule<a class="headerlink" href="#artnetoutmodule" title="Permanent link">&para;</a></h1>
-<p>Packs the current pixel frame from a named source into Art-Net OpDmx packets and sends them via UDP. 510 DMX bytes (= 170 RGB pixels) per packet → multi-universe at large geometries (e.g. 128×128×1 = 49 152 RGB bytes = 97 universes per frame, ~6 Mbps at 50 fps). Runs on core 1 (set via constructor <code>setCoreAffinity(1)</code>); reads frames cross-core from the source's <a href="../../../developer-guide/backend/#databuffert-the-shared-slot-primitive"><code>DataBuffer&lt;RGB&gt;</code></a> via a single acquire/release pair — no per-frame copy on the consumer side.</p>
-<p><strong>Wire format</strong> (one Art-Net OpDmx packet per universe, sent to <code>dest_ip:6454</code>):</p>
-<div class="highlight"><pre><span></span><code>&quot;Art-Net\0&quot;          8 bytes  ID
-0x00 0x50            2 bytes  OpCode (OpDmx, little-endian)
-0x00 0x0e            2 bytes  ProtVer 14 (big-endian per spec)
-seq                  1 byte   sequence (0 = ignore)
-phys                 1 byte   physical port (0)
-uni_lo uni_hi        2 bytes  universe (little-endian)
-len_hi len_lo        2 bytes  DMX byte count (big-endian)
-&lt;data&gt;               1..510 bytes  RGB triplets
-</code></pre></div>
-<h2 id="end-user-reference">End-user reference<a class="headerlink" href="#end-user-reference" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Control</th>
-<th>Type</th>
-<th>Range / default</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>enabled</code></td>
-<td>toggle</td>
-<td>true</td>
-<td></td>
-</tr>
-<tr>
-<td><code>source</code></td>
-<td>text</td>
-<td><code>ripples-0</code></td>
-<td>Module id whose frame to send (resolved via <code>DataRegistry</code>)</td>
-</tr>
-<tr>
-<td><code>dest_ip</code></td>
-<td>text</td>
-<td><code>255.255.255.255</code></td>
-<td>Receiver IP (broadcast by default; set to a specific Art-Net node)</td>
-</tr>
-<tr>
-<td><code>universe</code></td>
-<td>range</td>
-<td>0..15 / 0</td>
-<td>Starting Art-Net universe number (subsequent packets increment)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="developer-reference">Developer reference<a class="headerlink" href="#developer-reference" title="Permanent link">&para;</a></h2>
+<h1 id="adr-0006-per-effect-per-layout-loc-budgets">ADR 0006 — Per-effect / per-layout LOC budgets<a class="headerlink" href="#adr-0006-per-effect-per-layout-loc-budgets" title="Permanent link">&para;</a></h1>
+<p><strong>Status:</strong> Accepted, 2026-05-17.
+<strong>Supersedes:</strong> none.
+<strong>Related:</strong> <a href="../../../architecture/process/">process architecture §2 — guardrails obey their own rules</a>; <a href="https://github.com/ewowi/projectMM-v2/blob/main/CLAUDE.md">CLAUDE.md</a> Rule #1; <a href="https://github.com/ewowi/projectMM-v2/blob/main/scripts/checks/check_loc.py">check_loc.py</a>.</p>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p><code>src/modules/lights/</code> had a single aggregate LOC budget (<code>"src/modules/lights": 600</code>).
+The lights domain is the one surface designed to grow indefinitely: every new
+visual effect and every new panel layout is a new file there. A single
+aggregate ceiling has two failure modes against Rule #1:</p>
+<ol>
+<li><strong>It hides per-effect bloat.</strong> A 400-line effect and a 40-line effect are
+   indistinguishable under one total; the ceiling can be satisfied while an
+   individual effect is doing far too much.</li>
+<li><strong>It becomes a ratchet.</strong> As effects accumulate the number is bumped
+   600 → 1400 → 2200 → … . Each bump is "true" yet the bumps carry no
+   per-effect deliberation — exactly the unbounded-expansion pattern the
+   minimalism rule exists to prevent. Projected to 10 000+ LOC the aggregate
+   number means nothing.</li>
+</ol>
+<p>The codebase already solved this exact problem for <code>src/pal/</code>: <strong>one budget
+per file</strong>, and a gate (<code>check_pal_files_have_budgets</code>) that fails if any pal
+file lacks an entry — "adding a new pal concern is a moment of deliberation,
+not a free expansion." Effects and layouts are the same shape of growth.</p>
+<p>This change also lands alongside the v1 effect/layout port (5 effects + 2
+layouts) and a <code>PixelEffectBase</code> / <code>LayoutModule</code> extraction that removed the
+~6× duplicated resolve/allocate/teardown boilerplate the ports first carried.</p>
+<p>Alternatives considered:</p>
 <ul>
-<li>Constructor: <code>setCoreAffinity(1)</code> — runs on APP_CPU so the consumer doesn't share core 0 with the producer.</li>
-<li><code>setup()</code> — <code>udp_.begin()</code> (bind ephemeral source port), <code>resolve_buf_()</code> (<code>DataRegistry</code> lookup by <code>source</code> id).</li>
-<li><code>onUpdate(key)</code> — for <code>source</code> edits, re-call <code>resolve_buf_()</code>.</li>
-<li><code>loop20ms()</code> — <code>buf_-&gt;try_acquire_read()</code> (cross-core SPSC, release/acquire ordering); if null (no new frame), return early. Pack one Art-Net OpDmx packet per 510-byte universe slice via <code>pack_header()</code>, send via <code>udp_.send()</code>, <code>buf_-&gt;release_read()</code>.</li>
-<li><code>pack_header()</code> — public static helper exposed for <a href="https://github.com/ewowi/projectMM-v2/blob/main/test/test_pc/test_artnet_packing.cpp"><code>test_artnet_packing.cpp</code></a>.</li>
+<li><strong>Keep one aggregate, bump 600 → 1400.</strong> Rejected: defers the ratchet one
+  step; the number stops being a discipline signal as the surface grows.</li>
+<li><strong>Drop the lights budget entirely.</strong> Rejected: removes the only mechanical
+  brake on the surface most prone to drift — the opposite of Rule #1.</li>
+<li><strong>Per-directory sub-budgets (<code>effects/</code>, <code>layouts/</code>).</strong> Rejected: same
+  hiding problem one level down; a bloated single effect is still masked by
+  lean siblings in the same directory.</li>
 </ul>
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p>Effects and layouts are <strong>per-file budgeted</strong>, mirroring <code>src/pal/</code>:</p>
+<ul>
+<li><code>scripts/checks/check_loc.py</code> <code>BUDGETS</code> gains one entry per file under
+  <code>src/modules/lights/effects/</code> and <code>src/modules/lights/layouts/</code>, each with a
+  one-line comment naming the effect/layout.</li>
+<li>A new gate <code>check_lights_files_have_budgets()</code> fails the check if any
+  <code>.h/.cpp</code> under those two directories has no <code>BUDGETS</code> entry. Adding an
+  effect or layout therefore <em>requires</em> adding its budget line — the
+  deliberation moment.</li>
+<li><code>"src/modules/lights"</code> stays as a (smaller) aggregate for the shared
+  non-effect/non-layout files only (<code>RGB.h</code>, <code>Pixelable.h</code>, <code>PreviewModule.h</code>,
+  <code>ArtnetOutModule.h</code>, <code>GridLayoutModule.h</code>). <code>check_loc.py</code> is already
+  nested-aware: per-file entries are excluded from the directory total, so
+  there is no double-counting.</li>
+<li><code>RipplesEffect.h</code> is on <code>PixelEffectBase</code> like every other effect and so is
+  <strong>per-file budgeted by name</strong>, even though it sits in <code>lights/</code> root rather
+  than <code>effects/</code> (historical placement; moving the file is a cosmetic change
+  deliberately not bundled here). "Every effect is per-file budgeted" is the
+  invariant; directory is incidental. The gate (below) enforces it
+  mechanically for the <code>effects/</code>+<code>layouts/</code> dirs; root-dir effects are
+  enumerated explicitly.</li>
+</ul>
+<p><code>check_loc.py</code>'s own script budget is bumped (170 → 210) with a justification
+comment for the new gate + entries — the guardrail obeying its own rule.</p>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<p><strong>Cost.</strong>
+- <code>BUDGETS</code> grows by one entry per effect/layout (≈10 lines now; +1 line per
+  future effect). This is intentional: the line <em>is</em> the deliberation record.
+- A new effect PR must touch <code>check_loc.py</code> (add its budget). Same friction
+  <code>src/pal/</code> already imposes; accepted there, accepted here.
+- <code>check_loc.py</code> grew ~20 LOC (the gate + entries); budget bumped with reason.</p>
+<p><strong>Benefit.</strong>
+- A single bloated effect is now visible (its own line goes OVER) instead of
+  hidden under an aggregate.
+- No more aggregate ratchet: the lights surface can grow to many effects
+  without the budget number degrading into noise.
+- Consistent with the established, accepted <code>src/pal/</code> discipline — one
+  pattern for "surfaces that grow one concern at a time", not two.</p>
+<p><strong>What is <em>not</em> changed.</strong>
+- The minimalism rule itself; this strengthens its mechanical enforcement.
+- Other aggregate budgets (<code>src/core</code>, <code>src/modules/network</code>,
+  <code>src/modules/system</code>) — those are bounded surfaces, not per-concern growth,
+  and stay aggregate.
+- Adding a <em>new kind</em> of lights sub-surface (e.g. <code>drivers/</code>, <code>modifiers/</code>)
+  silently: extend <code>check_lights_files_have_budgets()</code>'s directory list and
+  note it here or in a follow-up ADR — same bar as a new pal concern.</p>
 
 
 
