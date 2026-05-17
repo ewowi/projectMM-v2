@@ -33,3 +33,10 @@ data/wifi.json
 # Tests tab. Contains local-network IPs/MACs that are dev-host-specific —
 # not portable across contributors. Auto-created on first launch.
 moondeck.json
+
+# Claude Code workspace. .claude/agents/ IS tracked — shared dev-workflow
+# agents are part of this repo's agentic-dev showcase (see ADR 0004). Only
+# host-specific personal state is ignored: settings.local.json (the .local.
+# suffix is the "personal, not shared" convention) and any local scratch.
+.claude/settings.local.json
+.claude/*.local.json

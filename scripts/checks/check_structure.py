@@ -7,11 +7,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent.parent
 
 ALLOWED = {
-    ".github", ".githooks", "data", "docs", "lib", "partitions", "scripts", "src", "test",
+    ".claude", ".github", ".githooks", "data", "docs", "lib", "partitions",
+    "scripts", "src", "test",
     ".gitignore", "CLAUDE.md", "LICENSE", "README.md",
     "mkdocs.yml", "platformio.ini", "pyproject.toml", "uv.lock",
 }
 # Each entry is justified by either being a v1 carry-over or by a paired ADR.
+# ".claude"    → docs/developer-guide/adr/0004-claude-agents-tracked.md
+#                (shared Claude Code agents; host-specific *.local.json ignored).
 # "lib"        → docs/develop/adr/0001-vendor-cpp-httplib.md (vendored third-party only).
 # "partitions" → ESP32 board flash layouts (CSV); pioarduino requires a file
 #                path, no .ini equivalent. Carry-over from v1 (Sprint 4).

@@ -61,6 +61,7 @@ nav:
       - 0001 — Vendor cpp-httplib: developer-guide/adr/0001-vendor-cpp-httplib.md
       - 0002 — ArduinoJson via lib_deps: developer-guide/adr/0002-arduinojson-lib-deps.md
       - 0003 — DataRing + DataRegistry in core: developer-guide/adr/0003-dataring-dataregistry-in-core.md
+      - 0004 — Track .claude/agents/: developer-guide/adr/0004-claude-agents-tracked.md
   - Development:
     - Overview: development/index.md
     - Release 1 — Foundation: development/release-01.md
