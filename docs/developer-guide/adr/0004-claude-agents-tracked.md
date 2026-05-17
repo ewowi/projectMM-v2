@@ -45,3 +45,32 @@ Alternatives considered:
 - Committing host-specific or secret state under `.claude/` (device IPs, tokens, `settings.local.json`). Those stay gitignored.
 - Using `.claude/` for v2-authored runtime code, scripts, or docs — it is Claude Code workspace config only. Runtime code → `src/`; tooling → `scripts/`; documentation → `docs/`.
 - Adding further `.claude/` subtypes (commands, hooks, styles) silently. Each new *kind* of shared workspace config is a structural addition; note it in this ADR (or a follow-up) with its justification, same bar as a new module.
+
+## Reaffirmed — no tester, deployer, scripts-owner, or product-owner agent
+
+The original decision rejected a tester and a deployer agent; that rationale
+lived only in the project record, not this ADR. Made explicit and durable
+here, and broadened, because the proposal recurred even with a now-substantial
+test surface (84 host cases, scenario REST runner, generated `tests.md`):
+
+- **No tester agent.** Decompose what it would do: *run everything / report
+  pass-fail* is exactly `guardrail-runner` (the v1 "4th test surface"
+  pattern). *Write or migrate tests* is interactive write→run→adjust work —
+  the deliberately-absent developer role (the Sonnet main thread does this;
+  see `project_no_developer_agent`). *Decide what is under-tested / test
+  strategy* is a one-shot design question already in `architect`'s scope.
+  No residue is left for a tester agent. A larger suite *strengthens* this
+  rejection (don't fork a second authority over it), not reverses it.
+- **No single-agent ownership of `moondeck.py` + scripts + CI.** That is the
+  v1 `deploy/`-concentration anti-pattern (one owner accreting an unbounded
+  tooling surface). That surface is governed by the moondeck.py census + the
+  structural-additions gate (process.md §2) + `check_structure.py`, not an
+  owning persona.
+- **No product-owner / end-user / PM agent, and no agent as conflict
+  tiebreaker.** An agent-as-PO is a second source of truth that drifts from
+  the documents — the named v1 drift. Product intent lives in
+  [`architecture/product.md`](../../architecture/product.md); the authority
+  chain (documents are the contract; agents produce findings not rulings;
+  the maintainer ratifies via ADR) is recorded in
+  [ADR 0008](0008-product-requirements-constraint.md). The team is the
+  workflow, not headcount.

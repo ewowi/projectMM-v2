@@ -1,0 +1,16 @@
+{
+  "name": "reference-setup",
+  "description": "THE canonical projectMM v2 light pipeline — single source of truth, also driven by the MoonDeck 'Create reference setup' card via scenario.py. layout-0 sized geometry; ripples-0 nests under it (name-matched 'layout' input); preview-0 + artnet-0 nest under ripples-0 (the 'source' wildcard input — Sprint-17 parent-input model). Replaces the deleted light_setup.py: one definition, replayed in-process (test_scenarios.cpp) and over REST (scenario.py / the card).",
+  "steps": [
+    { "name": "add-layout",   "op": "add_module", "id": "layout-0",  "type": "layout" },
+    { "name": "add-ripples",  "op": "add_module", "id": "ripples-0",  "type": "ripples" },
+    { "name": "add-preview",  "op": "add_module", "id": "preview-0",  "type": "preview" },
+    { "name": "add-artnet",   "op": "add_module", "id": "artnet-0",   "type": "artnet-out",
+      "measure": true },
+    { "name": "nest-ripples", "op": "reparent",   "id": "ripples-0",  "parent_id": "layout-0" },
+    { "name": "nest-preview", "op": "reparent",   "id": "preview-0",  "parent_id": "ripples-0" },
+    { "name": "nest-artnet",  "op": "reparent",   "id": "artnet-0",   "parent_id": "ripples-0",
+      "measure": true,
+      "bounds": { "module_count": { "min": 4 } } }
+  ]
+}

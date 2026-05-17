@@ -1,12 +1,17 @@
 #pragma once
 //
-// PalUdp — minimal UDP send abstraction. ESP32: AsyncUDP::writeTo —
-// fire-and-forget, no EHOSTUNREACH log spam on unreachable destinations.
-// PC: BSD SOCK_DGRAM. No receive support yet — ArtNet-in (Release 2) adds it.
+// PalUdp — minimal send-only UDP. Both platforms use a plain BSD-style
+// SOCK_DGRAM socket: ESP32 via lwIP's BSD sockets layer, PC via the OS.
+// The two branches differ only by which sockets header they include (and
+// the ESP32 wifi-guard) — destruction is one bounded ::close() on both, so
+// a module owning a pal::Udp can be deleted from any task without the
+// cross-task-blocking ~AsyncUDP() teardown that previously needed deferral
+// (see ADR 0005; the AsyncUDP variant was the wrong abstraction for a
+// send-only socket). No receive support yet — ArtNet-in (Release 2) adds it.
 //
 // API:
 //   pal::Udp udp;
-//   udp.begin();                                  // no-op on ESP32, bind on PC
+//   udp.begin();                                  // open the socket
 //   udp.send("192.168.1.255", 6454, data, len);   // best-effort, broadcast OK
 //
 
@@ -15,37 +20,15 @@
 #include <cstring>
 
 #ifdef ARDUINO
-
-  #include <AsyncUDP.h>
-  #include <WiFi.h>
+  #include <lwip/sockets.h>
 
   #include "PalWifi.h"
-
-namespace pal {
-
-class Udp {
- public:
-  bool begin() { return true; }  // AsyncUDP needs no bind for send-only use
-
-  bool send(const char* ip, uint16_t port, const uint8_t* data, size_t len) {
-    if (!pal::wifi_is_connected()) return false;  // PATCH: wifi-guard
-    IPAddress addr;
-    if (!addr.fromString(ip)) return false;
-    return udp_.writeTo(data, len, addr, port) == len;
-  }
-
- private:
-  AsyncUDP udp_;
-};
-
-}  // namespace pal
-
-#else  // PC
-
+#else
   #include <arpa/inet.h>
   #include <netinet/in.h>
   #include <sys/socket.h>
   #include <unistd.h>
+#endif
 
 namespace pal {
 
@@ -62,6 +45,9 @@ class Udp {
 
   bool send(const char* ip, uint16_t port, const uint8_t* data, size_t len) {
     if (fd_ < 0) return false;
+#ifdef ARDUINO
+    if (!pal::wifi_is_connected()) return false;  // PATCH: wifi-guard
+#endif
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
     addr.sin_port   = htons(port);
@@ -69,6 +55,8 @@ class Udp {
     return ::sendto(fd_, data, len, 0, (sockaddr*)&addr, sizeof(addr)) == (ssize_t)len;
   }
 
+  // One bounded lwIP/OS close — safe on any task (this is the whole point
+  // of the AsyncUDP→plain-socket swap; no cross-task teardown block).
   ~Udp() {
     if (fd_ >= 0) ::close(fd_);
   }
@@ -78,5 +66,3 @@ class Udp {
 };
 
 }  // namespace pal
-
-#endif

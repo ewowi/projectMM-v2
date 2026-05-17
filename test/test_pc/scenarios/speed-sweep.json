@@ -1,0 +1,21 @@
+{
+  "name": "speed-sweep",
+  "description": "Reference pipeline then sweep the ripples speed control slow→default→fast. Verifies control changes do not affect the module tree's memory footprint (mirrors v1 base-pipeline-speed intent with v2 modules).",
+  "steps": [
+    { "name": "add-layout",    "op": "add_module",  "id": "layout-0", "type": "layout" },
+    { "name": "add-ripples",   "op": "add_module",  "id": "ripples-0", "type": "ripples" },
+    { "name": "add-preview",   "op": "add_module",  "id": "preview-0", "type": "preview" },
+    { "name": "add-artnet",    "op": "add_module",  "id": "artnet-0",  "type": "artnet-out" },
+    { "name": "nest-ripples",  "op": "reparent",    "id": "ripples-0", "parent_id": "layout-0" },
+    { "name": "nest-preview",  "op": "reparent",    "id": "preview-0", "parent_id": "ripples-0" },
+    { "name": "nest-artnet",   "op": "reparent",    "id": "artnet-0",  "parent_id": "ripples-0",
+      "measure": true,
+      "bounds": { "module_count": { "min": 4 } } },
+    { "name": "speed-slow",    "op": "set_control", "id": "ripples-0", "key": "speed", "value": 26,
+      "measure": true },
+    { "name": "speed-default", "op": "set_control", "id": "ripples-0", "key": "speed", "value": 128,
+      "measure": true },
+    { "name": "speed-fast",    "op": "set_control", "id": "ripples-0", "key": "speed", "value": 230,
+      "measure": true }
+  ]
+}

@@ -18,14 +18,12 @@
 
 #include <cstring>
 
-#include "../../core/MoonModule.h"
+#include "layouts/LayoutModule.h"
 
 namespace pmm {
 
-class GridLayoutModule : public MoonModule {
+class GridLayoutModule : public LayoutModule {
  public:
-  const char* category() const override { return "Gridlayout"; }
-
   void onBuildControls() override {
     addControl(width_,      "width",      "slider", (uint16_t)1, (uint16_t)512);
     addControl(height_,     "height",     "slider", (uint16_t)1, (uint16_t)512);
@@ -41,19 +39,19 @@ class GridLayoutModule : public MoonModule {
 
   // -- Geometry API (called by effects from onAllocateMemory) ----------------
 
-  uint16_t width()  const { return width_;  }
-  uint16_t height() const { return height_; }
-  uint16_t depth()  const { return depth_;  }
+  uint16_t width()  const override { return width_;  }
+  uint16_t height() const override { return height_; }
+  uint16_t depth()  const override { return depth_;  }
 
   // Phase 1: physical count == w * h * d (no sparse layouts yet).
-  uint32_t physical_count() const {
+  uint32_t physical_count() const override {
     return (uint32_t)width_ * height_ * depth_;
   }
 
   // Map a logical pixel index to a physical pixel index.
   // logical_idx is in row-major order (x + y*w + z*w*h).
   // With serpentine, odd rows run right-to-left within each depth slice.
-  uint32_t map(uint32_t logical_idx) const {
+  uint32_t map(uint32_t logical_idx) const override {
     if (!serpentine_) return logical_idx;
     const uint32_t plane = (uint32_t)width_ * height_;
     const uint32_t z     = logical_idx / plane;

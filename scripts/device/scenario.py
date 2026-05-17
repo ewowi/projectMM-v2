@@ -85,6 +85,9 @@ def run_scenario(host, port, path, settle_s):
             elif op == "set_control":
                 r = _http("POST", host, port, "/api/control",
                           {"id": step["id"], "key": step["key"], "value": step["value"]})
+            elif op == "reparent":
+                r = _http("POST", host, port, "/api/modules/reparent",
+                          {"id": step["id"], "parent_id": step.get("parent_id", "")})
             else:
                 print(f"  SKIP {sname}: unknown op '{op}'", flush=True)
                 continue

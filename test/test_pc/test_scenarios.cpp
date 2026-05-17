@@ -1,8 +1,11 @@
 // Scenario replay tests — Sprint 8 Rail 3.
 //
 // Every JSON under test/test_pc/scenarios/ is parsed and replayed in-process
-// via ModuleManager. Steps: `add_module` (id, type) and `set_control` (id,
-// key, value). Steps marked `"measure": true` get a `[scenario] measure …`
+// via ModuleManager. Steps: `add_module` (id, type), `set_control` (id, key,
+// value), and `reparent` (id, parent_id — empty parent_id promotes to root,
+// the Sprint-17 parent-input model; this is what light_setup.py / the
+// reference pipeline use to nest preview/artnet under ripples). Steps marked
+// `"measure": true` get a `[scenario] measure …`
 // log line + optional bounds assertion. Rail 2's [MemBoot] / [MemLive]
 // events fire as modules pass through runSetup, so the test stdout shows the
 // same memory trail a real boot does — exactly the "events in the ui.py log
@@ -28,6 +31,13 @@
 #include "modules/lights/PreviewModule.h"
 #include "modules/lights/GridLayoutModule.h"
 #include "modules/lights/RipplesEffect.h"
+#include "modules/lights/effects/DistortionWavesEffect.h"
+#include "modules/lights/effects/FlowFluidEffect.h"
+#include "modules/lights/effects/LinesEffect.h"
+#include "modules/lights/effects/Noise2DEffect.h"
+#include "modules/lights/effects/SineEffect.h"
+#include "modules/lights/layouts/RingLayoutModule.h"
+#include "modules/lights/layouts/WheelLayoutModule.h"
 #include "modules/system/SystemStatusModule.h"
 
 namespace fs = std::filesystem;
@@ -35,9 +45,20 @@ using namespace pmm;
 
 namespace {
 
+// Mirror main.cpp's lights module set so any scenario can use any module a
+// real device has (a scenario referencing an unregistered type would add
+// nothing and a later reparent on it would fail — exactly the multi-effect
+// bug this set fixes).
 void register_scenario_types_(ModuleManager& mm) {
   mm.register_type<GridLayoutModule>("layout");
+  mm.register_type<RingLayoutModule>("ring-layout");
+  mm.register_type<WheelLayoutModule>("wheel-layout");
   mm.register_type<RipplesEffect>("ripples");
+  mm.register_type<DistortionWavesEffect>("distortion-waves");
+  mm.register_type<FlowFluidEffect>("flow-fluid");
+  mm.register_type<LinesEffect>("lines");
+  mm.register_type<Noise2DEffect>("noise-2d");
+  mm.register_type<SineEffect>("sine");
   mm.register_type<PreviewModule>("preview");
   mm.register_type<ArtnetOutModule>("artnet-out");
   mm.register_type<SystemStatusModule>("system");
@@ -96,6 +117,11 @@ void replay_scenario_(const fs::path& path) {
       INFO("step: " << sname);
       REQUIRE(m != nullptr);
       CHECK(m->setControl(key, JsonVariantConst(step["value"])));
+    } else if (std::strcmp(op, "reparent") == 0) {
+      const char* id        = step["id"]        | "";
+      const char* parent_id = step["parent_id"] | "";
+      INFO("step: " << sname);
+      CHECK(mm.reparent(id, parent_id));
     } else {
       INFO("unknown op: " << op);
       FAIL("scenario step has no recognised op");

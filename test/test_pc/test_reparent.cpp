@@ -67,6 +67,14 @@ class SourceModule : public MoonModule {
   const char* category() const override { return "test"; }
 };
 
+// Parent whose registered type differs from its category() — mirrors
+// RingLayoutModule (type "ring-layout", category "layout"). Used to prove
+// the ADR 0007 category match.
+class CategoryLayoutModule : public MoonModule {
+ public:
+  const char* category() const override { return "layout"; }
+};
+
 }  // namespace
 
 TEST_CASE("reparent: parent flag set on the name-matched input") {
@@ -195,4 +203,38 @@ TEST_CASE("reorder children: nested reorder changes child order and loop order")
   CHECK(std::string(mm.at(0)->id()) == "layout-0");
   CHECK(std::string(mm.at(1)->id()) == "sink-b");
   CHECK(std::string(mm.at(2)->id()) == "sink-a");
+}
+
+// ADR 0007: a generic "layout" input matches a parent by category() when the
+// parent's registered type differs (Ring/Wheel: type "ring-layout", category
+// "layout"). Regression that would have caught the un-nestable-Ring gap.
+TEST_CASE("reparent: 'layout' input matches a parent by category, not just type") {
+  ModuleManager mm;
+  mm.register_type<CategoryLayoutModule>("ring-layout");  // type != "layout"
+  mm.register_type<SinkModule>("sink");                   // input keyed "layout"
+
+  mm.add("ring-layout", "ring-0");
+  auto* child = dynamic_cast<SinkModule*>(mm.add("sink", "sink-0"));
+  REQUIRE(child != nullptr);
+
+  REQUIRE(mm.reparent("sink-0", "ring-0"));               // type mismatch, category match
+  CHECK(std::string(child->parentInputKey()) == "layout");
+  CHECK(std::string(child->src()) == "ring-0");
+}
+
+// ADR 0007 precedence: an exact name==type input beats a category match.
+TEST_CASE("reparent: exact name==type wins over a category match") {
+  ModuleManager mm;
+  // Parent registered as type "ring-layout", category "layout".
+  mm.register_type<CategoryLayoutModule>("ring-layout");
+  mm.register_type<DualModule>("dual");  // has both "source" and "layout" inputs
+
+  mm.add("ring-layout", "ring-0");
+  auto* d = dynamic_cast<DualModule*>(mm.add("dual", "dual-0"));
+  REQUIRE(d != nullptr);
+
+  // "layout" matches the parent's category; no input named "ring-layout"
+  // exactly, so the category rung binds the "layout" input (not "source").
+  REQUIRE(mm.reparent("dual-0", "ring-0"));
+  CHECK(std::string(d->parentInputKey()) == "layout");
 }

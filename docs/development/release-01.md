@@ -34,6 +34,9 @@ Sprint 2 and Sprint 3 were initially attempted as greenfield rewrites of v1's HT
 | [14](#sprint-14) | Ring → single-slot buffer; PATCH: convention; script LOC budgets; `frontend.md`; doc crosslink pass | `src/core/DataBuffer.h`, `scripts/check_patches.py`, `docs/developer-guide/` |
 | [15](#sprint-15) | GridLayoutModule: geometry flow + serpentine wiring; effects become geometry-agnostic | `modules/lights/GridLayoutModule.h`, `RipplesEffect` geometry controls removed |
 | [16](#sprint-16) | Module tree drag & reparent: cross-level drag-drop, auto-wire, loop order, layer slot | `src/core/`, `src/modules/network/HttpServerModule.cpp`, `src/frontend/app.js` |
+| [17](#sprint-17) | The parent *is* an input: `parentControlIdx_` replaces `auto_wire_`; one relationship, two views | `src/core/`, `src/frontend/app.js`, `system.md` |
+| [18](#sprint-18) | Port 6 v1 effects + 2 layouts onto shared `PixelEffectBase` / `LayoutModule`; `DataBuffer` teardown-liveness (ADR 0005); per-effect LOC budgets (ADR 0006); 3 `artnet-0`-delete crashes fixed at source — UAF (ADR 0005), WDT (PalUdp socket swap), `children_[]` dangling ptr (`remove()` parent-detach + subtree delete) | `src/modules/lights/`, `src/core/DataBuffer.h`, `src/core/ModuleManager.cpp`, `src/pal/PalUdp.h`, `scripts/check_loc.py`, [ADR 0005](../developer-guide/adr/0005-databuffer-teardown-liveness.md), [ADR 0006](../developer-guide/adr/0006-per-effect-loc-budgets.md) |
+| [19](#sprint-19) | v1-parity scenarios + unit tests: `reparent` scenario op, 7 v2 scenarios, card↔scenario alignment (`light_setup.py` deleted), `layout` input matches by category (ADR 0007), 5 v1 test files migrated port-and-minimized, generated `tests.md` | `test/test_pc/`, `scripts/device/scenario.py`, `src/core/ModuleManager.*`, `scripts/build/gen_test_list.py`, `system.md`, [ADR 0007](../developer-guide/adr/0007-parent-input-matches-category.md) |
 
 The v1 → v2 cutover (rename + final stable tag) closes [Release 2](backlog.md#release-2-v1-parity-cutover), which adds ArtNet **in**, OTA, NTP, and any remaining v1 parity bits.
 
@@ -539,3 +542,269 @@ Loop semantics are **identical**: the parent-flagged input drives `sort_depth_fi
 - [x] `StateStoreModule` round-trips via the persisted input value; pass-2 `reparent` re-derives the flag. HIL-verified: reboot restores the full nested tree.
 - [x] `system.md` § "Inputs, and the parent input" matches the shipped code (incl. wildcard rule); `check_loc` green; `test_reparent.cpp` passes (45/45, incl. wildcard + exact-wins cases).
 - [x] HIL: ripples→layout nests, no duplicate noodle; preview/artnet→ripples nests via `source` wildcard; incompatible drop rejected; promote ripples → root, `layout` input retained, noodle appears; reboot → tree restored.
+
+## Sprint 18 — v1 effect/layout port onto a shared base + DataBuffer teardown-liveness {#sprint-18}
+
+Ports six v1 effects (DistortionWaves, FlowFluid, Lines, Noise2D, Sine,
+RipplesEffect) and two layouts (Ring, Wheel) into `src/modules/lights/`. The
+port is the §4 "port-and-minimize" doctrine applied: the six effects each
+carried an identical ~70-line resolve-layout / pixels_ / owned
+`DataBuffer<RGB>` / teardown / resize-poll spine, so that spine was extracted
+into `effects/PixelEffectBase.h`; an effect is now its controls + its
+`render_()` only. Layout-type identity moved off the registered factory
+string onto a virtual `category()=="layout"` via a new abstract
+`layouts/LayoutModule.h` (GridLayoutModule reparented onto it; its bogus
+`category()=="Gridlayout"` string removed) — retiring the CLAUDE.md-named
+"strcmp on type names" anti-pattern, which also made Ring/Wheel actually
+resolvable (they were unreachable before, matched only the factory key).
+
+**ADR 0005 — `DataBuffer` teardown-liveness.** Deleting a producer while a
+consumer held a cached `DataBuffer*` was a use-after-free (observed: core-1
+`IllegalInstruction` on deleting `artnet-0`/`preview`). Fix: a `kDead`
+sentinel riding the existing `published_` atomic (`invalidate()` +
+reader `dead()`); producers `undeclare → invalidate → delete` in teardown;
+`ArtnetOutModule`/`PreviewModule` detach the cached reader when `dead()`. No
+new atom, no new hot-path load, ownership model unchanged — refines ADR 0003,
+no `system.md` change. The invariant is convention (every producer funnels
+through `PixelEffectBase`); a hand-rolled producer bypassing the base is the
+residual risk, recorded in ADR 0005.
+
+**ADR 0006 — per-effect/per-layout LOC budgets.** The single
+`src/modules/lights` aggregate was replaced with one budget per
+effect/layout file plus a `check_lights_files_have_budgets()` gate (the
+`src/pal/` pattern): a surface that grows one effect at a time gets one
+deliberation point per effect, not an ever-ratcheting ceiling.
+
+**The `artnet-0` delete crashes — three independent defects, each masked
+by the previous, all fixed at the source.** On-device, deleting `artnet-0`
+crashed three times with three different signatures; each fix was real and
+un-masked the next:
+
+1. `IllegalInstruction PC:0x50545400` — a dangling `DataBuffer*` (a
+   removed producer freed a buffer a consumer still cached). Closed by
+   **ADR 0005** (DataBuffer kDead-liveness — durable, see above).
+   Confirmed gone on device.
+2. `TG1WDT_SYS_RESET` — `~AsyncUDP()` ran a blocking cross-task lwIP
+   teardown on the watchdog-subscribed AsyncTCP/HTTP-DELETE task. A
+   deferred-removal mechanism (draft "ADR 0007", ≈+89 core LOC) was built,
+   reviewed, then **deleted**: a simplicity-gated re-analysis found its
+   premise wrong — for a *send-only* socket under arduino-esp32's default
+   `LWIP_TCPIP_CORE_LOCKING`, a plain BSD `lwip` `::close()` is one
+   bounded core-locked call, not the cross-task block `~AsyncUDP()`
+   performs. Fixed by a **`PalUdp` implementation swap**: the ARDUINO
+   branch becomes the same plain `SOCK_DGRAM` socket the PC branch already
+   is. This *consolidates* — the `#ifdef` class duplication in `PalUdp.h`
+   collapses to one class, the `AsyncUDP` dependency is dropped, zero core
+   change. A `Pal` impl change is what `Pal` exists to absorb; no ADR.
+3. `LoadProhibited` at `MoonModule.cpp:54` (the scheduler's child
+   recursion) — fixing #2 let `remove()` *run to completion* instead of
+   resetting, un-masking a **pre-existing latent bug**: `remove()` freed
+   the module's `unique_ptr` but never called `parent_->removeChild()`, so
+   the parent's `children_[]` kept a dangling pointer the next tick walked.
+   `reparent()` already did this detach (lines 158/193); `remove()` was
+   the one structural op that omitted it. Fix: `remove()` detaches from
+   its parent and removes the whole subtree (system.md parent-input model:
+   dropping a group drops its contents), reusing the existing `removeChild`
+   + `dfs_` helpers — ≈+10 core LOC, no new concept, no new state. **Not
+   an ADR**: it makes `remove()` honor the `parent_`/`children_` invariant
+   the rest of `ModuleManager` (`reparent`, `sort_depth_first_`) already
+   maintains — conformance to the existing constitution, not an amendment.
+
+The honest record: the second architect pass asserted "synchronous
+`remove()` is safe once `~AsyncUDP` is gone." That was wrong — it had not
+checked whether `remove()` honored the parent/children invariant (it did
+not). The simplicity-gated re-run caught both the over-engineered ADR 0007
+*and* this real second defect. PalUdp YAGNI note recorded in `PalUdp.h`.
+
+**MoonDeck convention — Live-tab device-target selector.** Recovering the
+wiped modules after the crash exposed a discoverability gap: the recreate-
+reference-setup action was a per-row `+light` button the maintainer could
+not find among the row's other affordances. Fixed by applying the
+selector convention the ESP32 and Develop tabs already use (`.selectors`
++ a `selected*()` accessor) to the Live tab: one shared device-target
+`#deviceSelect` dropdown, a standard-shape `Reference light setup` card
+(dot + label + `?` docs link + `Run`, like every other card) acting on
+the selection, and the per-row `+light` button **removed**. The
+recorded rule: *Live-tab device-targeted action cards read the shared
+selector via `getSelectedDevice()`; per-row controls manage only that row.*
+This caps device-row growth (7→6 elements) and makes the next device-
+targeted card trivial (reuse the accessor) instead of each appending a
+per-row button. `selected_device` persists in `moondeck.json` uiState (one
+scalar) so the choice survives reloads. No `moondeck.py` logic change (the
+`/device-setup` + `/ui-state` endpoints are payload-agnostic; only the
+`DEFAULT_UI_STATE` shape gained the key). No ADR — a dev-tool UI
+convention, not `src/` architecture. **Accepted regression** (not silent):
+firing the setup at several devices in quick succession now needs
+select→click per device instead of one click per row; acceptable — it is a
+once-per-device recovery/bootstrap action on a small (1–3) dev-console
+list, and a true fleet "apply to all enabled" card (reading the existing
+`enabled` checkbox) is the right answer if bulk is ever needed, not
+restoring per-row buttons.
+
+**Module-metrics card — a plain standard card, nothing more.** The
+module/type/core/ms-tick/heap/psram/class table was an inline per-row
+caret expander that injected a wide table *between device rows*, with N
+independent 2s polls, per-device runtime state
+(`_expanded`/`_metricsEl`/`_metricsHandle`), and a find-the-row-by-host-
+text DOM hack. Replaced with a **standard card identical in shape to every
+other card**: dot + label + `?` docs link + `Run` button; one click →
+one `/device-modules` fetch → a plain monospace text table in the shared
+`#output` pane (exactly how every other card writes output); press `Run`
+again to refresh. No timer, no live panel, no dedicated container, no
+reactivity, no teardown surface. Net deletion only: removed the per-row
+caret (×N), `toggleMetrics`/`mountMetricsPanel`/`stopMetricsPoll` (3
+functions, replaced by one inline button handler), the 3 per-device
+runtime fields, the DOM-search hack, the dead `.caret` CSS, **and the
+entire 7-line `.device-metrics` CSS ruleset** (the text table needs no
+styling — the `<pre>` is already monospace). Device-row element count
+7→6→5. `moondeck.py` unchanged. No ADR. (An earlier attempt at a
+single-poll reactive card was itself over-engineered for an
+observational read-once view and was reverted to this — the genuinely
+minimal form is "a button that fetches once.")
+
+### Rule #1 ledger
+
+- **Removed:** the RipplesEffect bespoke in-place-resize buf_-keepalive UAF
+  workaround (superseded by the generic ADR 0005 invariant); ~6× duplicated
+  effect boilerplate (folded into `PixelEffectBase`); GridLayoutModule's
+  unused `"Gridlayout"` category string; the single lights aggregate budget;
+  the `AsyncUDP` dependency *and* the `#ifdef`-duplicated `PalUdp` class
+  (collapsed to one); the drafted-then-deleted deferred-removal core
+  mechanism (≈+89 core LOC, ~12 ModuleManager methods/members, a Scheduler
+  atomic, a MoonModule bool — **not** shipped; the simpler Pal swap replaced
+  it before commit).
+- **Added:** `PixelEffectBase.h`, `LayoutModule.h`, 7 ported effect/layout
+  files, the `kDead` path in `DataBuffer.h`, the per-file budget gate, the
+  `remove()` parent-detach + subtree-delete (≈+10 core LOC, reusing
+  existing `removeChild`/`dfs_`). Two ADRs (0005, 0006) — not three.
+- **Net:** a feature port (8 modules) + three source-level correctness
+  fixes. Core delta is small and *invariant-restoring*, not mechanism-
+  adding: ADR 0005 is +1 LOC (a contract on an existing primitive); the
+  WDT fix is a `Pal` swap (0 core LOC, *removes* a dependency); the
+  parent-detach fix is ≈+10 LOC making `remove()` consistent with the
+  `reparent()` pattern already in the same file. *Essential* complexity
+  dropped: RipplesEffect 217→107, the duplicated effect spine deleted, the
+  `PalUdp` branch duplication deleted, a strcmp-on-type drift retired, and
+  the `remove()`/`reparent()` parent-handling asymmetry retired. Release 1
+  ends at **ADR 0006** with a far smaller core than the deferred-removal
+  trajectory would have produced.
+
+### Sprint 18 Definition of Done
+
+- [x] 6 effects + 2 layouts ported; all on `PixelEffectBase` / `LayoutModule`.
+- [x] Layout resolution via virtual `category()=="layout"`; no remaining
+      `strcmp(type(),"layout")`; no consumer relies on the old strings
+      (audited: `ArtnetOutModule`, frontend, scripts).
+- [x] Crash 1 (UAF) — ADR 0005 verified: `pc` build green; `test_data_buffer.cpp`
+      + 45/45 pass. **HIL: `IllegalInstruction PC:0x50545400` on deleting
+      `artnet-0` is GONE** — confirmed on device.
+- [x] `allocate_()` keeps the original unchanged-geometry realloc-skip (no
+      cold-path table-rebuild regression on no-op layout re-set / state reload).
+- [x] Crash 2 (WDT) — PalUdp AsyncUDP→plain-socket swap; **zero core change**
+      for this fix (the drafted deferred-removal mechanism was reverted in
+      full before commit). `remove()` stays synchronous. Builds green
+      pc + esp32dev.
+- [x] Crash 3 (`LoadProhibited` at MoonModule.cpp:54) — `remove()` now
+      detaches from parent + removes the subtree (reusing `removeChild`/
+      `dfs_`), closing the parent-`children_[]` dangling-pointer UAF.
+      Pre-flight: no shipping module caches a raw `MoonModule*` from
+      `setInput` (architect path-5 audit). Builds green pc + esp32dev;
+      45/45 tests pass incl. the synchronous `test_scenarios.cpp`
+      size-drain loop, `test_state_store.cpp`, `test_scheduler_affinity.cpp`.
+- [x] ADR 0005 + 0006 in `mkdocs.yml` nav; `mkdocs --strict` green. No
+      ADR 0007 (deleted — neither the Pal swap nor the remove() fix needs one).
+- [x] `check_loc` green: per-file effect/layout budgets; `src/core` bumped
+      for ADR 0005 (+1) and the remove() parent-detach (≈+10) with
+      attribution; `check_loc.py` 170→210 (ADR 0006 gate).
+- [~] HIL on hardware (effects render; Ring/Wheel resolve; **delete `artnet-0`
+      no longer crashes — neither UAF nor WDT**) — **pending device flash**
+      (the decisive test for the PalUdp swap).
+
+## Sprint 19 — v1-parity scenarios + unit tests {#sprint-19}
+
+Closes the v1→v2 gap for the *test/scenario* surface (the module/effect
+port was Sprint 18). The driving constraint throughout: **port-and-minimize,
+not transcribe** — every v1 assertion was re-checked against v2's actual
+behavior before porting; several v1 cases were deliberately *not* migrated
+because v2 has no such API or behavior (documented inline so the omission is
+visible, not silent).
+
+**Scenario format gains a `reparent` op.** v1's scenario runner only had
+`add_module` + `set_control`; v2's `base-pipeline.json` faked the
+effect→layout link with `set_control` — the exact v1 dual-state
+approximation Sprint 17 deleted, and one that *cannot* express
+preview/artnet attachment at all (they use the `source` wildcard input, no
+settable key). Added a third verb `reparent` (id, parent_id) to **both**
+runners (`test_scenarios.cpp` ~6 LOC, `scenario.py` ~3 LOC) → maps 1:1 onto
+the Sprint-17 `/api/modules/reparent` API. 7 scenarios authored mirroring
+v1 intent with v2's real module set: `reference-setup`, `resize-32`,
+`resize-64`, `speed-sweep`, `multi-effect`, `layout-swap` (+ the implicit
+glob). The unfaithful `base-pipeline.json` was deleted.
+
+**Card ↔ scenario aligned; one source of truth.** The MoonDeck "Create
+reference setup" card → `/device-setup` now replays `reference-setup.json`
+via `scenario.py` (wipe-then-rebuild — deterministic post-crash recovery),
+the *same* definition `test_scenarios.cpp` replays in-process. The bespoke
+`scripts/device/light_setup.py` (~75 LOC) was **deleted** — the card and
+the scenario are now literally the same thing. Net-negative LOC, one
+recovery mechanism instead of two.
+
+**ADR 0007 — `layout` input matches by category, not just type.** Authoring
+`layout-swap` exposed a real defect: effects' generic `layout` input only
+name-matched a parent whose *registered factory type* was `"layout"`, so
+Ring/Wheel (types `ring-layout`/`wheel-layout`, category `layout`) were
+**structurally un-nestable by any effect** — even though geometry
+resolution *already* matched layouts by `category()`. Structural nesting
+contradicted data resolution. Fix: `parent_input_idx_` now matches name ==
+type **or category** **or** `source` (precedence: exact type > category >
+source), ~5 LOC in one core function — *removes* the type-vs-category
+asymmetry and the last "strcmp on type names" v1 drift from the reparent
+path. Paired surgical `system.md` edits + 2 new `test_reparent.cpp` cases.
+
+**5 v1 test files migrated (port-and-minimized).** `test_controls.cpp`
+(new, 11 cases — `setControl`/`onUpdate`/`getSchema`/`getControlValues`/
+`clearControls`/select/`defVal`; **no clamp test** — v2's `writeThrough_`
+doesn't clamp); `test_module.cpp` extended (5 cases — unknown-type
+truthfulness, subtree-remove regression, `SystemStatusModule` lifecycle;
+v1's `replace`/`HasChildren`/dup-id cases **N/A** — v2 has no such API,
+dup-id is enforced at the HTTP layer); `test_integration.cpp` (new, 8
+subcases — REST `/api/control` 200/404/400, `/api/types`, dup-id 409,
+create 201; the WS-transport roundtrip **deliberately omitted** — ~120 LOC
+of new client infra to re-test a transport `pal::WsServer` abstracts, whose
+content is already unit-tested; recorded, not skipped); `test_memtracker.cpp`
+(new, 4 cases — snapshot consistency, `frag_pct` truncation, per-registered-
+type `classSize==sizeof` sweep). The remaining 4 v1 test files
+(Layers/OTA/WifiAp/Coord3D/v1-Logger-levels/Tasks/FileManager) were
+confirmed against `src/` as **N/A — v2 lacks the module**, explicitly out
+of scope. Two v1-actual findings surfaced *by* writing the tests: the dead
+`if (!add(...)) 404` branch in `HttpServerModule` (add() is permissive) and
+create returning 201 not 200 — recorded as latent cleanup, not hidden.
+
+**`scripts/build/gen_test_list.py` → `docs/developer-guide/tests.md`.**
+Static parse of `TEST_CASE`/`SUBCASE` strings (no run, no JsonReporter, no
+log — v1's `unittest.py` executed the suite; this does not) → a per-module/
+core page so users see the tested surface. 67 cases across 14 files.
+
+### Sprint 19 Definition of Done
+
+- [x] `reparent` op in both runners; 7 v2 scenarios replay clean in
+      `test_scenarios.cpp`; `test_scenarios.cpp` registers the full module
+      set (fixed a `multi-effect` failure where unregistered `lines`/`noise`
+      types made reparent fail — a faithful-scenarios bug, caught by tests).
+- [x] Card → `scenario.py reference-setup`; `light_setup.py` deleted; all
+      live references updated (`moondeck.py`, `app.js`, `index.html`,
+      `check_loc.py`); `backlog.md` history left accurate.
+- [x] ADR 0007 + surgical `system.md` edits + mkdocs nav; 2 `test_reparent`
+      cases (category match, exact-type>category precedence) green; `pc`
+      build green.
+- [x] 5 v1 test files migrated, every assertion verified against v2's
+      actual behavior (port-and-minimize); N/A v1 files documented.
+- [x] `tests.md` generated; `gen_test_list.py` budgeted; all touched test
+      files re-budgeted (ADR 0006 per-file pattern).
+- [x] Full host suite green: 85 cases pass (`uv run scripts/build/test.py`).
+      (Sprint 18's "45/45" was the pre-migration count; this sprint's
+      migrations took it to 85. `tests.md` lists 67 *TEST_CASE*s — subcases,
+      e.g. test_integration's 8, are nested under their case, not counted
+      separately there.)
+- [~] HIL: the card recreates the reference pipeline on a live device via
+      `scenario.py` — **pending device flash** (same flash as Sprint 18).

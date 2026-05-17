@@ -40,6 +40,9 @@
     <div class="pane" data-tab="live">
       <div class="group" id="devicesGroup">
         <h2>Devices</h2>
+        <div class="selectors">
+          <label>Device <select id="deviceSelect"></select></label>
+        </div>
         <div id="deviceList"></div>
         <div class="card device-controls">
           <span class="label" id="scanLabel">Scan <code id="scanSubnetLbl">…</code></span>
@@ -49,6 +52,18 @@
         <div class="card device-add">
           <input type="text" id="newDeviceHost" placeholder="host:port (e.g. 192.168.1.156:80)" style="flex:1;background:#1e1e22;color:#e0e0e0;border:1px solid #555;border-radius:4px;padding:3px 6px;font:inherit;font-size:0.9em;">
           <button id="addDeviceBtn">Add</button>
+        </div>
+        <div class="card lights-setup">
+          <span class="dot"></span>
+          <span class="label">Reference light setup <code>layout → ripples → preview/artnet</code></span>
+          <a class="help" id="lightsHelp" href="#" title="Open docs in the right panel">?</a>
+          <button id="createSetupBtn" title="Replay the reference-setup scenario on the selected device: wipes non-head modules then rebuilds layout→ripples→preview/artnet (post-crash recovery)">Run</button>
+        </div>
+        <div class="card metrics">
+          <span class="dot"></span>
+          <span class="label">Module metrics</span>
+          <a class="help" id="metricsHelp" href="#" title="Open docs in the right panel">?</a>
+          <button id="metricsBtn">Run</button>
         </div>
       </div>
     </div>

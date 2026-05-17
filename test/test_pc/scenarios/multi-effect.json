@@ -1,0 +1,18 @@
+{
+  "name": "multi-effect",
+  "description": "One layout with three effects nested under it (ripples + lines + noise-2d). Exercises layer grouping, loop order, and top-down onAllocateMemory across multiple effects on shared geometry (mirrors v1 two-layers/four-layers intent with v2 modules). reparent (not set_control) is used so the structural nesting + loop order is what's tested, not just data resolution.",
+  "steps": [
+    { "name": "add-layout",  "op": "add_module", "id": "layout-0", "type": "layout" },
+    { "name": "add-ripples", "op": "add_module", "id": "ripples-0", "type": "ripples",
+      "measure": true },
+    { "name": "nest-ripples","op": "reparent",   "id": "ripples-0", "parent_id": "layout-0" },
+    { "name": "add-lines",   "op": "add_module", "id": "lines-0",   "type": "lines",
+      "measure": true },
+    { "name": "nest-lines",  "op": "reparent",   "id": "lines-0",   "parent_id": "layout-0" },
+    { "name": "add-noise",   "op": "add_module", "id": "noise-0",   "type": "noise-2d",
+      "measure": true },
+    { "name": "nest-noise",  "op": "reparent",   "id": "noise-0",   "parent_id": "layout-0",
+      "measure": true,
+      "bounds": { "module_count": { "min": 4 } } }
+  ]
+}

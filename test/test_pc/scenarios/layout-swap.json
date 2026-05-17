@@ -1,0 +1,18 @@
+{
+  "name": "layout-swap",
+  "description": "One ripples effect re-nested across three layout kinds: Grid → Ring → Wheel. Exercises re-pointing the structural parent across distinct LayoutModule types — only authorable because ADR 0007 made the effect's generic `layout` input match by category (Ring/Wheel register as types ring-layout/wheel-layout but category()==layout). Each reparent triggers onUpdate(layout) → geometry re-resolve at the new layout's extent (mirrors v1 xmas-tree-3d intent: swap the layout, measure the projection cost).",
+  "steps": [
+    { "name": "add-grid",     "op": "add_module", "id": "grid-0",   "type": "layout" },
+    { "name": "add-ring",     "op": "add_module", "id": "ring-0",   "type": "ring-layout" },
+    { "name": "add-wheel",    "op": "add_module", "id": "wheel-0",  "type": "wheel-layout" },
+    { "name": "add-ripples",  "op": "add_module", "id": "ripples-0", "type": "ripples",
+      "measure": true },
+    { "name": "nest-on-grid", "op": "reparent",   "id": "ripples-0", "parent_id": "grid-0",
+      "measure": true },
+    { "name": "swap-to-ring", "op": "reparent",   "id": "ripples-0", "parent_id": "ring-0",
+      "measure": true },
+    { "name": "swap-to-wheel","op": "reparent",   "id": "ripples-0", "parent_id": "wheel-0",
+      "measure": true,
+      "bounds": { "module_count": { "min": 4 } } }
+  ]
+}

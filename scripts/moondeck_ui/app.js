@@ -230,12 +230,66 @@ const scanBtn        = document.getElementById('scanSubnetBtn');
 const scanSubnetLbl  = document.getElementById('scanSubnetLbl');
 const addDevBtn      = document.getElementById('addDeviceBtn');
 const newHostInput   = document.getElementById('newDeviceHost');
+const deviceSelect   = document.getElementById('deviceSelect');
+const createSetupBtn = document.getElementById('createSetupBtn');
 let uiState = null;
 
 function persistUiState() {
   return fetch('/ui-state', {method: 'POST', headers: {'Content-Type': 'application/json'},
                               body: JSON.stringify(uiState)});
 }
+
+// The shared device-target accessor. Live-tab device-targeted action cards
+// (Lights setup today; future cards reuse this) read the selected device
+// here instead of each adding a per-row button — same convention the ESP32
+// and Develop tabs use with selectedEnv()/selectedPort(). Per-row controls
+// stay restricted to managing that row (enable, metrics, open, remove).
+function getSelectedDevice() {
+  return (uiState?.devices || []).find(
+    d => `${d.host}:${d.port}` === deviceSelect.value) || null;
+}
+
+// Rebuild the selector options from the device list, restoring the persisted
+// selection if its host:port still exists (else first device). Disables the
+// selector + dependent action cards when there are no devices. Called at the
+// end of renderDevices(), which every list mutation already funnels through.
+function renderDeviceSelect() {
+  const devs = uiState.devices || [];
+  if (devs.length === 0) {
+    deviceSelect.innerHTML = '<option>(no devices)</option>';
+    deviceSelect.disabled = true;
+    createSetupBtn.disabled = true;
+    return;
+  }
+  const want = uiState.selected_device;
+  const keys = devs.map(d => `${d.host}:${d.port}`);
+  const sel = keys.includes(want) ? want : keys[0];
+  deviceSelect.innerHTML = devs.map(d => {
+    const k = `${d.host}:${d.port}`;
+    return `<option value="${esc(k)}"${k === sel ? ' selected' : ''}>`
+         + `${esc(d.name || '(unnamed)')} (${esc(k)})</option>`;
+  }).join('');
+  deviceSelect.disabled = false;
+  createSetupBtn.disabled = false;
+  if (uiState.selected_device !== sel) {
+    uiState.selected_device = sel;
+    persistUiState();
+  }
+}
+
+deviceSelect.onchange = () => {
+  uiState.selected_device = deviceSelect.value;
+  persistUiState();
+};
+createSetupBtn.onclick = () => createLightSetup();
+
+const lightsHelp = document.getElementById('lightsHelp');
+const LIGHTS_DOCS = `${DOCS_BASE}/developer-guide/deploy/#live-devices`;
+lightsHelp.href = LIGHTS_DOCS;
+lightsHelp.addEventListener('click', ev => {
+  ev.preventDefault();
+  showDocsUrl(LIGHTS_DOCS, 'Reference light setup');
+});
 
 function renderDevices() {
   deviceList.innerHTML = '';
@@ -245,17 +299,13 @@ function renderDevices() {
     empty.className = 'device-row'; empty.style.color = '#888';
     empty.textContent = '(no devices — click Discover or Add)';
     deviceList.appendChild(empty);
+    renderDeviceSelect();  // disables selector + dependent cards
     return;
   }
   uiState.devices.forEach((d, idx) => {
     const row = document.createElement('div'); row.className = 'device-row';
     const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!d.enabled;
     cb.onchange = () => { d.enabled = cb.checked; persistUiState(); };
-    // Caret: ▸ collapsed / ▾ expanded. Toggles inline metrics table below.
-    const caret = document.createElement('span'); caret.className = 'caret';
-    caret.textContent = d._expanded ? '▾' : '▸';
-    caret.title = 'Show module metrics (GET /api/modules every 2s)';
-    caret.onclick = () => toggleMetrics(d, caret);
     const name = document.createElement('span'); name.className = 'name'; name.textContent = d.name || '(unnamed)';
     name.style.cursor = 'pointer';
     name.title = `Click to open ${d.host}:${d.port}/ in the right panel` + (d.chip || d.env ? `\n${[d.chip, d.env].filter(Boolean).join(' / ')}` : '');
@@ -265,90 +315,77 @@ function renderDevices() {
     status.textContent = d.last_status || '';
     if (d.last_status === 'reachable') status.classList.add('ok');
     else if (d.last_status === 'unreachable') status.classList.add('fail');
-    const setup = document.createElement('button');
-    setup.className = 'rm'; setup.textContent = '+light';
-    setup.title = 'Create the reference light setup (layout → ripples → preview/artnet) on this device';
-    setup.onclick = () => createLightSetup(d, setup);
     const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×'; rm.title = 'Remove';
     rm.onclick = () => {
-      stopMetricsPoll(d);
+      // No per-row state to clean up; renderDeviceSelect() re-syncs the
+      // shared selector if the removed device was the selected one.
       uiState.devices.splice(idx, 1);
       persistUiState().then(renderDevices);
     };
-    row.append(caret, cb, name, host, status, setup, rm);
+    row.append(cb, name, host, status, rm);
     deviceList.appendChild(row);
-    // If this device was expanded before re-render (e.g. checkbox toggled
-    // somewhere else), recreate its metrics panel and resume polling.
-    if (d._expanded) mountMetricsPanel(d);
   });
+  // Every device-list mutation funnels through renderDevices(), so syncing
+  // the shared selector here covers add / discover / remove / refresh / load.
+  renderDeviceSelect();
 }
 
-// Inline-metrics state lives on the device object as `_expanded` (bool),
-// `_metricsEl` (the DOM panel), and `_metricsHandle` (the setInterval id).
-// Kept off uiState.devices' persisted shape — these are runtime-only.
-function toggleMetrics(d, caret) {
-  if (d._expanded) {
-    stopMetricsPoll(d);
-    d._expanded = false;
-    caret.textContent = '▸';
-  } else {
-    d._expanded = true;
-    caret.textContent = '▾';
-    mountMetricsPanel(d);
-  }
-}
-
-function stopMetricsPoll(d) {
-  if (d._metricsHandle) { clearInterval(d._metricsHandle); d._metricsHandle = null; }
-  if (d._metricsEl) { d._metricsEl.remove(); d._metricsEl = null; }
-}
-
-function mountMetricsPanel(d) {
-  // Locate the parent row so the panel inserts directly under it.
-  const rows = Array.from(deviceList.querySelectorAll('.device-row'));
-  const row = rows.find(r => r.querySelector('.host')?.textContent === `${d.host}:${d.port}`);
-  if (!row) return;
-  const panel = document.createElement('div'); panel.className = 'device-metrics';
-  panel.innerHTML = '<span class="meta">loading…</span>';
-  row.after(panel);
-  d._metricsEl = panel;
-  refreshMetrics(d);
-  d._metricsHandle = setInterval(() => refreshMetrics(d), 2000);
-}
-
-async function refreshMetrics(d) {
-  if (!d._metricsEl) return;
+// Module-metrics card — a standard run-once card like every other card.
+// Reads the shared device selector, fetches /device-modules once per click,
+// prints the table to the output pane. No timer, no live panel: press Run
+// again to refresh. (`metricsHelp` ? + `metricsBtn` Run wired below.)
+const metricsBtn  = document.getElementById('metricsBtn');
+const metricsHelp = document.getElementById('metricsHelp');
+const METRICS_DOCS = `${DOCS_BASE}/developer-guide/deploy/#live-devices`;
+metricsHelp.href = METRICS_DOCS;
+metricsHelp.addEventListener('click', ev => {
+  ev.preventDefault();
+  showDocsUrl(METRICS_DOCS, 'Module metrics');
+});
+metricsBtn.addEventListener('click', async () => {
+  const d = getSelectedDevice();
+  if (!d) { showOutput(); append('<span class="err">no device selected</span>\n'); return; }
+  metricsBtn.disabled = true; metricsBtn.textContent = '…';
+  showOutput();
+  append(`<span class="meta">$ module metrics — ${esc(d.name || d.host)}\n</span>`);
   try {
     const r = await fetch('/device-modules', {method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({host: d.host, port: d.port})});
-    const j = await r.json();
-    const mods = j.modules || [];
-    if (!d._metricsEl) return;  // user may have collapsed between request + reply
-    if (mods.length === 0) {
-      d._metricsEl.innerHTML = '<span class="err">no response from /api/modules</span>';
-      return;
-    }
+    const mods = (await r.json()).modules || [];
+    if (mods.length === 0) { append('<span class="err">no response from /api/modules</span>\n'); return; }
     const fmtKB = b => (b/1024).toFixed(b < 1024 ? 2 : 1);
-    let html = '<table><thead><tr><th>module</th><th>type</th><th class="num">core</th><th class="num">ms/tick</th><th class="num">heap</th><th class="num">psram</th><th class="num">class</th></tr></thead><tbody>';
+    // Plain monospace text table into the #output <pre>, exactly like every
+    // other card's output — no HTML table, no dedicated CSS.
+    const pad = (s, n) => String(s).padEnd(n);
+    const padL = (s, n) => String(s).padStart(n);
+    let txt = pad('module', 16) + pad('type', 14) + padL('core', 5)
+            + padL('ms/tick', 9) + padL('heap', 10) + padL('psram', 10)
+            + padL('class', 9) + '\n';
     for (const m of mods) {
-      const ms = (m.ms_per_tick ?? 0).toFixed(2);
-      html += `<tr><td>${esc(m.id || '')}</td><td>${esc(m.type || '')}</td>`
-            + `<td class="num">${m.core ?? 0}</td>`
-            + `<td class="num">${ms}</td>`
-            + `<td class="num">${fmtKB(m.heap_size_bytes ?? 0)} KB</td>`
-            + `<td class="num">${fmtKB(m.psram_size_bytes ?? 0)} KB</td>`
-            + `<td class="num">${m.class_size_bytes ?? 0} B</td></tr>`;
+      txt += pad(m.id || '', 16) + pad(m.type || '', 14)
+           + padL(m.core ?? 0, 5)
+           + padL((m.ms_per_tick ?? 0).toFixed(2), 9)
+           + padL(fmtKB(m.heap_size_bytes ?? 0) + 'K', 10)
+           + padL(fmtKB(m.psram_size_bytes ?? 0) + 'K', 10)
+           + padL((m.class_size_bytes ?? 0) + 'B', 9) + '\n';
     }
-    html += '</tbody></table>';
-    html += `<div class="meta">${mods.length} module(s) · refresh 2s · ${new Date().toLocaleTimeString()}</div>`;
-    d._metricsEl.innerHTML = html;
+    append(esc(txt));
+    append(`<span class="meta">${mods.length} module(s) · ${new Date().toLocaleTimeString()}</span>\n`);
   } catch (e) {
-    if (d._metricsEl) d._metricsEl.innerHTML = `<span class="err">fetch failed: ${esc(String(e))}</span>`;
+    append(`<span class="err">fetch failed: ${esc(String(e))}</span>\n`);
+  } finally {
+    metricsBtn.disabled = false; metricsBtn.textContent = 'Run';
   }
-}
+});
 
-async function createLightSetup(d, btn) {
+// Acts on the shared device selector (getSelectedDevice), not a per-row
+// button. Replays the reference-setup scenario via /device-setup →
+// scenario.py (wipe-then-rebuild) — the recovery path after a crash.
+async function createLightSetup() {
+  const d = getSelectedDevice();
+  if (!d) return;
+  const btn = createSetupBtn;
   const prev = btn.textContent;
   btn.disabled = true; btn.textContent = '…';
   try {
@@ -359,8 +396,6 @@ async function createLightSetup(d, btn) {
     const summary = (j.log || []).join('\n');
     if (j.ok) {
       btn.textContent = '✓';
-      // If the metrics panel is open, refresh it so the new tree shows.
-      if (d._expanded) refreshMetrics(d);
     } else {
       btn.textContent = '✗';
       alert('Light setup failed on ' + d.host + ':\n\n' + summary);

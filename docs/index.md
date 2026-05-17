@@ -15,6 +15,6 @@ The entry domain is **light control**: LEDs over GPIO or network. Effects, layer
 Four top-level sections; each has an Overview page that lists what's under it.
 
 - **[User Guide](user-guide/index.md)** — per-module reference (controls + lifecycle overrides), grouped by category (system / network / lights).
-- **[Architecture](architecture/index.md)** — the two contracts: [System](architecture/system.md) (the four core pieces) and [Process](architecture/process.md) (minimalism, guardrails, anti-drift, port-and-minimize).
+- **[Architecture](architecture/index.md)** — the three contracts: [System](architecture/system.md) (the four core pieces), [Process](architecture/process.md) (minimalism, guardrails, anti-drift, port-and-minimize), and [Product](architecture/product.md) (binding capacity/throughput floors + the desktop-first UX standard).
 - **[Developer Guide](developer-guide/index.md)** — how to build, flash, and test ([Deploy](developer-guide/deploy.md)), plus the [ADRs](developer-guide/adr/0001-vendor-cpp-httplib.md) that constrain it.
 - **[Development](development/index.md)** — what's shipped ([Release 1](development/release-01.md)), what's next + deferred ([Backlog](development/backlog.md)).

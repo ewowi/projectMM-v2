@@ -1,8 +1,16 @@
 #include "ModuleManager.h"
 
+#include <algorithm>
 #include <cstdio>
 
 namespace pmm {
+
+// Depth-first collect: move `node` + its whole subtree out of `src` into
+// `out` (matched slots left null). Defined at file scope below; forward-
+// declared so remove() (above its definition) can reuse it.
+static void dfs_(MoonModule* node,
+                 std::vector<std::unique_ptr<MoonModule>>& src,
+                 std::vector<std::unique_ptr<MoonModule>>& out);
 
 MoonModule* ModuleManager::add(const char* type, const char* id) {
   std::lock_guard<std::recursive_mutex> lk(mu_);
@@ -31,12 +39,27 @@ MoonModule* ModuleManager::add(const char* type, const char* id) {
 bool ModuleManager::remove(const char* id) {
   std::lock_guard<std::recursive_mutex> lk(mu_);
   for (auto it = modules_.begin(); it != modules_.end(); ++it) {
-    if ((*it)->id_ == id) {
-      std::printf("[mm] remove: id=%s\n", id);
-      (*it)->runTeardown();  // dispatch wrapper: recurses into children first
-      modules_.erase(it);
-      return true;
-    }
+    if ((*it)->id_ != id) continue;
+    MoonModule* m = it->get();
+    std::printf("[mm] remove: id=%s\n", id);
+    // Detach from the parent FIRST. remove() previously freed the module
+    // but left the parent's children_[] holding a dangling pointer — the
+    // scheduler's runLoop() child-recursion (MoonModule.cpp) then walked it
+    // → use-after-free. reparent() already does exactly this detach before
+    // any structural change; remove() must honor the same parent_/children_
+    // invariant the rest of ModuleManager maintains.
+    if (m->parent_) m->parent_->removeChild(m);
+    // Deleting a module deletes its nested subtree (system.md parent-input
+    // model: a "group" is a module with children; dropping it drops its
+    // contents). runTeardown() on the root already recurses teardown()
+    // children-first; dfs_ then moves the whole subtree out of modules_.
+    m->runTeardown();
+    std::vector<std::unique_ptr<MoonModule>> dead;
+    dfs_(m, modules_, dead);  // moves root + descendants out, nulling slots
+    modules_.erase(std::remove(modules_.begin(), modules_.end(), nullptr),
+                   modules_.end());
+    // `dead` frees the subtree's unique_ptrs here, on scope exit.
+    return true;
   }
   std::printf("[mm] remove: id=%s not found\n", id);
   return false;
@@ -68,24 +91,27 @@ void ModuleManager::sort_depth_first_() {
 }
 
 // Index of the input on `child` that can be the parent link. An input
-// matches the parent if its key == parent's type (e.g. effect's "layout"
-// input ↔ "layout"-type parent), OR its key is the conventional wildcard
-// "source" (a type-agnostic "reads from whatever produces data" input —
-// preview/artnet use it). A precise name==type match wins over a generic
-// "source" if the child has both. -1 if no input matches — the signal to
-// reject the reparent (a module nests only under a parent it has an input
-// for). See architecture/system.md "Inputs, and the parent input".
+// matches the parent if its key == parent->type() (exact — e.g. effect's
+// "layout" input ↔ "layout"-type GridLayoutModule), OR == parent->category()
+// (ADR 0007 — so a generic "layout" input also nests under Ring/Wheel, whose
+// types are "ring-layout"/"wheel-layout" but category() is "layout"; this is
+// the same rule PixelEffectBase's geometry resolution already uses, so
+// structural nesting no longer contradicts data resolution), OR == the
+// conventional "source" wildcard (preview/artnet — type-agnostic reader).
+// Precedence: exact type > category > source. -1 if none → reject reparent.
+// See architecture/system.md "Inputs, and the parent input".
 int8_t ModuleManager::parent_input_idx_(const MoonModule* child,
-                                         const char* parent_type) {
-  if (!parent_type) return -1;
-  int8_t source_idx = -1;
+                                         const MoonModule* parent) {
+  if (!parent) return -1;
+  int8_t cat_idx = -1, source_idx = -1;
   for (uint8_t i = 0; i < child->controlCount_; ++i) {
     const ControlDescriptor& d = child->controls_[i];
     if (d.type != CtrlType::String && d.type != CtrlType::EditStr) continue;
-    if (std::strcmp(d.key, parent_type) == 0) return (int8_t)i;  // exact wins
+    if (std::strcmp(d.key, parent->type()) == 0) return (int8_t)i;  // exact type wins
+    if (cat_idx < 0 && std::strcmp(d.key, parent->category()) == 0) cat_idx = (int8_t)i;
     if (source_idx < 0 && std::strcmp(d.key, "source") == 0) source_idx = (int8_t)i;
   }
-  return source_idx;  // wildcard fallback, or -1 if none
+  return cat_idx >= 0 ? cat_idx : source_idx;  // category, then wildcard, else -1
 }
 
 // -- Public API --------------------------------------------------------------
@@ -167,9 +193,10 @@ bool ModuleManager::reparent(const std::string& id,
     return false;
   }
 
-  // The parent IS an input: find the child's input named for the parent's
-  // type. No such input → the drop is rejected (no universal parent).
-  int8_t idx = parent_input_idx_(m, new_parent->type());
+  // The parent IS an input: find the child's input that accepts this parent
+  // (by type, category, or the "source" wildcard — ADR 0007). No such input
+  // → the drop is rejected (no universal parent).
+  int8_t idx = parent_input_idx_(m, new_parent);
   if (idx < 0) {
     std::printf("[mm] reparent: %s has no input named '%s' — drop rejected\n",
                 id.c_str(), new_parent->type());

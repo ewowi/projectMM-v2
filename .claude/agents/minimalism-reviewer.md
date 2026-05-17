@@ -40,7 +40,12 @@ Judge it against these questions — be concrete, cite files/lines:
 3. **LOC budgets** (`scripts/checks/check_loc.py`): if a budget was bumped,
    is there a justification comment and is the bump proportionate to genuine
    new behavior (not cosmetic line growth)? A bump to dodge real work is a
-   finding.
+   finding. **Perf/capacity budgets** (`docs/architecture/product.md`): does
+   the change regress a **binding** capacity floor or throughput target, or
+   grow per-module footprint against the ≥4096-LED no-PSRAM floor? A binding
+   regression without a paired ADR is a finding — the same bar as an
+   unjustified LOC-budget bump. An **aspirational** miss (e.g. the 12288
+   no-PSRAM stretch) is informational only, never a finding.
 4. **Architecture fit:** does it match `system.md`? A model/boundary change
    needs a paired ADR *or* a deliberate system.md edit — never silent. Adding
    networking/system-info to `Pal`, `strcmp` on type names in core, a 4th
@@ -59,6 +64,26 @@ Judge it against these questions — be concrete, cite files/lines:
    refactors, speculative abstractions, "while I was here" edits, designing
    for hypothetical future requirements — call them out; the rule prefers
    three similar lines over a premature abstraction.
+9. **Simpler or more complex?** Independently of correctness: does this
+   change make the system *simpler* or *more complex*? Measure it — concepts
+   and state added vs removed, core LOC delta. A correct change that adds a
+   new mechanism/state-machine to `src/core/` (especially in Release 1,
+   whose purpose is a minimal baseline) is a finding even if every line is
+   justified — say so plainly and ask whether a lower-complexity fix exists.
+   "It's a necessary correctness fix" is the exact rationalisation that
+   grows a core; do not let it pass unchallenged.
+10. **Established pattern, not exotic.** Is this a design a competent new
+    contributor would *recognise* (a known concurrency/lifecycle/data-flow
+    pattern, named as such), or a bespoke mechanism invented here? Name the
+    closest standard pattern and judge whether the diff matches it or
+    diverges. Exotic-but-correct is still a finding: the system must be
+    understandable, not just sound. If the diff invents a mechanism where a
+    conventional one would do, say which conventional one.
+11. **ADR proliferation.** Does this diff add an ADR? In a release meant to
+    *establish* the architecture, each new ADR is itself an anti-minimalism
+    signal — a baseline that needs many amendments is not solid. Is this ADR
+    genuinely a new durable decision, or churn from a feature exposing a
+    latent bug? Flag a cluster of ADRs landing together.
 
 Do NOT edit, stage, or commit anything. Do NOT run the guardrail scripts
 (that is guardrail-runner's job — say so if checks are needed).
@@ -70,7 +95,13 @@ MINIMALISM REVIEW — <APPROVE | APPROVE WITH NITS | CHANGES REQUESTED>
 
 Pays for itself:   <yes / no — what it adds vs removes>
 Removed/simplified: <what, or "nothing — justified? <verdict>">
-Architecture fit:  <fits system.md / needs ADR / silent drift — be specific>
+Simpler or complex: <SIMPLER / neutral / MORE COMPLEX — concept + core LOC
+                     delta; if more complex, is a lower-complexity fix
+                     plausible?>
+Established pattern: <recognised pattern (name it) / exotic — would a new
+                     contributor expect this?>
+Architecture fit:  <fits system.md / needs ADR / silent drift; ADR count
+                     this diff — churn or durable?>
 Hot path:          <clean / violation at file:line>
 Budgets & PATCHes: <ok / finding>
 Scope:             <focused / creep at file:line>

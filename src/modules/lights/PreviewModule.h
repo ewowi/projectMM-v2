@@ -63,6 +63,8 @@ class PreviewModule : public MoonModule {
 
   void loop20ms() override {
     if (!ws_) resolve_ws_();
+    // ADR 0005: producer gone — drop the cached pointer before it is freed.
+    if (buf_ && reader_.dead()) { buf_ = nullptr; reader_.detach(); }
     if (!buf_) resolve_buf_();
     if (!buf_ || !ws_ || !frame_buf_) return;
     if (!ws_->hasClients()) return;

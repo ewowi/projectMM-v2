@@ -19,7 +19,8 @@ Pre-commit and CI invoke scripts directly (see .githooks/pre-commit and
 
 # MoonDeck is stdlib-only, zero-dependency, bound to 127.0.0.1, no build
 # step. The UI is three real static files (scripts/moondeck_ui/) and the
-# device REST orchestration lives in scripts/device/light_setup.py — this
+# reference pipeline is the reference-setup scenario replayed by
+# scripts/device/scenario.py (one definition, in-process + REST) — this
 # file is the HTTP server + card catalogue + agent handlers + process
 # registry only. (The former "moondeck-monolith" PATCH is resolved: the
 # inline HTML blob and orchestration logic that justified it were split out.)
@@ -274,6 +275,9 @@ DEFAULT_UI_STATE = {
     "version":     1,
     "scan_subnet": "192.168.1.0/24",
     "scan_port":   80,
+    # Live-tab shared device-target selector (host:port). Empty default → the
+    # UI falls back to the first device on first render and persists it.
+    "selected_device": "",
     "devices": [
         {"name": "PC (local Run card)", "host": "127.0.0.1", "port": 8080,
          "enabled": True, "discovered": "default"},
@@ -509,12 +513,16 @@ class Handler(BaseHTTPRequestHandler):
         if not host:
             self.send_error(400, "host required")
             return
-        # Shell out to the standalone script (same pattern as every card);
-        # keeps the REST-orchestration logic out of the monolith.
+        # The reference pipeline is now ONE definition: the reference-setup
+        # scenario, replayed by scenario.py (same runner the in-process
+        # test_scenarios.cpp uses). No bespoke light_setup.py — the card and
+        # the scenario are the same thing. scenario.py wipes non-head modules
+        # then rebuilds (deterministic post-crash recovery).
         try:
             p = subprocess.run(
-                [sys.executable, str(resolve_script("light_setup.py")),
-                 host, str(port)],
+                [sys.executable, str(resolve_script("scenario.py")),
+                 "--host", host, "--port", str(port),
+                 "--scenario", "reference-setup"],
                 capture_output=True, text=True, timeout=30)
             log = (p.stdout + p.stderr).strip().splitlines()
             self._send_json({"ok": p.returncode == 0, "log": log})

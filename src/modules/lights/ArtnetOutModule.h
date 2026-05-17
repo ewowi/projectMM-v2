@@ -55,6 +55,9 @@ class ArtnetOutModule : public MoonModule {
   }
 
   void loop20ms() override {
+    // ADR 0005: producer torn down — drop the cached pointer before it is
+    // freed and re-resolve (finds nothing until a producer reclaims the id).
+    if (buf_ && reader_.dead()) { buf_ = nullptr; reader_.detach(); }
     if (!buf_) resolve_buf_();
     if (!buf_) return;
 

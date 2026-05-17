@@ -6,6 +6,13 @@
 #include "modules/lights/GridLayoutModule.h"
 #include "modules/lights/PreviewModule.h"
 #include "modules/lights/RipplesEffect.h"
+#include "modules/lights/effects/DistortionWavesEffect.h"
+#include "modules/lights/effects/FlowFluidEffect.h"
+#include "modules/lights/effects/LinesEffect.h"
+#include "modules/lights/effects/Noise2DEffect.h"
+#include "modules/lights/effects/SineEffect.h"
+#include "modules/lights/layouts/RingLayoutModule.h"
+#include "modules/lights/layouts/WheelLayoutModule.h"
 #include "modules/network/HttpServerModule.h"
 #include "modules/network/WebSocketModule.h"
 #include "modules/system/Logger.h"
@@ -40,7 +47,14 @@ void setup() {
   mm.register_type<pmm::WebSocketModule>("ws");
   mm.register_type<pmm::StateStoreModule>("state-store");
   mm.register_type<pmm::GridLayoutModule>("layout");
+  mm.register_type<pmm::RingLayoutModule>("ring-layout");
+  mm.register_type<pmm::WheelLayoutModule>("wheel-layout");
   mm.register_type<pmm::RipplesEffect>("ripples");
+  mm.register_type<pmm::DistortionWavesEffect>("distortion-waves");
+  mm.register_type<pmm::FlowFluidEffect>("flow-fluid");
+  mm.register_type<pmm::LinesEffect>("lines");
+  mm.register_type<pmm::Noise2DEffect>("noise-2d");
+  mm.register_type<pmm::SineEffect>("sine");
   mm.register_type<pmm::PreviewModule>("preview");
   mm.register_type<pmm::ArtnetOutModule>("artnet-out");
 

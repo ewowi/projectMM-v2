@@ -1,0 +1,18 @@
+{
+  "name": "resize-32",
+  "description": "Reference pipeline then resize the grid 16→32. Measures pixel-buffer reallocation cost and the module tree's heap delta when quadrupling pixel count (mirrors v1 base-pipeline-32x32 intent with v2 modules).",
+  "steps": [
+    { "name": "add-layout",   "op": "add_module",  "id": "layout-0", "type": "layout" },
+    { "name": "add-ripples",  "op": "add_module",  "id": "ripples-0", "type": "ripples" },
+    { "name": "add-preview",  "op": "add_module",  "id": "preview-0", "type": "preview" },
+    { "name": "add-artnet",   "op": "add_module",  "id": "artnet-0",  "type": "artnet-out" },
+    { "name": "nest-ripples", "op": "reparent",    "id": "ripples-0", "parent_id": "layout-0" },
+    { "name": "nest-preview", "op": "reparent",    "id": "preview-0", "parent_id": "ripples-0" },
+    { "name": "nest-artnet",  "op": "reparent",    "id": "artnet-0",  "parent_id": "ripples-0",
+      "measure": true,
+      "bounds": { "module_count": { "min": 4 } } },
+    { "name": "resize-32w",   "op": "set_control", "id": "layout-0",  "key": "width",  "value": 32 },
+    { "name": "resize-32h",   "op": "set_control", "id": "layout-0",  "key": "height", "value": 32,
+      "measure": true }
+  ]
+}

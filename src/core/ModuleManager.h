@@ -73,9 +73,13 @@ class ModuleManager {
 
  private:
   void sort_depth_first_();
-  // Index into child->controls_ of the String/EditStr input whose key equals
-  // parent_type, or -1 if the child has no such input.
-  static int8_t parent_input_idx_(const MoonModule* child, const char* parent_type);
+  // Index into child->controls_ of the String/EditStr input that accepts
+  // `parent`: key == parent->type() (exact) OR parent->category() OR the
+  // "source" wildcard. -1 if none. Precedence: exact type > category >
+  // source. Category match (ADR 0007) lets a generic `layout` input nest
+  // under any LayoutModule (Grid/Ring/Wheel) — the same rule the data-flow
+  // resolution already uses, so structural nesting no longer contradicts it.
+  static int8_t parent_input_idx_(const MoonModule* child, const MoonModule* parent);
 
   mutable std::recursive_mutex mu_;
   std::unordered_map<std::string, Factory> factories_;

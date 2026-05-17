@@ -41,15 +41,6 @@
   .device-row .status.fail { color: #ef9a9a; }
   .device-row .rm { background: transparent; border: none; color: #888; cursor: pointer; padding: 0 6px; min-width: auto; font-size: 1.1em; }
   .device-row .rm:hover { color: #ef9a9a; }
-  .device-row .caret { width: 14px; color: #888; cursor: pointer; user-select: none; text-align: center; }
-  .device-row .caret:hover { color: #ddd; }
-  .device-metrics { background: #232328; border: 1px solid #3a3a40; border-radius: 6px; padding: 6px 8px; margin: -4px 0 6px 24px; font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 0.8em; }
-  .device-metrics table { width: 100%; border-collapse: collapse; }
-  .device-metrics th { text-align: left; color: #888; font-weight: normal; padding: 2px 8px 2px 0; border-bottom: 1px solid #3a3a40; }
-  .device-metrics td { padding: 2px 8px 2px 0; color: #ccc; }
-  .device-metrics td.num { text-align: right; }
-  .device-metrics .err { color: #ef9a9a; }
-  .device-metrics .meta { color: #888; font-size: 0.85em; padding-top: 4px; }
   #right { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
   #viewBar { display: flex; align-items: center; gap: 12px; font-size: 0.85em; color: #888; padding: 2px 4px; min-height: 22px; }
   #viewBar .mode { font-weight: 500; color: #ccc; }

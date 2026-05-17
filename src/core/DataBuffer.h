@@ -18,6 +18,15 @@
 //   try_acquire_read() — memory_order_acquire  (consumer)
 //   32-bit atomics are single-instruction on Xtensa LX6/LX7.
 //
+// Teardown liveness (ADR 0005): a producer removed while a consumer still
+// holds a cached DataBuffer* would otherwise UAF on the next tick. Before a
+// producer frees this buffer it calls invalidate(), which stores kDead into
+// the same published_ atomic try_acquire_read() already loads. A reader that
+// sees kDead returns nullptr (graceful skipped frame) instead of touching
+// freed slot_. No new atomic, no new hot-path load — the sentinel rides the
+// revision word. Producer ordering: invalidate() + DataRegistry::undeclare()
+// MUST run in teardown() before the buffer is freed. See ADR 0005.
+//
 // T must be trivially copyable (RGB, uint8_t, etc.).
 //
 
@@ -68,7 +77,17 @@ class DataBuffer {
     return published_.load(std::memory_order_acquire);
   }
 
-  static constexpr uint32_t kNone = (uint32_t)-1;
+  // ADR 0005: mark this buffer dead before the producer frees it. Readers
+  // observe kDead via the published_ load they already do and return no
+  // frame. Idempotent; call from the producer's teardown() before delete,
+  // after DataRegistry::undeclare(). publish() is never called again after
+  // this (the producer is being torn down).
+  void invalidate() {
+    published_.store(kDead, std::memory_order_release);
+  }
+
+  static constexpr uint32_t kNone = (uint32_t)-1;       // no frame published yet
+  static constexpr uint32_t kDead = (uint32_t)-2;       // producer torn down — do not read
 
  private:
   friend class DataBufferReader<T>;
@@ -110,9 +129,17 @@ class DataBufferReader {
   const T* try_acquire_read() {
     if (!buf_) return nullptr;
     const uint32_t pub = buf_->published_.load(std::memory_order_acquire);
-    if (pub == DataBuffer<T>::kNone) return nullptr;
+    // kNone: nothing published yet. kDead (ADR 0005): producer torn down —
+    // the DataBuffer/slot_ may be freed imminently; never dereference it.
+    if (pub == DataBuffer<T>::kNone || pub == DataBuffer<T>::kDead) return nullptr;
     if (pub == consumed_.load(std::memory_order_relaxed)) return nullptr;
     return buf_->slot_;
+  }
+
+  // True once the producer has invalidate()d the buffer (ADR 0005). Consumers
+  // poll this on their non-hot cadence to detach() and re-resolve.
+  bool dead() const {
+    return buf_ && buf_->published_.load(std::memory_order_acquire) == DataBuffer<T>::kDead;
   }
 
   void release_read() {
