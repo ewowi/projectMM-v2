@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MoonDeck — projectMM v2</title>
+<link rel="icon" type="image/png" href="/assets/moonlight-logo.png">
+<link rel="stylesheet" href="/ui/style.css">
+</head>
+<body>
+<header>
+  <img src="/assets/moonlight-logo.png" alt="" class="logo">
+  <h1>MoonDeck <span style="color:#888;font-weight:400;font-size:0.85em;">— projectMM v2</span></h1>
+  <div class="tabs">
+    <button class="tab" data-tab="pc">PC</button>
+    <button class="tab" data-tab="esp32">ESP32</button>
+    <button class="tab" data-tab="live">Live</button>
+    <button class="tab" data-tab="dev">Develop</button>
+  </div>
+</header>
+<main>
+  <div id="panes">
+    <div class="pane" data-tab="pc"></div>
+    <div class="pane" data-tab="esp32">
+      <div class="selectors">
+        <label>Env <select id="envSelect"></select></label>
+        <label>Port <select id="portSelect"></select></label>
+        <button id="refreshPorts" title="Rescan USB serial devices">↻</button>
+      </div>
+    </div>
+    <div class="pane" data-tab="dev">
+      <div class="selectors">
+        <label>Release <select id="releaseSelect"></select></label>
+        <label>Sprint <select id="sprintSelect"></select></label>
+        <button id="openDocsBtn" title="Open the selected sprint's section in the right panel">Documentation</button>
+      </div>
+      <div class="group" id="devTasksGroup">
+        <h2>Sprint authoring</h2>
+      </div>
+    </div>
+    <div class="pane" data-tab="live">
+      <div class="group" id="devicesGroup">
+        <h2>Devices</h2>
+        <div id="deviceList"></div>
+        <div class="card device-controls">
+          <span class="label" id="scanLabel">Scan <code id="scanSubnetLbl">…</code></span>
+          <button id="refreshDevicesBtn" title="Re-probe each known device's /api/system">Refresh</button>
+          <button id="scanSubnetBtn" title="Sweep the subnet for new projectMM v2 devices">Discover</button>
+        </div>
+        <div class="card device-add">
+          <input type="text" id="newDeviceHost" placeholder="host:port (e.g. 192.168.1.156:80)" style="flex:1;background:#1e1e22;color:#e0e0e0;border:1px solid #555;border-radius:4px;padding:3px 6px;font:inherit;font-size:0.9em;">
+          <button id="addDeviceBtn">Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="right">
+    <div id="viewBar">
+      <span class="mode" id="viewMode">Output</span>
+      <span class="url" id="viewUrl"></span>
+      <button class="back hidden" id="viewBack" title="Return to script output">← Output</button>
+    </div>
+    <pre id="output"><span class="meta">Click Run on any script, or click a device name in the Live tab to load its UI here.</span></pre>
+    <iframe id="deviceFrame" class="hidden" src="about:blank"></iframe>
+    <div id="agentBar">
+      <button id="analyzeBtn" title="Send the current log to Claude Code for a verdict">Analyze (by agent)</button>
+      <button id="fixBtn" class="hidden" title="Ask Claude Code to fix the issue it found">Fix</button>
+      <input type="text" id="askInput" placeholder="Ask the agent about this log… (Enter to send)" title="Free-form question to Claude Code, with the current log as context">
+      <button id="askBtn" title="Send your question + the current log to Claude Code">Ask</button>
+    </div>
+  </div>
+</main>
+<!--__MOONDECK_BOOTSTRAP__-->
+<script src="/ui/app.js"></script>
+</body>
+</html>

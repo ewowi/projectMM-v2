@@ -17,11 +17,12 @@ docs pages. Stdlib only, bound to 127.0.0.1.
 Pre-commit and CI invoke scripts directly (see .githooks/pre-commit and
 .github/workflows/ci.yml). MoonDeck is for interactive developer use only.
 
-# PATCH: moondeck-monolith — HTTP server, HTML/CSS/JS, agent prompts, device
-# discovery, and process management all live in one file for stdlib-only,
-# zero-dependency deployment. Remove when the file exceeds its check_loc.py
-# budget and a split pays for itself (e.g. separate moondeck_ui.py for the
-# inline HTML blob, or a templated file served from disk).
+# MoonDeck is stdlib-only, zero-dependency, bound to 127.0.0.1, no build
+# step. The UI is three real static files (scripts/moondeck_ui/) and the
+# device REST orchestration lives in scripts/device/light_setup.py — this
+# file is the HTTP server + card catalogue + agent handlers + process
+# registry only. (The former "moondeck-monolith" PATCH is resolved: the
+# inline HTML blob and orchestration logic that justified it were split out.)
 """
 import argparse
 import json
@@ -34,8 +35,24 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
-
 ROOT = Path(__file__).resolve().parent.parent
+SCRIPTS_DIR = ROOT / "scripts"
+# The MoonDeck UI is three real static files in scripts/moondeck_ui/.
+# index.html is served at / with a bootstrap <script> injected; style.css
+# and app.js are served verbatim from the sandboxed /ui/ route.
+UI_DIR = SCRIPTS_DIR / "moondeck_ui"
+
+
+def resolve_script(name):
+    """Map a bare script filename to its full path under scripts/<subdir>/.
+
+    Scripts live in scripts/{checks,build,device}/. Card specs carry bare
+    filenames; this is the single place the subfolder layout is known."""
+    for sub in ("checks", "build", "device"):
+        p = SCRIPTS_DIR / sub / name
+        if p.exists():
+            return p
+    return SCRIPTS_DIR / name  # moondeck.py itself
 
 # Card catalogue. Each card declares its `tab` (pc / esp32 / live) and `group`
 # within that tab. Cards on the esp32 tab opt into the tab-scoped env selector
@@ -353,798 +370,6 @@ _running = {}
 _lock = threading.Lock()
 
 
-INDEX_HTML = r"""<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>MoonDeck — projectMM v2</title>
-<link rel="icon" type="image/png" href="/assets/moonlight-logo.png">
-<style>
-  body { font-family: system-ui, sans-serif; margin: 0; background: #1e1e22; color: #e0e0e0; }
-  header { background: #2a2a30; padding: 14px 24px; border-bottom: 1px solid #444; display: flex; align-items: center; gap: 18px; position: sticky; top: 0; z-index: 10; }
-  header .logo { width: 28px; height: 28px; flex-shrink: 0; display: block; }
-  header h1 { margin: 0; font-size: 1.1em; font-weight: 500; }
-  .tabs { display: flex; gap: 4px; }
-  .tabs .tab { background: transparent; color: #aaa; border: 1px solid #444; border-radius: 4px; padding: 4px 14px; cursor: pointer; font: inherit; font-size: 0.9em; }
-  .tabs .tab:hover { color: #e0e0e0; background: #353540; }
-  .tabs .tab.active { background: #3a3a55; color: #e0e0e0; border-color: #5a5a7a; }
-  main { padding: 20px 24px; display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start; }
-  .selectors { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: center; background: #232328; border: 1px solid #3a3a40; border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; font-size: 0.85em; color: #aaa; }
-  .selectors label { display: flex; align-items: center; gap: 6px; }
-  .selectors select { background: #1e1e22; color: #e0e0e0; border: 1px solid #555; border-radius: 4px; padding: 3px 6px; font: inherit; font-size: 0.9em; min-width: 200px; }
-  .selectors button { padding: 3px 8px; }
-  .pane { display: none; }
-  .pane.active { display: block; }
-  .group { margin-bottom: 18px; }
-  .group h2 { font-size: 0.75em; letter-spacing: 0.08em; text-transform: uppercase; color: #888; margin: 0 0 6px 0; }
-  .card { background: #2a2a30; border: 1px solid #3a3a40; border-radius: 6px; padding: 10px 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 12px; }
-  .card .label { flex: 1; font-size: 0.95em; }
-  .card .url { font-size: 0.78em; }
-  .card .url a { color: #80cbc4; text-decoration: none; }
-  .card .url a:hover { text-decoration: underline; }
-  .card .help { color: #888; text-decoration: none; font-size: 0.85em; padding: 0 4px; }
-  .card .help:hover { color: #ccc; }
-  .card .dot { width: 10px; height: 10px; border-radius: 50%; background: #555; flex-shrink: 0; }
-  .card.ok .dot { background: #4caf50; }
-  .card.fail .dot { background: #f44336; }
-  .card.running .dot { background: #ffa726; animation: pulse 1s ease-in-out infinite; }
-  @keyframes pulse { 50% { opacity: 0.35; } }
-  button { background: #3a3a42; color: #e0e0e0; border: 1px solid #555; border-radius: 4px; padding: 4px 12px; cursor: pointer; font: inherit; font-size: 0.85em; min-width: 56px; }
-  button:hover:not(:disabled) { background: #4a4a52; }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
-  button.stop { background: #5a3636; border-color: #7a4040; }
-  button.stop:hover:not(:disabled) { background: #6a4040; }
-  .device-row { background: #2a2a30; border: 1px solid #3a3a40; border-radius: 6px; padding: 8px 10px; margin-bottom: 4px; display: flex; align-items: center; gap: 10px; font-size: 0.88em; }
-  .device-row input[type=checkbox] { transform: scale(1.1); accent-color: #80cbc4; }
-  .device-row .name { flex: 1; font-weight: 500; }
-  .device-row .host { color: #999; font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 0.85em; }
-  .device-row .status { color: #888; font-size: 0.8em; min-width: 90px; text-align: right; }
-  .device-row .status.ok   { color: #a5d6a7; }
-  .device-row .status.fail { color: #ef9a9a; }
-  .device-row .rm { background: transparent; border: none; color: #888; cursor: pointer; padding: 0 6px; min-width: auto; font-size: 1.1em; }
-  .device-row .rm:hover { color: #ef9a9a; }
-  .device-row .caret { width: 14px; color: #888; cursor: pointer; user-select: none; text-align: center; }
-  .device-row .caret:hover { color: #ddd; }
-  .device-metrics { background: #232328; border: 1px solid #3a3a40; border-radius: 6px; padding: 6px 8px; margin: -4px 0 6px 24px; font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 0.8em; }
-  .device-metrics table { width: 100%; border-collapse: collapse; }
-  .device-metrics th { text-align: left; color: #888; font-weight: normal; padding: 2px 8px 2px 0; border-bottom: 1px solid #3a3a40; }
-  .device-metrics td { padding: 2px 8px 2px 0; color: #ccc; }
-  .device-metrics td.num { text-align: right; }
-  .device-metrics .err { color: #ef9a9a; }
-  .device-metrics .meta { color: #888; font-size: 0.85em; padding-top: 4px; }
-  #right { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-  #viewBar { display: flex; align-items: center; gap: 12px; font-size: 0.85em; color: #888; padding: 2px 4px; min-height: 22px; }
-  #viewBar .mode { font-weight: 500; color: #ccc; }
-  #viewBar .url a { color: #80cbc4; text-decoration: none; font-size: 0.85em; }
-  #viewBar .url a:hover { text-decoration: underline; }
-  #viewBar .back { background: #3a3a42; border: 1px solid #555; color: #e0e0e0; padding: 2px 10px; cursor: pointer; border-radius: 4px; font: inherit; font-size: 0.78em; }
-  #viewBar .back:hover { background: #4a4a52; }
-  .hidden { display: none !important; }
-  #deviceFrame { width: 100%; height: calc(100vh - 140px); background: #fff; border: 1px solid #3a3a40; border-radius: 6px; }
-  #output { background: #141416; border: 1px solid #3a3a40; border-radius: 6px; padding: 14px 16px; font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 0.82em; line-height: 1.45; white-space: pre-wrap; overflow-y: auto; height: calc(100vh - 175px); margin: 0; }
-  #agentBar { display: flex; gap: 8px; padding: 2px 4px; align-items: center; }
-  #agentBar button { background: #2e3a4a; border-color: #4a5a72; color: #cce4ff; padding: 5px 14px; font-size: 0.85em; }
-  #agentBar button:hover:not(:disabled) { background: #3a4a5e; }
-  #agentBar button:disabled { opacity: 0.6; cursor: wait; }
-  #agentBar button#fixBtn { background: #4a3a2e; border-color: #725a4a; color: #ffe0c8; }
-  #agentBar button#fixBtn:hover:not(:disabled) { background: #5e4a3a; }
-  #agentBar #askInput { flex: 1; min-width: 200px; background: #1e1e22; color: #e0e0e0; border: 1px solid #4a5a72; border-radius: 4px; padding: 5px 8px; font: inherit; font-size: 0.85em; }
-  #agentBar #askInput:focus { outline: none; border-color: #6a8aa8; }
-  #agentBar #askInput:disabled { opacity: 0.6; }
-  #output .meta { color: #888; }
-  #output .fail { color: #ef9a9a; }
-  #output .ok { color: #a5d6a7; }
-</style>
-</head>
-<body>
-<header>
-  <img src="/assets/moonlight-logo.png" alt="" class="logo">
-  <h1>MoonDeck <span style="color:#888;font-weight:400;font-size:0.85em;">— projectMM v2</span></h1>
-  <div class="tabs">
-    <button class="tab" data-tab="pc">PC</button>
-    <button class="tab" data-tab="esp32">ESP32</button>
-    <button class="tab" data-tab="live">Live</button>
-    <button class="tab" data-tab="dev">Develop</button>
-  </div>
-</header>
-<main>
-  <div id="panes">
-    <div class="pane" data-tab="pc"></div>
-    <div class="pane" data-tab="esp32">
-      <div class="selectors">
-        <label>Env <select id="envSelect"></select></label>
-        <label>Port <select id="portSelect"></select></label>
-        <button id="refreshPorts" title="Rescan USB serial devices">↻</button>
-      </div>
-    </div>
-    <div class="pane" data-tab="dev">
-      <div class="selectors">
-        <label>Release <select id="releaseSelect"></select></label>
-        <label>Sprint <select id="sprintSelect"></select></label>
-        <button id="openDocsBtn" title="Open the selected sprint's section in the right panel">Documentation</button>
-      </div>
-      <div class="group" id="devTasksGroup">
-        <h2>Sprint authoring</h2>
-      </div>
-    </div>
-    <div class="pane" data-tab="live">
-      <div class="group" id="devicesGroup">
-        <h2>Devices</h2>
-        <div id="deviceList"></div>
-        <div class="card device-controls">
-          <span class="label" id="scanLabel">Scan <code id="scanSubnetLbl">…</code></span>
-          <button id="refreshDevicesBtn" title="Re-probe each known device's /api/system">Refresh</button>
-          <button id="scanSubnetBtn" title="Sweep the subnet for new projectMM v2 devices">Discover</button>
-        </div>
-        <div class="card device-add">
-          <input type="text" id="newDeviceHost" placeholder="host:port (e.g. 192.168.1.156:80)" style="flex:1;background:#1e1e22;color:#e0e0e0;border:1px solid #555;border-radius:4px;padding:3px 6px;font:inherit;font-size:0.9em;">
-          <button id="addDeviceBtn">Add</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div id="right">
-    <div id="viewBar">
-      <span class="mode" id="viewMode">Output</span>
-      <span class="url" id="viewUrl"></span>
-      <button class="back hidden" id="viewBack" title="Return to script output">← Output</button>
-    </div>
-    <pre id="output"><span class="meta">Click Run on any script, or click a device name in the Live tab to load its UI here.</span></pre>
-    <iframe id="deviceFrame" class="hidden" src="about:blank"></iframe>
-    <div id="agentBar">
-      <button id="analyzeBtn" title="Send the current log to Claude Code for a verdict">Analyze (by agent)</button>
-      <button id="fixBtn" class="hidden" title="Ask Claude Code to fix the issue it found">Fix</button>
-      <input type="text" id="askInput" placeholder="Ask the agent about this log… (Enter to send)" title="Free-form question to Claude Code, with the current log as context">
-      <button id="askBtn" title="Send your question + the current log to Claude Code">Ask</button>
-    </div>
-  </div>
-</main>
-<script>
-const SCRIPTS = __SCRIPTS_JSON__;
-const ESP32_ENVS = __ESP32_ENVS_JSON__;
-const RELEASES = __RELEASES_JSON__;
-const DEV_TASKS = __DEV_TASKS_JSON__;
-const DOCS_BASE = 'http://127.0.0.1:8000/projectMM-v2';
-const output = document.getElementById('output');
-const panes = document.querySelectorAll('.pane');
-const tabs = document.querySelectorAll('.tab');
-const envSelect = document.getElementById('envSelect');
-const portSelect = document.getElementById('portSelect');
-const refreshBtn = document.getElementById('refreshPorts');
-const elById = {};   // id -> { card, button, urlSpan, eventSource, spec }
-
-// ── Tabs ──────────────────────────────────────────────────────────────────
-function showTab(name) {
-  for (const t of tabs)  t.classList.toggle('active', t.dataset.tab === name);
-  for (const p of panes) p.classList.toggle('active', p.dataset.tab === name);
-  localStorage.setItem('tab', name);
-}
-for (const t of tabs) t.addEventListener('click', () => showTab(t.dataset.tab));
-showTab(localStorage.getItem('tab') || 'pc');
-
-// ── Develop tab: release + sprint dropdowns → docs iframe ─────────────
-const releaseSelect = document.getElementById('releaseSelect');
-const sprintSelect  = document.getElementById('sprintSelect');
-const openDocsBtn   = document.getElementById('openDocsBtn');
-
-function populateReleases() {
-  releaseSelect.innerHTML = '';
-  for (const r of RELEASES) {
-    const opt = document.createElement('option');
-    opt.value = r.slug; opt.textContent = r.title;
-    releaseSelect.appendChild(opt);
-  }
-  const stored = localStorage.getItem('release');
-  const valid  = (s) => RELEASES.find(r => r.slug === s);
-  // Default: last selected, else the latest release file (the highest-numbered
-  // one once more land). Minimal: no need to track "current release" anywhere
-  // else; sort order of the discovery is authoritative.
-  releaseSelect.value =
-    valid(stored) ? stored :
-    RELEASES.length ? RELEASES[RELEASES.length - 1].slug : '';
-}
-function populateSprints() {
-  const r = RELEASES.find(x => x.slug === releaseSelect.value);
-  sprintSelect.innerHTML = '';
-  if (!r) return;
-  for (const s of r.sprints) {
-    const opt = document.createElement('option');
-    opt.value = s.id;
-    // Label format: "Sprint 7 — Two-core + PSRAM scaling" (truncated if long)
-    const title = s.title.length > 60 ? s.title.slice(0, 57) + '…' : s.title;
-    opt.textContent = `${s.label} — ${title}`;
-    sprintSelect.appendChild(opt);
-  }
-  // Per-release sprint memory: switching releases doesn't pin the same sprint
-  // number, since "Sprint 8" means different things across releases.
-  const stored = localStorage.getItem(`sprint-${r.slug}`);
-  const valid  = (id) => r.sprints.find(s => s.id === id);
-  sprintSelect.value =
-    valid(stored) ? stored :
-    r.sprints.length ? r.sprints[r.sprints.length - 1].id : '';
-}
-releaseSelect.addEventListener('change', () => {
-  localStorage.setItem('release', releaseSelect.value);
-  populateSprints();
-});
-sprintSelect.addEventListener('change', () => {
-  if (releaseSelect.value) {
-    localStorage.setItem(`sprint-${releaseSelect.value}`, sprintSelect.value);
-  }
-});
-openDocsBtn.addEventListener('click', () => {
-  const slug   = releaseSelect.value;
-  const sprint = sprintSelect.value;
-  if (!slug || !sprint) return;
-  const r = RELEASES.find(x => x.slug === slug);
-  const s = r && r.sprints.find(x => x.id === sprint);
-  const label = `${r ? r.title.replace(/^Release \d+ — /, 'Rel') : slug} → ${s ? s.label : sprint}`;
-  showDocsUrl(`${DOCS_BASE}/development/${slug}/#${sprint}`, label);
-});
-
-populateReleases();
-populateSprints();
-
-// ── Develop tab: dev-task cards (Run invokes the agent) ───────────────
-const devTasksGroup = document.getElementById('devTasksGroup');
-const devTaskBtnById = {};
-for (const t of DEV_TASKS) {
-  const c = document.createElement('div'); c.className = 'card';
-  const dot = document.createElement('span'); dot.className = 'dot';
-  const lbl = document.createElement('span'); lbl.className = 'label'; lbl.textContent = t.label;
-  const help = document.createElement('a');
-  help.className = 'help'; help.textContent = '?';
-  help.href = `${DOCS_BASE}/developer-guide/deploy/#${t.docs_anchor}`;
-  help.title = `Open docs in the right panel`;
-  help.addEventListener('click', (ev) => {
-    ev.preventDefault();
-    showDocsUrl(`${DOCS_BASE}/developer-guide/deploy/#${t.docs_anchor}`, t.label);
-  });
-  const btn = document.createElement('button'); btn.textContent = 'Run';
-  btn.addEventListener('click', () => runDevTask(t));
-  c.append(dot, lbl, help, btn);
-  devTasksGroup.appendChild(c);
-  devTaskBtnById[t.id] = {card: c, button: btn};
-}
-
-async function runDevTask(t) {
-  const e = devTaskBtnById[t.id];
-  if (!e) return;
-  showOutput();
-  output.textContent = '';
-  append(`<span class="meta">$ ${esc(t.id)}\n</span>`);
-  append(`<span class="meta">--- Agent task: ${esc(t.label)} (streaming, may take minutes) ---</span>\n`);
-  e.card.className = 'card running';
-  e.button.disabled = true; e.button.textContent = 'Running…';
-  try {
-    const res = await callAgentStream('/agent-task', {task: t.id}, appendAgentLine);
-    e.card.className = 'card ' + (res.exit_code === 0 ? 'ok' : 'fail');
-  } catch (err) {
-    append(`<span class="fail">Task failed: ${esc(String(err))}</span>\n`);
-    e.card.className = 'card fail';
-  } finally {
-    e.button.disabled = false; e.button.textContent = 'Run';
-  }
-}
-
-// ── ESP32 selectors (env + port) ──────────────────────────────────────────
-for (const env of ESP32_ENVS) {
-  const opt = document.createElement('option');
-  opt.value = env; opt.textContent = env;
-  envSelect.appendChild(opt);
-}
-envSelect.value = localStorage.getItem('env') || ESP32_ENVS[0];
-envSelect.addEventListener('change', () => localStorage.setItem('env', envSelect.value));
-function selectedEnv()  { return envSelect.value || ''; }
-function selectedPort() { return portSelect.value || ''; }
-
-function refreshPorts() {
-  return fetch('/ports').then(r => r.json()).then(({ ports }) => {
-    const prev = localStorage.getItem('port') || portSelect.value;
-    portSelect.innerHTML = '';
-    if (ports.length === 0) {
-      const opt = document.createElement('option');
-      opt.value = ''; opt.textContent = '(no USB serial devices)';
-      portSelect.appendChild(opt);
-    } else {
-      for (const p of ports) {
-        const opt = document.createElement('option');
-        opt.value = p.path;
-        opt.textContent = p.label ? `${p.path} — ${p.label}` : p.path;
-        portSelect.appendChild(opt);
-      }
-      if (ports.map(p => p.path).includes(prev)) portSelect.value = prev;
-    }
-    updateGates();
-  });
-}
-portSelect.addEventListener('change', () => { localStorage.setItem('port', portSelect.value); updateGates(); });
-refreshBtn.addEventListener('click', refreshPorts);
-
-function updateGates() {
-  // Disable Run buttons on cards that need a port when none is selected. The
-  // env selector is always populated from ESP32_ENVS, so it never gates.
-  const hasPort = !!selectedPort();
-  for (const e of Object.values(elById)) {
-    if (!e.spec.needs_port) continue;
-    if (e.button.classList.contains('stop')) continue;  // don't override a running long-runner
-    e.button.disabled = !hasPort;
-    e.button.title = hasPort ? '' : 'select a port first';
-  }
-}
-
-// ── Render cards into their tab panes, grouped by `group` ────────────────
-const groupsByTab = {};
-for (const s of SCRIPTS) {
-  const t = s.tab || 'pc';
-  (groupsByTab[t] = groupsByTab[t] || {});
-  (groupsByTab[t][s.group] = groupsByTab[t][s.group] || []).push(s);
-}
-for (const [tabName, groups] of Object.entries(groupsByTab)) {
-  const pane = document.querySelector(`.pane[data-tab="${tabName}"]`);
-  if (!pane) continue;
-  for (const [name, items] of Object.entries(groups)) {
-    const g = document.createElement('div');
-    g.className = 'group';
-    const h = document.createElement('h2'); h.textContent = name; g.appendChild(h);
-    for (const s of items) {
-      const c = document.createElement('div');
-      c.className = 'card'; c.dataset.id = s.id;
-      const dot = document.createElement('span'); dot.className = 'dot';
-      const lbl = document.createElement('span'); lbl.className = 'label'; lbl.textContent = s.label;
-      const urlSpan = document.createElement('span'); urlSpan.className = 'url';
-      const help = document.createElement('a');
-      help.className = 'help'; help.textContent = '?';
-      help.href = `${DOCS_BASE}/developer-guide/deploy/#${s.id}`;
-      help.title = `Open docs in the right panel (middle-click → new tab)`;
-      // Left-click loads docs in the iframe; preserving the href means
-      // middle-click and right-click → new tab still work for power users.
-      help.addEventListener('click', (ev) => { ev.preventDefault(); showDocs(s); });
-      const btn = document.createElement('button'); btn.textContent = s.long_running ? 'Start' : 'Run';
-      btn.onclick = () => toggle(s);
-      c.append(dot, lbl, urlSpan, help, btn);
-      g.appendChild(c);
-      elById[s.id] = { card: c, button: btn, urlSpan, eventSource: null, spec: s };
-    }
-    pane.appendChild(g);
-  }
-}
-
-// On load, populate ports then reflect anything currently running on the server.
-refreshPorts().then(() => fetch('/status')).then(r => r.json()).then(({ running }) => {
-  for (const id of running) {
-    const e = elById[id]; if (!e) continue;
-    e.card.className = 'card running';
-    if (e.spec.long_running) {
-      setRunningUI(e);
-      attachStream(e, /*alreadyRunning=*/true);
-    }
-  }
-});
-
-// ── Live: device list (persisted to moondeck.json) ────────────────────────
-const deviceList     = document.getElementById('deviceList');
-const refreshDevsBtn = document.getElementById('refreshDevicesBtn');
-const scanBtn        = document.getElementById('scanSubnetBtn');
-const scanSubnetLbl  = document.getElementById('scanSubnetLbl');
-const addDevBtn      = document.getElementById('addDeviceBtn');
-const newHostInput   = document.getElementById('newDeviceHost');
-let uiState = null;
-
-function persistUiState() {
-  return fetch('/ui-state', {method: 'POST', headers: {'Content-Type': 'application/json'},
-                              body: JSON.stringify(uiState)});
-}
-
-function renderDevices() {
-  deviceList.innerHTML = '';
-  scanSubnetLbl.textContent = `${uiState.scan_subnet}  port ${uiState.scan_port}`;
-  if (uiState.devices.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'device-row'; empty.style.color = '#888';
-    empty.textContent = '(no devices — click Discover or Add)';
-    deviceList.appendChild(empty);
-    return;
-  }
-  uiState.devices.forEach((d, idx) => {
-    const row = document.createElement('div'); row.className = 'device-row';
-    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!d.enabled;
-    cb.onchange = () => { d.enabled = cb.checked; persistUiState(); };
-    // Caret: ▸ collapsed / ▾ expanded. Toggles inline metrics table below.
-    const caret = document.createElement('span'); caret.className = 'caret';
-    caret.textContent = d._expanded ? '▾' : '▸';
-    caret.title = 'Show module metrics (GET /api/modules every 2s)';
-    caret.onclick = () => toggleMetrics(d, caret);
-    const name = document.createElement('span'); name.className = 'name'; name.textContent = d.name || '(unnamed)';
-    name.style.cursor = 'pointer';
-    name.title = `Click to open ${d.host}:${d.port}/ in the right panel` + (d.chip || d.env ? `\n${[d.chip, d.env].filter(Boolean).join(' / ')}` : '');
-    name.onclick = () => showDevice(d);
-    const host = document.createElement('span'); host.className = 'host'; host.textContent = `${d.host}:${d.port}`;
-    const status = document.createElement('span'); status.className = 'status';
-    status.textContent = d.last_status || '';
-    if (d.last_status === 'reachable') status.classList.add('ok');
-    else if (d.last_status === 'unreachable') status.classList.add('fail');
-    const rm = document.createElement('button'); rm.className = 'rm'; rm.textContent = '×'; rm.title = 'Remove';
-    rm.onclick = () => {
-      stopMetricsPoll(d);
-      uiState.devices.splice(idx, 1);
-      persistUiState().then(renderDevices);
-    };
-    row.append(caret, cb, name, host, status, rm);
-    deviceList.appendChild(row);
-    // If this device was expanded before re-render (e.g. checkbox toggled
-    // somewhere else), recreate its metrics panel and resume polling.
-    if (d._expanded) mountMetricsPanel(d);
-  });
-}
-
-// Inline-metrics state lives on the device object as `_expanded` (bool),
-// `_metricsEl` (the DOM panel), and `_metricsHandle` (the setInterval id).
-// Kept off uiState.devices' persisted shape — these are runtime-only.
-function toggleMetrics(d, caret) {
-  if (d._expanded) {
-    stopMetricsPoll(d);
-    d._expanded = false;
-    caret.textContent = '▸';
-  } else {
-    d._expanded = true;
-    caret.textContent = '▾';
-    mountMetricsPanel(d);
-  }
-}
-
-function stopMetricsPoll(d) {
-  if (d._metricsHandle) { clearInterval(d._metricsHandle); d._metricsHandle = null; }
-  if (d._metricsEl) { d._metricsEl.remove(); d._metricsEl = null; }
-}
-
-function mountMetricsPanel(d) {
-  // Locate the parent row so the panel inserts directly under it.
-  const rows = Array.from(deviceList.querySelectorAll('.device-row'));
-  const row = rows.find(r => r.querySelector('.host')?.textContent === `${d.host}:${d.port}`);
-  if (!row) return;
-  const panel = document.createElement('div'); panel.className = 'device-metrics';
-  panel.innerHTML = '<span class="meta">loading…</span>';
-  row.after(panel);
-  d._metricsEl = panel;
-  refreshMetrics(d);
-  d._metricsHandle = setInterval(() => refreshMetrics(d), 2000);
-}
-
-async function refreshMetrics(d) {
-  if (!d._metricsEl) return;
-  try {
-    const r = await fetch('/device-modules', {method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({host: d.host, port: d.port})});
-    const j = await r.json();
-    const mods = j.modules || [];
-    if (!d._metricsEl) return;  // user may have collapsed between request + reply
-    if (mods.length === 0) {
-      d._metricsEl.innerHTML = '<span class="err">no response from /api/modules</span>';
-      return;
-    }
-    const fmtKB = b => (b/1024).toFixed(b < 1024 ? 2 : 1);
-    let html = '<table><thead><tr><th>module</th><th>type</th><th class="num">core</th><th class="num">ms/tick</th><th class="num">heap</th><th class="num">psram</th><th class="num">class</th></tr></thead><tbody>';
-    for (const m of mods) {
-      const ms = (m.ms_per_tick ?? 0).toFixed(2);
-      html += `<tr><td>${esc(m.id || '')}</td><td>${esc(m.type || '')}</td>`
-            + `<td class="num">${m.core ?? 0}</td>`
-            + `<td class="num">${ms}</td>`
-            + `<td class="num">${fmtKB(m.heap_size_bytes ?? 0)} KB</td>`
-            + `<td class="num">${fmtKB(m.psram_size_bytes ?? 0)} KB</td>`
-            + `<td class="num">${m.class_size_bytes ?? 0} B</td></tr>`;
-    }
-    html += '</tbody></table>';
-    html += `<div class="meta">${mods.length} module(s) · refresh 2s · ${new Date().toLocaleTimeString()}</div>`;
-    d._metricsEl.innerHTML = html;
-  } catch (e) {
-    if (d._metricsEl) d._metricsEl.innerHTML = `<span class="err">fetch failed: ${esc(String(e))}</span>`;
-  }
-}
-
-async function probeOne(d) {
-  const r = await fetch('/probe', {method: 'POST', headers: {'Content-Type': 'application/json'},
-                                    body: JSON.stringify({host: d.host, port: d.port})});
-  const j = await r.json();
-  d.last_status = j.reachable ? 'reachable' : 'unreachable';
-  if (j.reachable && j.info) {
-    d.chip = j.info.chip_model || d.chip;
-    d.mac  = j.info.mac_address || d.mac;
-    d.env  = j.info.env || d.env;
-    if (j.info.mac_address && (!d.name || /^MM-/.test(d.name))) {
-      const tail = j.info.mac_address.replace(/:/g, '').slice(-4).toUpperCase();
-      d.name = `MM-${tail}`;
-    }
-  }
-}
-
-async function refreshAllDevices() {
-  refreshDevsBtn.disabled = true; refreshDevsBtn.textContent = 'Probing…';
-  await Promise.all(uiState.devices.map(probeOne));
-  await persistUiState();
-  renderDevices();
-  refreshDevsBtn.disabled = false; refreshDevsBtn.textContent = 'Refresh';
-}
-
-async function runScan() {
-  scanBtn.disabled = true; scanBtn.textContent = 'Scanning…';
-  try {
-    const r = await fetch('/scan', {method: 'POST', headers: {'Content-Type': 'application/json'},
-                                    body: JSON.stringify({subnet: uiState.scan_subnet, port: uiState.scan_port})});
-    const { devices } = await r.json();
-    // Merge: existing entries keep their `enabled` toggle; scan-found
-    // entries are added or have their chip/mac/env refreshed.
-    const byHost = new Map(uiState.devices.map(d => [d.host + ':' + d.port, d]));
-    for (const found of devices) {
-      const key = found.host + ':' + found.port;
-      const existing = byHost.get(key);
-      if (existing) {
-        Object.assign(existing, {chip: found.chip, mac: found.mac, env: found.env,
-                                 last_status: 'reachable', name: existing.name || found.name});
-      } else {
-        uiState.devices.push({...found, last_status: 'reachable'});
-      }
-    }
-    await persistUiState();
-    renderDevices();
-  } finally {
-    scanBtn.disabled = false; scanBtn.textContent = 'Discover';
-  }
-}
-
-function addDeviceFromInput() {
-  const raw = (newHostInput.value || '').trim();
-  if (!raw) return;
-  // host[:port] — default 80
-  const m = raw.match(/^([^\s:]+)(?::(\d+))?$/);
-  if (!m) { alert('Use the form host or host:port (e.g. 192.168.1.156:80)'); return; }
-  const host = m[1];
-  const port = m[2] ? parseInt(m[2], 10) : 80;
-  if (uiState.devices.some(d => d.host === host && d.port === port)) {
-    alert('Already in the list.'); return;
-  }
-  uiState.devices.push({name: host, host, port, enabled: true, discovered: 'manual'});
-  newHostInput.value = '';
-  persistUiState().then(renderDevices);
-}
-
-refreshDevsBtn.addEventListener('click', refreshAllDevices);
-scanBtn.addEventListener('click', runScan);
-addDevBtn.addEventListener('click', addDeviceFromInput);
-newHostInput.addEventListener('keydown', ev => { if (ev.key === 'Enter') addDeviceFromInput(); });
-
-fetch('/ui-state').then(r => r.json()).then(s => { uiState = s; renderDevices(); });
-
-function append(html) { output.insertAdjacentHTML('beforeend', html); output.scrollTop = output.scrollHeight; }
-function esc(s) { return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]); }
-
-// ── Right-pane view toggle: Output ↔ Device iframe ────────────────────────
-const deviceFrame = document.getElementById('deviceFrame');
-const viewMode    = document.getElementById('viewMode');
-const viewUrl     = document.getElementById('viewUrl');
-const viewBack    = document.getElementById('viewBack');
-const agentBar    = document.getElementById('agentBar');
-const analyzeBtn  = document.getElementById('analyzeBtn');
-const fixBtn      = document.getElementById('fixBtn');
-const askInput    = document.getElementById('askInput');
-const askBtn      = document.getElementById('askBtn');
-let   lastAnalysis = '';
-
-function showOutput() {
-  output.classList.remove('hidden');
-  agentBar.classList.remove('hidden');
-  deviceFrame.classList.add('hidden');
-  viewBack.classList.add('hidden');
-  viewMode.textContent = 'Output';
-  viewUrl.innerHTML = '';
-}
-function showDevice(d) {
-  const url = `http://${d.host}:${d.port}/`;
-  // Only reload if the URL actually changed — avoids re-mount + WS reconnect
-  // when the user clicks the same device twice.
-  if (deviceFrame.src !== url) deviceFrame.src = url;
-  output.classList.add('hidden');
-  agentBar.classList.add('hidden');
-  deviceFrame.classList.remove('hidden');
-  viewBack.classList.remove('hidden');
-  viewMode.textContent = `Device — ${d.name || (d.host + ':' + d.port)}`;
-  viewUrl.innerHTML = `<a href="${url}" target="_blank" rel="noopener">open in new tab ↗</a>`;
-}
-function showDocsUrl(url, label) {
-  // Generic docs viewer. Requires the MkDocs serve card to be running
-  // (port 8000); if it's not, the iframe shows a connection-refused page
-  // and the hint is self-evident.
-  if (deviceFrame.src !== url) deviceFrame.src = url;
-  output.classList.add('hidden');
-  agentBar.classList.add('hidden');
-  deviceFrame.classList.remove('hidden');
-  viewBack.classList.remove('hidden');
-  viewMode.textContent = `Docs — ${label}`;
-  viewUrl.innerHTML = `<a href="${url}" target="_blank" rel="noopener">open in new tab ↗</a>`;
-}
-function showDocs(s) {
-  // Card `?` click adapter.
-  showDocsUrl(`${DOCS_BASE}/developer-guide/deploy/#${s.id}`, s.label);
-}
-viewBack.addEventListener('click', showOutput);
-
-// ── Agent loop: Analyze / Fix / Ask — all stream via SSE so the user sees
-//    the agent's narration + tool calls live (same UX as a terminal run).
-async function callAgentStream(endpoint, payload, onLine) {
-  const r = await fetch(endpoint, {method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(payload)});
-  if (!r.ok) {
-    const text = await r.text();
-    throw new Error(`${r.status}: ${text}`);
-  }
-  // Parse SSE off the response body manually (EventSource is GET-only).
-  const reader = r.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  let full = '';
-  let exitCode = 0;
-  while (true) {
-    const {value, done} = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, {stream: true});
-    let idx;
-    while ((idx = buffer.indexOf('\n\n')) !== -1) {
-      const block = buffer.slice(0, idx);
-      buffer = buffer.slice(idx + 2);
-      let ev = '', data = '';
-      for (const ln of block.split('\n')) {
-        if      (ln.startsWith('event: ')) ev = ln.slice(7);
-        else if (ln.startsWith('data: '))  data += (data ? '\n' : '') + ln.slice(6);
-      }
-      if (ev === 'line') {
-        onLine(data);
-        full += data + '\n';
-      } else if (ev === 'done') {
-        exitCode = parseInt(data) || 0;
-      }
-    }
-  }
-  return {output: full, exit_code: exitCode};
-}
-function appendAgentLine(data) { append(esc(data) + '\n'); }
-
-analyzeBtn.addEventListener('click', async () => {
-  const log = output.innerText.trim();
-  if (!log) { alert('Nothing in the log yet — run a script first.'); return; }
-  analyzeBtn.disabled = true; analyzeBtn.textContent = 'Analyzing…';
-  fixBtn.classList.add('hidden');
-  append(`\n<span class="meta">--- Agent analysis ---</span>\n`);
-  try {
-    const res = await callAgentStream('/analyze', {log}, appendAgentLine);
-    lastAnalysis = res.output || '';
-    const firstLine = (lastAnalysis.split('\n', 1)[0] || '').trim();
-    if (firstLine.startsWith('ISSUE')) fixBtn.classList.remove('hidden');
-  } catch (e) {
-    append(`<span class="fail">Analyze failed: ${esc(String(e))}</span>\n`);
-  } finally {
-    analyzeBtn.disabled = false; analyzeBtn.textContent = 'Analyze (by agent)';
-  }
-});
-fixBtn.addEventListener('click', async () => {
-  if (!lastAnalysis) { alert('Run Analyze first.'); return; }
-  if (!confirm('The agent will edit files in this repo. Continue?')) return;
-  const log = output.innerText.trim();
-  fixBtn.disabled = true; fixBtn.textContent = 'Fixing…';
-  append(`\n<span class="meta">--- Agent fix ---</span>\n`);
-  try {
-    await callAgentStream('/fix', {log, analysis: lastAnalysis}, appendAgentLine);
-  } catch (e) {
-    append(`<span class="fail">Fix failed: ${esc(String(e))}</span>\n`);
-  } finally {
-    fixBtn.disabled = false; fixBtn.textContent = 'Fix';
-  }
-});
-
-async function sendAsk() {
-  const prompt = askInput.value.trim();
-  if (!prompt) { askInput.focus(); return; }
-  const log = output.innerText.trim();
-  askBtn.disabled = true; askInput.disabled = true; askBtn.textContent = 'Asking…';
-  append(`\n<span class="meta">--- Ask: ${esc(prompt)} ---</span>\n`);
-  try {
-    await callAgentStream('/ask', {log, prompt}, appendAgentLine);
-    askInput.value = '';   // clear on success; let user see the question in the log
-  } catch (e) {
-    append(`<span class="fail">Ask failed: ${esc(String(e))}</span>\n`);
-  } finally {
-    askBtn.disabled = false; askInput.disabled = false; askBtn.textContent = 'Ask';
-    askInput.focus();
-  }
-}
-askBtn.addEventListener('click', sendAsk);
-askInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); sendAsk(); } });
-
-function setRunningUI(e) {
-  e.button.textContent = 'Stop';
-  e.button.classList.add('stop');
-  e.button.disabled = false;
-  if (e.spec.url) e.urlSpan.innerHTML = `<a href="${e.spec.url}" target="_blank">open ↗</a>`;
-}
-function setIdleUI(e, code) {
-  e.button.textContent = e.spec.long_running ? 'Start' : 'Run';
-  e.button.classList.remove('stop');
-  e.button.disabled = false;
-  e.urlSpan.innerHTML = '';
-  if (code !== undefined) e.card.className = 'card ' + (code === 0 ? 'ok' : 'fail');
-}
-
-function toggle(s) {
-  const e = elById[s.id];
-  if (e.button.classList.contains('stop')) {
-    fetch(`/stop/${encodeURIComponent(s.id)}`, { method: 'POST' });
-    if (!e.eventSource) {
-      // Stopping a long-runner we are no longer streaming (another script took over the panel).
-      setIdleUI(e);
-      e.card.className = 'card';
-    }
-    // Otherwise the SSE `done` event clears the UI when the kill lands.
-    return;
-  }
-  // Close any other open client streams so the output panel shows just this run.
-  // Server processes keep running; reload to re-attach to a long-running one.
-  Object.values(elById).forEach(other => {
-    if (other !== e && other.eventSource) { other.eventSource.close(); other.eventSource = null; }
-  });
-  // Disable other Run buttons only for short-running scripts (they share the output panel).
-  // Long-running scripts (mkdocs serve, monitor) run in the background; leave the UI usable.
-  if (!s.long_running) {
-    document.querySelectorAll('button.tab').forEach(b => { /* never disable tabs */ });
-    for (const e2 of Object.values(elById)) {
-      if (!e2.button.classList.contains('stop')) e2.button.disabled = true;
-    }
-  }
-  e.button.disabled = true;
-  output.textContent = '';
-  showOutput();  // swap back from a device iframe view, if currently shown
-  append(`<span class="meta">$ ${esc(s.id)}\n</span>`);
-  e.card.className = 'card running';
-  if (s.long_running) setRunningUI(e);
-  attachStream(e, /*alreadyRunning=*/false);
-}
-
-function attachStream(e, alreadyRunning) {
-  const qs = new URLSearchParams();
-  if (alreadyRunning)                       qs.set('attach', '1');
-  if (e.spec.needs_env  && selectedEnv())   qs.set('env',  selectedEnv());
-  if (e.spec.needs_port && selectedPort())  qs.set('port', selectedPort());
-  const url = `/run/${encodeURIComponent(e.spec.id)}${qs.toString() ? '?' + qs : ''}`;
-  const es = new EventSource(url);
-  e.eventSource = es;
-  es.addEventListener('line', ev => append(esc(ev.data) + '\n'));
-  es.addEventListener('step', ev => append(`<span class="meta">--- ${esc(ev.data)} ---\n</span>`));
-  es.addEventListener('done', ev => {
-    const code = parseInt(ev.data);
-    append(`<span class="${code === 0 ? 'ok' : 'fail'}">exit ${code}\n</span>`);
-    setIdleUI(e, code);
-    for (const e2 of Object.values(elById)) {
-      if (!e2.button.classList.contains('stop')) e2.button.disabled = false;
-    }
-    updateGates();
-    es.close(); e.eventSource = null;
-  });
-  es.onerror = () => {
-    if (e.card.classList.contains('running') && !e.spec.long_running) e.card.className = 'card fail';
-    setIdleUI(e);
-    for (const e2 of Object.values(elById)) {
-      if (!e2.button.classList.contains('stop')) e2.button.disabled = false;
-    }
-    updateGates();
-    es.close(); e.eventSource = null;
-  };
-}
-</script>
-</body>
-</html>
-"""
-
-
 def _find(id_):
     return next((s for s in SCRIPTS if s["id"] == id_), None)
 
@@ -1167,6 +392,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/":
             return self._send_index()
+        if self.path.startswith("/ui/"):
+            return self._send_ui_file(self.path[len("/ui/"):])
         if self.path == "/status":
             return self._send_status()
         if self.path == "/ports":
@@ -1193,6 +420,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._do_scan()
         if self.path == "/device-modules":
             return self._do_device_modules()
+        if self.path == "/device-setup":
+            return self._do_device_setup()
         if self.path == "/analyze":
             return self._do_agent("analyze")
         if self.path == "/fix":
@@ -1268,6 +497,29 @@ class Handler(BaseHTTPRequestHandler):
             return
         modules = fetch_device_modules(host, port, timeout=3.0)
         self._send_json({"modules": modules or []})
+
+    def _do_device_setup(self):
+        try:
+            body = self._read_json_body()
+        except (json.JSONDecodeError, ValueError):
+            self.send_error(400, "invalid json")
+            return
+        host = (body.get("host") or "").strip()
+        port = int(body.get("port") or 80)
+        if not host:
+            self.send_error(400, "host required")
+            return
+        # Shell out to the standalone script (same pattern as every card);
+        # keeps the REST-orchestration logic out of the monolith.
+        try:
+            p = subprocess.run(
+                [sys.executable, str(resolve_script("light_setup.py")),
+                 host, str(port)],
+                capture_output=True, text=True, timeout=30)
+            log = (p.stdout + p.stderr).strip().splitlines()
+            self._send_json({"ok": p.returncode == 0, "log": log})
+        except Exception as e:
+            self._send_json({"ok": False, "log": [str(e)]})
 
     # ── Streaming agent invocations (SSE) ─────────────────────────────────
     # All four entry points (analyze / fix / ask / agent-task) build a prompt
@@ -1427,17 +679,22 @@ class Handler(BaseHTTPRequestHandler):
             pass
 
     def _send_index(self):
-        # Strip server-only fields from DEV_TASKS before serialising — the
-        # frontend only needs `id`, `label`, and `docs_anchor`. Keeps the
-        # prompt server-side (smaller HTML, no accidental prompt-injection
-        # surface from the page).
+        # The UI is three real static files in scripts/moondeck_ui/. Read
+        # index.html from disk and inject one bootstrap <script> with the
+        # server→client data before app.js loads, so app.js / style.css stay
+        # pure static assets (no templating). Strip server-only DEV_TASKS
+        # fields — the page only needs id/label/docs_anchor (keeps the prompt
+        # server-side, no prompt-injection surface from the page).
         dev_tasks_pub = [{"id": t["id"], "label": t["label"], "docs_anchor": t["docs_anchor"]}
                          for t in DEV_TASKS]
-        html = (INDEX_HTML
-                .replace("__SCRIPTS_JSON__",    json.dumps(SCRIPTS))
-                .replace("__ESP32_ENVS_JSON__", json.dumps(ESP32_ENVS))
-                .replace("__RELEASES_JSON__",   json.dumps(scan_releases()))
-                .replace("__DEV_TASKS_JSON__",  json.dumps(dev_tasks_pub)))
+        bootstrap = "<script>window.__MOONDECK__=" + json.dumps({
+            "scripts":   SCRIPTS,
+            "esp32Envs": ESP32_ENVS,
+            "releases":  scan_releases(),
+            "devTasks":  dev_tasks_pub,
+        }) + ";</script>"
+        html = (UI_DIR / "index.html").read_text()
+        html = html.replace("<!--__MOONDECK_BOOTSTRAP__-->", bootstrap)
         body = html.encode()
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -1484,6 +741,29 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", mime)
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", "public, max-age=3600")
+        self.end_headers()
+        self.wfile.write(data)
+
+    _UI_MIME = {".css": "text/css; charset=utf-8",
+                ".js": "text/javascript; charset=utf-8",
+                ".html": "text/html; charset=utf-8"}
+
+    def _send_ui_file(self, name):
+        # Serve the MoonDeck static UI from scripts/moondeck_ui/. Sandboxed:
+        # Path(name).name strips any directory part so `..`/nested paths
+        # cannot escape UI_DIR (same guard as _send_asset). No-store: the UI
+        # is edited live during development; never cache it.
+        safe = Path(name).name
+        if not safe or safe.startswith("."):
+            self.send_error(404); return
+        path = UI_DIR / safe
+        if not path.is_file() or path.suffix.lower() not in self._UI_MIME:
+            self.send_error(404); return
+        data = path.read_bytes()
+        self.send_response(200)
+        self.send_header("Content-Type", self._UI_MIME[path.suffix.lower()])
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
         self.end_headers()
         self.wfile.write(data)
 
@@ -1539,7 +819,7 @@ class Handler(BaseHTTPRequestHandler):
             pass  # client closed; process registered in _running keeps running
 
     def _run_one(self, id_, script_name, script_args):
-        cmd = ["uv", "run", str(ROOT / "scripts" / script_name), *script_args]
+        cmd = ["uv", "run", str(resolve_script(script_name)), *script_args]
         # Force the child Python to flush stdout per-line: when stdout is a
         # pipe (not a TTY), the default is block-buffering (~4 KB) and a
         # script printing one line per scenario step shows nothing in the

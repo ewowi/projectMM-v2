@@ -38,9 +38,9 @@ The UI is the developer's window into the project's processes — what scripts e
 Pre-commit, CI, and ad-hoc command-line use call scripts directly:
 
 ```bash
-uv run scripts/build.py
-uv run scripts/test.py
-uv run scripts/check_loc.py
+uv run scripts/build/build.py
+uv run scripts/build/test.py
+uv run scripts/checks/check_loc.py
 ```
 
 ## Enable the pre-commit hook
@@ -57,17 +57,17 @@ Every card in the UI has a `?` link that jumps to the matching section below.
 
 ### Build {#build}
 
-Runs PlatformIO against `env:pc`: `pio run -e pc`. Produces `.pio/build/pc/program`; no-op if the binary is up to date. Source: `scripts/build.py`.
+Runs PlatformIO against `env:pc`: `pio run -e pc`. Produces `.pio/build/pc/program`; no-op if the binary is up to date. Source: `scripts/build/build.py`.
 
 The same script accepts an env name as its first positional argument. The ESP32 tab's **Build** card forwards the tab-scoped env selector (`esp32dev` or `esp32s3_n16r8`) so a single card covers both targets — see [Build (ESP32)](#esp32-build). CI runs the same script three times via a matrix; pre-commit only builds PC.
 
 ### Test {#test}
 
-Runs the host unit and integration test suite via `pio test -e pc-test`. Uses [doctest](https://github.com/doctest/doctest) (fetched automatically by PlatformIO). Covers `ModuleManager` factory, `HelloModule` counter, and `HttpServerModule` REST handlers via direct dispatch (no sockets). Source: `scripts/test.py`.
+Runs the host unit and integration test suite via `pio test -e pc-test`. Uses [doctest](https://github.com/doctest/doctest) (fetched automatically by PlatformIO). Covers `ModuleManager` factory, `HelloModule` counter, and `HttpServerModule` REST handlers via direct dispatch (no sockets). Source: `scripts/build/test.py`.
 
 ### Run {#run}
 
-Starts the compiled `pc` binary (long-running). Exposes the browser UI and REST API on `http://127.0.0.1:8080`. Start the Run card after a successful Build; Stop sends SIGTERM. Source: `scripts/run.py`.
+Starts the compiled `pc` binary (long-running). Exposes the browser UI and REST API on `http://127.0.0.1:8080`. Start the Run card after a successful Build; Stop sends SIGTERM. Source: `scripts/build/run.py`.
 
 The HTTP port differs per platform: PC binds 8080 (port < 1024 requires root and `run.py` is unprivileged), ESP32 binds 80 so users open `http://<device-ip>` without a port suffix. The default comes from `pal::default_http_port()` and is overridable via the `HttpServerModule` constructor.
 
@@ -78,7 +78,7 @@ The HTTP port differs per platform: PC binds 8080 (port < 1024 requires root and
 ```bash
 cp data/wifi.json.example data/wifi.json
 $EDITOR data/wifi.json                              # set ssid + password
-uv run scripts/flash.py esp32dev --target uploadfs --port /dev/cu.usbserial-XXXX
+uv run scripts/device/flash.py esp32dev --target uploadfs --port /dev/cu.usbserial-XXXX
 ```
 
 The same is available in the UI via the **ESP32 → Flash filesystem** card (set the tab's env selector to `esp32dev` first).
@@ -87,11 +87,11 @@ The same is available in the UI via the **ESP32 → Flash filesystem** card (set
 
 ### Build (ESP32) {#esp32-build}
 
-ESP32 tab's first card. Invokes `scripts/build.py` with the tab-scoped env selector value (`esp32dev` or `esp32s3_n16r8`), which expands to `pio run -e <env>`. No port involved — pure build.
+ESP32 tab's first card. Invokes `scripts/build/build.py` with the tab-scoped env selector value (`esp32dev` or `esp32s3_n16r8`), which expands to `pio run -e <env>`. No port involved — pure build.
 
 ### Flash firmware {#esp32-flash}
 
-Uploads the built firmware over USB via `pio run -e <env> --target upload --upload-port <port>`. Uses the tab's env selector and port dropdown. The Run button disables until a port is selected. Source: `scripts/flash.py`. CI does not flash (no hardware in the runner).
+Uploads the built firmware over USB via `pio run -e <env> --target upload --upload-port <port>`. Uses the tab's env selector and port dropdown. The Run button disables until a port is selected. Source: `scripts/device/flash.py`. CI does not flash (no hardware in the runner).
 
 ### Flash filesystem {#esp32-flashfs}
 
@@ -99,7 +99,7 @@ Same as Flash firmware but with `--target uploadfs`: writes `data/` to the Littl
 
 ### Serial monitor {#esp32-monitor}
 
-Long-running. Wraps `pio device monitor -e <env> --port <port>`, which reads `monitor_speed` (115200) and `monitor_filters` (`esp32_exception_decoder` — decodes panic backtraces inline) from the env section in `platformio.ini`. Stop sends SIGTERM. The serial port is exclusive, so stop the monitor before flashing the same device. Source: `scripts/monitor.py`.
+Long-running. Wraps `pio device monitor -e <env> --port <port>`, which reads `monitor_speed` (115200) and `monitor_filters` (`esp32_exception_decoder` — decodes panic backtraces inline) from the env section in `platformio.ini`. Stop sends SIGTERM. The serial port is exclusive, so stop the monitor before flashing the same device. Source: `scripts/device/monitor.py`.
 
 ### USB serial port picker
 
@@ -154,11 +154,11 @@ Commit message follows the project style: lowercase prefix (`sprint N:`, `docs:`
 
 ### Run scenarios (in-process) {#live-scenarios}
 
-Live tab. Replays every JSON under `test/test_pc/scenarios/` through `ModuleManager` in-process via `pio test -e pc-test`. Rail 2's `[MemBoot]` / `[MemLive]` events fire during replay; the output panel shows the same memory trail a real boot does. Source: `scripts/test.py`. Doesn't touch the Devices list — purely maintainer-side fast feedback.
+Live tab. Replays every JSON under `test/test_pc/scenarios/` through `ModuleManager` in-process via `pio test -e pc-test`. Rail 2's `[MemBoot]` / `[MemLive]` events fire during replay; the output panel shows the same memory trail a real boot does. Source: `scripts/build/test.py`. Doesn't touch the Devices list — purely maintainer-side fast feedback.
 
 ### Run scenarios (live, all enabled devices) {#live-scenarios-devices}
 
-Live tab. For each device in `moondeck.json` with `enabled: true`, probes `/api/system`, then replays every JSON under `test/test_pc/scenarios/` against the device via REST (`POST /api/modules` for add, `POST /api/control` for set_control, `DELETE /api/modules/<id>` for cleanup). After each `"measure": true` step, samples `/api/system` for `system_fps` + `heap_free_kb` + `psram_free_kb` and `/api/modules` for the module count; bounds in the JSON (currently `module_count.{min,max}`) are asserted. Cleanup deletes every non-head module before and after each scenario so the next run starts clean. Source: `scripts/scenario.py`. Promoted from Sprint 8 deferred — see [Sprint 10](../development/release-01.md#sprint-10).
+Live tab. For each device in `moondeck.json` with `enabled: true`, probes `/api/system`, then replays every JSON under `test/test_pc/scenarios/` against the device via REST (`POST /api/modules` for add, `POST /api/control` for set_control, `DELETE /api/modules/<id>` for cleanup). After each `"measure": true` step, samples `/api/system` for `system_fps` + `heap_free_kb` + `psram_free_kb` and `/api/modules` for the module count; bounds in the JSON (currently `module_count.{min,max}`) are asserted. Cleanup deletes every non-head module before and after each scenario so the next run starts clean. Source: `scripts/device/scenario.py`. Promoted from Sprint 8 deferred — see [Sprint 10](../development/release-01.md#sprint-10).
 
 ### Run all checks {#all-checks}
 
@@ -166,7 +166,7 @@ Runs all `check_*` scripts (LOC budgets, hot-path bans, raw-GPIO ban, structure,
 
 ### Patch inventory {#check-patches}
 
-Scans `src/` and `scripts/` for `// PATCH:` (C++) and `# PATCH:` (Python) comments and lists them with their names. Each patch has a removal condition; the scan is informational — exit 0 always — but makes all outstanding patches visible in one place. Cross-reference: [backlog — Known patches](../development/backlog.md#known-patches-tracked-for-removal). Source: `scripts/check_patches.py`.
+Scans `src/` and `scripts/` for `// PATCH:` (C++) and `# PATCH:` (Python) comments and lists them with their names. Each patch has a removal condition; the scan is informational — exit 0 always — but makes all outstanding patches visible in one place. Cross-reference: [backlog — Known patches](../development/backlog.md#known-patches-tracked-for-removal). Source: `scripts/checks/check_patches.py`.
 
 ### LOC budgets {#check-loc}
 
@@ -192,7 +192,7 @@ Pal files for `PalGpio`, `PalRtos`, and `PalHeap` are intentionally **not** pre-
 
 `src/pal/` files must each have a BUDGETS entry; `check_loc.py` fails on any unbudgeted pal file. Adding a new pal concern is therefore an explicit decision: pick a budget, write a one-line comment in `BUDGETS` saying what the file is for. This is what keeps the `pal/` directory partitioned by concern instead of becoming v1's kitchen-sink Pal.h.
 
-Surfaces are nested-aware: counting `src/core/` excludes anything that falls under another budgeted sub-path. Fails if any surface exceeds its budget. Bumping a budget requires editing `scripts/check_loc.py` with a signed-off line in the release plan.
+Surfaces are nested-aware: counting `src/core/` excludes anything that falls under another budgeted sub-path. Fails if any surface exceeds its budget. Bumping a budget requires editing `scripts/checks/check_loc.py` with a signed-off line in the release plan.
 
 ### Hot-path bans {#check-hot-path}
 
@@ -201,23 +201,23 @@ Scans `src/` for `void <Class>::loop[20ms|1s|10s]?() { ... }` method bodies and 
 - Allocations — `new` / `malloc` / `psram_malloc` / `JsonDocument`
 - Blocking calls — `delay` / `vTaskDelay` / `sleep` / `usleep` / `recv`
 
-Implements the hot-path rules from [process architecture](../architecture/process.md): no allocations and no blocking calls inside any `loop*()` body. Allocate in `setup()` or on a control-update event instead. Source: `scripts/check_hot_path.py`.
+Implements the hot-path rules from [process architecture](../architecture/process.md): no allocations and no blocking calls inside any `loop*()` body. Allocate in `setup()` or on a control-update event instead. Source: `scripts/checks/check_hot_path.py`.
 
 ### Raw-GPIO ban {#check-gpio}
 
-Fails on any GPIO call with a literal integer pin: `pinMode(5, ...)`, `digitalWrite(13, ...)`, `gpio_set_level(2, ...)`, `analogRead(34)`, and similar. Pins must come from a typed board configuration (e.g. `BoardPins::WS2812_DATA`) — the rule is about traceability of the pin number, not whether it is statically known. Source: `scripts/check_gpio.py`.
+Fails on any GPIO call with a literal integer pin: `pinMode(5, ...)`, `digitalWrite(13, ...)`, `gpio_set_level(2, ...)`, `analogRead(34)`, and similar. Pins must come from a typed board configuration (e.g. `BoardPins::WS2812_DATA`) — the rule is about traceability of the pin number, not whether it is statically known. Source: `scripts/checks/check_gpio.py`.
 
 ### Structure {#check-structure}
 
-Lists tracked top-level paths (`git ls-files`) and fails on anything not in the allowlist hard-coded in `scripts/check_structure.py`. Adding a new top-level path requires editing the allowlist with a paired ADR under `docs/developer-guide/adr/`.
+Lists tracked top-level paths (`git ls-files`) and fails on anything not in the allowlist hard-coded in `scripts/checks/check_structure.py`. Adding a new top-level path requires editing the allowlist with a paired ADR under `docs/developer-guide/adr/`.
 
 ### Platform guards {#check-platform}
 
-Scans every `.h` / `.hpp` / `.cpp` / `.cc` file under `src/` **except** files in `src/pal/`, and fails on any platform-identity gate: `#ifdef ARDUINO`, `#ifdef ESP_PLATFORM`, `#ifdef ESP32`, `#ifdef ARDUINO_ARCH_*`, `#include <Arduino.h>`, `#include <esp_*.h>`, `#include <freertos/...>`. Platform-conditional code lives only in `src/pal/` files; modules consume it through the `pal::*` interface. See [system architecture — Pal](../architecture/system.md#pal-the-only-place-platform-conditionals-appear). Source: `scripts/check_platform_guards.py`.
+Scans every `.h` / `.hpp` / `.cpp` / `.cc` file under `src/` **except** files in `src/pal/`, and fails on any platform-identity gate: `#ifdef ARDUINO`, `#ifdef ESP_PLATFORM`, `#ifdef ESP32`, `#ifdef ARDUINO_ARCH_*`, `#include <Arduino.h>`, `#include <esp_*.h>`, `#include <freertos/...>`. Platform-conditional code lives only in `src/pal/` files; modules consume it through the `pal::*` interface. See [system architecture — Pal](../architecture/system.md#pal-the-only-place-platform-conditionals-appear). Source: `scripts/checks/check_platform_guards.py`.
 
 ### Frontend bundle drift {#check-bundle}
 
-Re-generates `src/frontend/frontend_bundle.h` in-memory from the sources (`index.html` + `style.css` + `app.js`) and fails if the committed bundle differs byte-for-byte. The generator (`scripts/gen_frontend_bundle.py`) is deterministic — `gzip` is invoked with `mtime=0` so identical sources always produce identical bundles. Fix drift by running `uv run scripts/gen_frontend_bundle.py` and committing the regenerated bundle. Source: `scripts/check_bundle.py`.
+Re-generates `src/frontend/frontend_bundle.h` in-memory from the sources (`index.html` + `style.css` + `app.js`) and fails if the committed bundle differs byte-for-byte. The generator (`scripts/build/gen_frontend_bundle.py`) is deterministic — `gzip` is invoked with `mtime=0` so identical sources always produce identical bundles. Fix drift by running `uv run scripts/build/gen_frontend_bundle.py` and committing the regenerated bundle. Source: `scripts/checks/check_bundle.py`.
 
 ### Code analysis (lizard) {#check-analysis}
 
@@ -232,7 +232,7 @@ Runs [lizard](https://github.com/terryyin/lizard) over `src/` (C++ files only, `
    113       32   1231      0   153  pmm::HttpServerModule::setup@33-185@…
 ```
 
-Lizard is fetched on demand via `uv run --with lizard` — no permanent project dependency. Source: `scripts/check_analysis.py`.
+Lizard is fetched on demand via `uv run --with lizard` — no permanent project dependency. Source: `scripts/checks/check_analysis.py`.
 
 ### C++ static analysis (cppcheck) {#check-cppcheck}
 
@@ -245,18 +245,18 @@ Runs [cppcheck](https://cppcheck.sourceforge.io/) over `src/` with `warning`, `s
 
 Anything that survives the suppressions is worth investigating. First run found a real bug: `SystemStatusModule::tickCount_` shadowing `MoonModule::tickCount_`, causing `msPerTick` to never advance for that module — fixed by renaming to `fpsTick_`.
 
-Cppcheck is fetched on demand via `uv run --with cppcheck` — no permanent project dependency. Source: `scripts/check_cppcheck.py`.
+Cppcheck is fetched on demand via `uv run --with cppcheck` — no permanent project dependency. Source: `scripts/checks/check_cppcheck.py`.
 
 ### Python lint (ruff) {#check-ruff}
 
 Runs [ruff](https://docs.astral.sh/ruff/) over `scripts/` and reports any findings. E402 (module-level import not at top of file) and E701/E702 (intentional compact one-liners in `moondeck.py`) are suppressed — everything else is live. On a clean codebase prints `All checks passed!`.
 
-Ruff is fetched on demand via `uv run --with ruff` — no permanent project dependency. Source: `scripts/check_ruff.py`.
+Ruff is fetched on demand via `uv run --with ruff` — no permanent project dependency. Source: `scripts/checks/check_ruff.py`.
 
 ### Regenerate frontend bundle {#gen-bundle}
 
-Inlines `style.css` and `app.js` into `index.html`, gzip-compresses the result, and writes `src/frontend/frontend_bundle.h` as a `uint8_t` array. `HttpServerModule` serves this on `GET /` with `Content-Encoding: gzip`. Source: `scripts/gen_frontend_bundle.py`.
+Inlines `style.css` and `app.js` into `index.html`, gzip-compresses the result, and writes `src/frontend/frontend_bundle.h` as a `uint8_t` array. `HttpServerModule` serves this on `GET /` with `Content-Encoding: gzip`. Source: `scripts/build/gen_frontend_bundle.py`.
 
 ### MkDocs serve {#mkdocs}
 
-Starts the local documentation server at `http://127.0.0.1:8000/projectMM-v2/` via `uv run --extra docs mkdocs serve --dev-addr 127.0.0.1:8000`. Long-running: the card shows **Start** / **Stop**, plus a clickable "open ↗" link while running. Source: `scripts/mkdocs_serve.py`.
+Starts the local documentation server at `http://127.0.0.1:8000/projectMM-v2/` via `uv run --extra docs mkdocs serve --dev-addr 127.0.0.1:8000`. Long-running: the card shows **Start** / **Stop**, plus a clickable "open ↗" link while running. Source: `scripts/build/mkdocs_serve.py`.

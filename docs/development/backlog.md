@@ -166,6 +166,10 @@ Workarounds annotated `// PATCH:` in source. Each has a stated unlock condition;
 - **`PATCH: queue-headroom` (`src/pal/PalWs.h`).** `canBroadcastBinary()` skips a pixel frame when the AsyncWebSocket queue is near-full, preventing 50 fps binary from starving 1 fps text messages. Root cause: AsyncWebSocket uses a single per-client queue for all frame types. Unlock: AsyncWebSocket separates binary/text queues, or the preview stream moves to a dedicated WebSocket endpoint.
 - **`PATCH: wifi-guard` (`src/pal/PalUdp.h`).** Guards against pre-WiFi sends. Root cause: no lifecycle signal from the module graph when WiFi is up; the guard is a local workaround. Unlock: a WiFi-ready event from `WifiStaModule` removes the need for every caller to poll.
 
+**Resolved:**
+
+- ~~`PATCH: moondeck-monolith` (`scripts/moondeck.py`)~~ — **resolved.** The marker existed because the HTTP server, inline HTML/CSS/JS, agent prompts, and device orchestration all lived in one file (stdlib-only, zero-dep, no build step). Its unlock condition ("the file exceeds its budget and a split pays for itself") was met when the one-click light-setup feature pushed it over budget. Split: the UI is now three real static files (`scripts/moondeck_ui/{index.html,style.css,app.js}`, served from a sandboxed `/ui/` route with a `window.__MOONDECK__` bootstrap), device REST orchestration moved to `scripts/device/light_setup.py`, and the remaining scripts were organised into `scripts/{checks,build,device}/`. `moondeck.py` is the server/orchestrator only. The convention worked as designed — it deferred the split until it genuinely paid for itself, then triggered it.
+
 ### Documentation / process
 
 - **Recurring-evaluation sprint** (Release 5 per the Release Overview). From [Sprint 9 deferred](release-01.md#sprint-9). Framing is set in Release 1; concrete scope earns its place when Release 4 wraps.

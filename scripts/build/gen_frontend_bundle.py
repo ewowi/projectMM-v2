@@ -15,7 +15,7 @@ import gzip
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 FRONTEND = ROOT / "src" / "frontend"
 SRC_HTML = FRONTEND / "index.html"
 SRC_CSS = FRONTEND / "style.css"

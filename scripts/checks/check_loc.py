@@ -17,7 +17,7 @@ a matching removal is doing too much. Bump the budget only with a justification 
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 
 BUDGETS = {
     "src/core": 420,                  # ModuleManager + Scheduler (excludes MoonModule.{h,cpp})
@@ -64,35 +64,43 @@ BUDGETS = {
 
 EXTS = {".h", ".hpp", ".cpp", ".cc"}
 
-# Script budgets — non-blank, non-comment lines per file in scripts/.
-# moondeck.py carries the full server + UI inline (stdlib-only constraint,
-# see PATCH: moondeck-monolith). Its budget is tight; bump only with removal.
-# Other scripts stay small — each does one thing.
+# Script budgets — non-blank, non-comment lines per .py under scripts/
+# (recursive; subfolders checks/ build/ device/). Each script stays small —
+# one thing per file. Bump a budget only with a justification comment.
 SCRIPT_BUDGETS = {
-    "scripts/moondeck.py":         1450,  # monolith by design; see PATCH comment
-    "scripts/check_class_sizes.py": 430,  # largest check; LOC driven by ESP32 struct table
-    "scripts/scenario.py":          200,
-    "scripts/check_ui.py":          140,
-    "scripts/check_loc.py":         165,  # self-referential; bump when new surfaces land
-    "scripts/gen_frontend_bundle.py": 80,
-    "scripts/check_hot_path.py":     65,
-    "scripts/check_platform_guards.py": 65,
-    "scripts/check_patches.py":      60,
-    "scripts/classify_tests.py":     55,
-    "scripts/inject_build_info.py":  45,
-    "scripts/check_cppcheck.py":     45,
-    "scripts/mkdocs_serve.py":       40,
-    "scripts/check_gpio.py":         40,
-    "scripts/monitor.py":            35,
-    "scripts/test.py":               35,
-    "scripts/flash.py":              35,
-    "scripts/check_structure.py":    30,
-    "scripts/check_bundle.py":       30,
-    "scripts/build.py":              25,
-    "scripts/_pio.py":               20,
-    "scripts/run.py":                20,
-    "scripts/check_ruff.py":         15,
-    "scripts/check_analysis.py":     15,
+    # Orchestrator (scripts/ root). MoonDeck's UI is three real static files
+    # in scripts/moondeck_ui/ (index.html/style.css/app.js) — not LOC-budgeted,
+    # same as src/frontend/. moondeck.py is the server/orchestrator only.
+    "scripts/moondeck.py":         740,   # server/orchestrator only (was a 1450 monolith;
+                                          # UI → scripts/moondeck_ui/, REST orchestration
+                                          # → scripts/device/light_setup.py)
+    # Checks (scripts/checks/)
+    "scripts/checks/check_class_sizes.py": 430,  # largest check; LOC driven by ESP32 struct table
+    "scripts/checks/check_ui.py":          140,
+    "scripts/checks/check_loc.py":         170,  # self-referential; bump when new surfaces land
+    "scripts/checks/check_hot_path.py":     65,
+    "scripts/checks/check_platform_guards.py": 65,
+    "scripts/checks/check_patches.py":      60,
+    "scripts/checks/classify_tests.py":     55,
+    "scripts/checks/check_cppcheck.py":     45,
+    "scripts/checks/check_gpio.py":         40,
+    "scripts/checks/check_structure.py":    30,
+    "scripts/checks/check_bundle.py":       30,
+    "scripts/checks/check_ruff.py":         15,
+    "scripts/checks/check_analysis.py":     15,
+    # Build (scripts/build/)
+    "scripts/build/gen_frontend_bundle.py": 80,
+    "scripts/build/inject_build_info.py":   45,
+    "scripts/build/mkdocs_serve.py":        40,
+    "scripts/build/test.py":                35,
+    "scripts/build/build.py":               25,
+    "scripts/build/_pio.py":                20,
+    "scripts/build/run.py":                 20,
+    # Device (scripts/device/)
+    "scripts/device/scenario.py":          200,
+    "scripts/device/light_setup.py":        70,  # standalone REST orchestration
+    "scripts/device/monitor.py":            35,
+    "scripts/device/flash.py":              35,
 }
 
 
@@ -143,13 +151,15 @@ def check_pal_files_have_budgets() -> bool:
 
 
 def check_scripts_have_budgets() -> bool:
-    """Fail if any .py in scripts/ lacks a SCRIPT_BUDGETS entry."""
+    """Fail if any .py under scripts/ (incl. subfolders) lacks a budget."""
     scripts_dir = ROOT / "scripts"
     if not scripts_dir.exists():
         return True
     budgeted = {ROOT / p for p in SCRIPT_BUDGETS}
     ok = True
-    for f in sorted(scripts_dir.glob("*.py")):
+    for f in sorted(scripts_dir.rglob("*.py")):
+        if "__pycache__" in f.parts:
+            continue
         if f not in budgeted:
             rel = f.relative_to(ROOT)
             print(f"FAIL: script without SCRIPT_BUDGETS entry: {rel}")

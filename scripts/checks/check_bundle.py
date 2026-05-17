@@ -12,8 +12,11 @@ The generator is deterministic (gzip mtime=0), so identical sources always
 produce identical bundles.
 """
 import sys
+from pathlib import Path
 
-import gen_frontend_bundle as gen
+# gen_frontend_bundle lives in scripts/build/ (this check is in scripts/checks/).
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "build"))
+import gen_frontend_bundle as gen  # noqa: E402
 
 
 def main() -> int:

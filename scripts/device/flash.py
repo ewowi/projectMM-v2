@@ -12,10 +12,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _pio import pio_bin
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "build"))
+from _pio import pio_bin  # noqa: E402  (shared helper lives in scripts/build/)
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 def main(argv):

@@ -14,12 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: uv run scripts/check_loc.py
-      - run: uv run scripts/check_hot_path.py
-      - run: uv run scripts/check_gpio.py
-      - run: uv run scripts/check_structure.py
-      - run: uv run scripts/check_platform_guards.py
-      - run: uv run scripts/check_bundle.py
+      - run: uv run scripts/checks/check_loc.py
+      - run: uv run scripts/checks/check_hot_path.py
+      - run: uv run scripts/checks/check_gpio.py
+      - run: uv run scripts/checks/check_structure.py
+      - run: uv run scripts/checks/check_platform_guards.py
+      - run: uv run scripts/checks/check_bundle.py
 
   build:
     name: Build ${{ matrix.env }}
@@ -35,7 +35,7 @@ jobs:
       - name: Install PlatformIO
         run: uv sync --extra ci
       - name: Build
-        run: uv run scripts/build.py ${{ matrix.env }}
+        run: uv run scripts/build/build.py ${{ matrix.env }}
       - name: Test
         if: matrix.env == 'pc'
-        run: uv run scripts/test.py
+        run: uv run scripts/build/test.py

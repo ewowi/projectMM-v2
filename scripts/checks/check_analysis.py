@@ -3,7 +3,7 @@
 import subprocess
 import sys
 from pathlib import Path
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 sys.exit(subprocess.call(
     ["uv", "run", "--with", "lizard", "python3", "-m", "lizard", "src/", "-l", "cpp",
      "--ignore_warnings", "1", "-x", "src/frontend/*"],

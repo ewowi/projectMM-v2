@@ -24,7 +24,7 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True
 
-ROOT          = Path(__file__).resolve().parent.parent
+ROOT          = Path(__file__).resolve().parent.parent.parent
 SCENARIOS_DIR = ROOT / "test" / "test_pc" / "scenarios"
 UI_STATE_PATH = ROOT / "moondeck.json"
 
